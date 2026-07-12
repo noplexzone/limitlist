@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added — Phase 2
+
+- `rating` field on `AnimeShow` (nullable Float/REAL, 0.5–5.0 half-star): displayed as `x/5` inline, editable via watchlist dropdown.
+- `notes` field on `AnimeShow` (nullable text): displayed below episode counter, editable via watchlist textarea.
+- API validation for rating: rejects values outside 0.5–5.0 and non-half-star increments (400).
+- Anime-focused search mode (default ON): filters TMDB results to Animation genre (id 16) or Japanese-origin content; sorted by JP/Animation score. Falls back to full results if filtering gives nothing.
+- "Anime-focused" checkbox in search UI; pass `?animeOnly=false` to API for broad TV results.
+- `docker-entrypoint.sh`: starts as root to `chown -R nextjs:nodejs /data`, then drops to UID 1001 via `gosu` before running migrations and the web server.
+- `gosu` added to Docker runner stage.
+
+### Fixed — Phase 2
+
+- Docker runtime no longer runs the app as root. The entrypoint handles bind-mount ownership prep then execs as the `nextjs` user.
+
 ### Added — Phase 1
 
 - Initial project scaffold: Next.js 15 App Router + TypeScript + Tailwind CSS

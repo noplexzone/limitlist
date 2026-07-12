@@ -51,11 +51,15 @@ docker compose down         # stop
 ```
 Data persists in Docker volume mapped to ./data on host.
 
+The entrypoint (`docker-entrypoint.sh`) briefly starts as root to chown `/data`, then drops to UID 1001 (`nextjs`) via `gosu` before running migrations and the server. No manual host `chown` required for bind mounts.
+
+Legacy builder required: `DOCKER_BUILDKIT=0 docker build ...` (buildx TCP upgrade is blocked in this environment).
+
 ## Auth
 Single-user. Credentials set via env vars. Session via iron-session HTTP-only cookie.
 
 ## Phases
-- Phase 1 (current): Core CRUD + auth + TMDB search + Docker
-- Phase 2: Star ratings (1-5, half-star)
+- Phase 1 (complete): Core CRUD + auth + TMDB search + Docker
+- Phase 2 (complete): Ratings/notes + anime-focused search + Docker non-root runtime
 - Phase 3: TBD
 - Phase 4: In-app reminders

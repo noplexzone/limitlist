@@ -11,7 +11,11 @@ export interface MetadataResult {
   episodesTotal?: number
 }
 
+export interface SearchOptions {
+  animeOnly?: boolean
+}
+
 export interface MetadataProvider {
   name: string
-  search(query: string): Promise<MetadataResult[]>
+  search(query: string, options?: SearchOptions): Promise<MetadataResult[]>
 }

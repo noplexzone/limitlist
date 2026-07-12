@@ -18,7 +18,23 @@ interface AnimeShow {
   episodeDurationMinutes: number
   genres?: string | null
   studios?: string | null
+  rating?: number | null
+  notes?: string | null
 }
+
+const RATING_OPTIONS: { value: number | null; label: string }[] = [
+  { value: null, label: 'Unrated' },
+  { value: 0.5, label: '0.5' },
+  { value: 1.0, label: '1' },
+  { value: 1.5, label: '1.5' },
+  { value: 2.0, label: '2' },
+  { value: 2.5, label: '2.5' },
+  { value: 3.0, label: '3' },
+  { value: 3.5, label: '3.5' },
+  { value: 4.0, label: '4' },
+  { value: 4.5, label: '4.5' },
+  { value: 5.0, label: '5' },
+]
 
 const STATUS_LABELS: Record<AnimeShow['status'], string> = {
   WATCHING: 'Watching',
@@ -66,6 +82,8 @@ export default function WatchlistClient() {
       episodesWatched: show.episodesWatched,
       episodesTotal: show.episodesTotal,
       episodeDurationMinutes: show.episodeDurationMinutes,
+      rating: show.rating ?? null,
+      notes: show.notes ?? '',
     })
     setSaveError('')
   }
@@ -171,7 +189,13 @@ export default function WatchlistClient() {
                 {show.episodesTotal != null ? `/${show.episodesTotal}` : '/?'}
               </span>
               <span>{show.episodeDurationMinutes}min/ep</span>
+              {show.rating != null && (
+                <span className="text-yellow-400 font-medium">{show.rating}/5</span>
+              )}
             </div>
+            {show.notes && (
+              <p className="text-gray-400 text-sm mt-1 italic">{show.notes}</p>
+            )}
 
             {editing === show.id ? (
               <div className="mt-3 space-y-2">
@@ -240,7 +264,38 @@ export default function WatchlistClient() {
                       className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm w-20"
                     />
                   </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-gray-400">Rating</span>
+                    <select
+                      value={editValues.rating ?? ''}
+                      onChange={(e) =>
+                        setEditValues((v) => ({
+                          ...v,
+                          rating: e.target.value === '' ? null : parseFloat(e.target.value),
+                        }))
+                      }
+                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm"
+                    >
+                      {RATING_OPTIONS.map((opt) => (
+                        <option key={opt.label} value={opt.value ?? ''}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-gray-400">Notes</span>
+                  <textarea
+                    value={editValues.notes ?? ''}
+                    onChange={(e) =>
+                      setEditValues((v) => ({ ...v, notes: e.target.value }))
+                    }
+                    rows={2}
+                    placeholder="Optional notes..."
+                    className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm w-full resize-y"
+                  />
+                </label>
                 <div className="flex gap-2 mt-1">
                   <button
                     onClick={() => saveEdit(show.id)}

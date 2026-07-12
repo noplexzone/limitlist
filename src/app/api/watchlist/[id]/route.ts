@@ -39,15 +39,40 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
+  if (body.rating !== undefined && body.rating !== null) {
+    const r = body.rating
+    if (
+      typeof r !== 'number' ||
+      !Number.isFinite(r) ||
+      r < 0.5 ||
+      r > 5.0 ||
+      Math.abs(r * 2 - Math.round(r * 2)) > 0.001
+    ) {
+      return NextResponse.json(
+        { error: 'Rating must be a half-star value between 0.5 and 5.0' },
+        { status: 400 }
+      )
+    }
+  }
+
   const allowedFields = [
     'status',
     'episodesWatched',
     'episodesTotal',
     'episodeDurationMinutes',
+    'rating',
+    'notes',
   ]
   const updateData: Record<string, unknown> = {}
   for (const field of allowedFields) {
-    if (field in body) updateData[field] = body[field]
+    if (field in body) {
+      if (field === 'notes') {
+        const trimmed = typeof body.notes === 'string' ? body.notes.trim() : null
+        updateData.notes = trimmed || null
+      } else {
+        updateData[field] = body[field]
+      }
+    }
   }
 
   try {

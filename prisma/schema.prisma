@@ -22,6 +22,8 @@ model AnimeShow {
   episodeDurationMinutes Int         @default(24)
   genres                 String?
   studios                String?
+  rating                 Float?
+  notes                  String?
   createdAt              DateTime    @default(now())
   updatedAt              DateTime    @updatedAt
 

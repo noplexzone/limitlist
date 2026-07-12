@@ -1,7 +1,8 @@
-import type { MetadataProvider, MetadataResult } from './providers'
+import type { MetadataProvider, MetadataResult, SearchOptions } from './providers'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w500'
+const ANIMATION_GENRE_ID = 16
 
 interface TmdbTvResult {
   id: number
@@ -12,6 +13,7 @@ interface TmdbTvResult {
   first_air_date?: string
   genre_ids?: number[]
   origin_country?: string[]
+  original_language?: string
 }
 
 interface TmdbSearchResponse {
@@ -39,7 +41,7 @@ export class TmdbProvider implements MetadataProvider {
     this.apiKey = apiKey
   }
 
-  async search(query: string): Promise<MetadataResult[]> {
+  async search(query: string, options?: SearchOptions): Promise<MetadataResult[]> {
     const url = new URL(`${TMDB_BASE}/search/tv`)
     url.searchParams.set('api_key', this.apiKey)
     url.searchParams.set('query', query)
@@ -51,8 +53,30 @@ export class TmdbProvider implements MetadataProvider {
     }
 
     const data: TmdbSearchResponse = await res.json()
+    let items = data.results
 
-    return data.results.slice(0, 10).map((item) => ({
+    // Anime-focused mode: filter to Animation genre (id 16) or Japanese-origin content.
+    // Falls back to all results if filtering would return nothing (prevents empty results
+    // for valid anime that TMDB hasn't tagged correctly).
+    if (options?.animeOnly !== false) {
+      const filtered = items.filter(
+        (item) =>
+          item.genre_ids?.includes(ANIMATION_GENRE_ID) ||
+          item.original_language === 'ja' ||
+          item.origin_country?.includes('JP')
+      )
+      items = filtered.length > 0 ? filtered : items
+
+      // Sort: Japanese/JP-origin first, then Animation genre, then rest
+      items = [...items].sort((a, b) => {
+        const score = (i: TmdbTvResult) =>
+          (i.original_language === 'ja' || i.origin_country?.includes('JP') ? 2 : 0) +
+          (i.genre_ids?.includes(ANIMATION_GENRE_ID) ? 1 : 0)
+        return score(b) - score(a)
+      })
+    }
+
+    return items.slice(0, 10).map((item) => ({
       providerId: String(item.id),
       providerName: 'tmdb',
       title: item.name,

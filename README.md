@@ -52,6 +52,34 @@ docker compose down
 | `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/anime-tracker.db` |
 | `TMDB_API_KEY` | Recommended | TMDB API key for metadata search. Get one free at https://www.themoviedb.org/settings/api |
 
+## Ratings and notes
+
+Each show in the watchlist can have an optional rating (0.5–5.0 in half-star increments) and free-text notes. Both are nullable — leaving them blank means unrated/no notes.
+
+- Edit a show in the watchlist and choose a rating from the dropdown (Unrated, 0.5, 1, 1.5, …, 5).
+- Type notes in the textarea; they are trimmed and stored as-is.
+- Displayed inline: `4.5/5` and the note text below the episode counter.
+
+## Anime-focused search
+
+The search page defaults to **Anime-focused** mode, which filters TMDB results to shows that are:
+- tagged with TMDB genre id 16 (Animation), **or**
+- originally Japanese (`original_language = "ja"`) or from Japan (`origin_country` contains `"JP"`).
+
+Results within that set are sorted: Japanese/JP-origin first, then other animation.
+
+If filtering would return zero results (e.g., TMDB hasn't tagged a show correctly), the full unfiltered results are returned as a fallback.
+
+Uncheck **Anime-focused** in the search UI to get broad all-TV results. The API also accepts `?animeOnly=false` directly.
+
+Non-Japanese animation (e.g., Avatar, Arcane) will still appear in anime-focused mode because TMDB tags it as Animation (genre 16).
+
+## Docker runtime model
+
+The container starts as root long enough to fix `/data` ownership (`chown -R nextjs:nodejs /data`), then immediately drops to the `nextjs` user (UID 1001) via `gosu` before running migrations and the web server. This lets bind-mounted directories like `./data:/data` be writable without requiring the host to pre-chown the directory — important for Unraid and other NAS environments where bind mounts are owned by root.
+
+The pinned Prisma 5 CLI is copied into the image; migrations use `node node_modules/prisma/build/index.js migrate deploy` (not `npx prisma`) to avoid downloading Prisma 7 at runtime.
+
 ## Prisma / Migrations
 
 ```bash
@@ -67,10 +95,9 @@ npm run db:migrate:deploy
 
 ## Metadata provider note
 
-Search uses the TMDB TV endpoint which returns all TV shows, not only anime.
-This is an accepted Phase 1 tradeoff: the search is broad, and you select what to import.
-Results are stored with `metadataProvider=tmdb` and the TMDB series ID, preventing duplicates.
-TMDB models shows as a single series with seasons, which matches the preferred data model.
+Search uses the TMDB TV endpoint. In anime-focused mode (default on) results are filtered and ranked for anime-like content; uncheck to see all TV. See [Anime-focused search](#anime-focused-search) above.
+
+Results are stored with `metadataProvider=tmdb` and the TMDB series ID, preventing duplicates. TMDB models shows as a single series with seasons, which matches the preferred data model.
 
 If `TMDB_API_KEY` is not set, the search page will display a configuration message instead of crashing.
 
@@ -81,7 +108,7 @@ Sessions use signed HTTP-only cookies via iron-session. Logout is available in t
 
 ## Phases
 
-- **Phase 1** (current): Core CRUD, auth, TMDB search, Docker
-- **Phase 2**: Star ratings (1–5 stars, half-star increments)
+- **Phase 1** (complete): Core CRUD, auth, TMDB search, Docker
+- **Phase 2** (complete): Ratings/notes, anime-focused search, Docker non-root runtime
 - **Phase 3**: TBD
 - **Phase 4**: In-app reminders

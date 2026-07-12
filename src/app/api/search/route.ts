@@ -19,8 +19,11 @@ export async function GET(req: NextRequest) {
     )
   }
 
+  // animeOnly defaults to true; pass ?animeOnly=false for broad TV results
+  const animeOnly = req.nextUrl.searchParams.get('animeOnly') !== 'false'
+
   try {
-    const results = await tmdb.search(query.trim())
+    const results = await tmdb.search(query.trim(), { animeOnly })
     return NextResponse.json({ results })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Search failed'

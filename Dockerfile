@@ -21,13 +21,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Prisma query engine requires OpenSSL on Debian slim
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+# Prisma query engine requires OpenSSL; gosu is used by the entrypoint to drop
+# from root (needed for bind-mount chown) to the nextjs user before exec.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl gosu && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 --gid nodejs nextjs
 
-RUN mkdir -p /data && chown nextjs:nodejs /data
+RUN mkdir -p /data
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -39,11 +40,11 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
-# Run as root so Docker bind mounts such as ./data:/data are writable without
-# host-side UID/GID preparation. This can be tightened later with a custom
-# entrypoint or explicit PUID/PGID support for Unraid.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

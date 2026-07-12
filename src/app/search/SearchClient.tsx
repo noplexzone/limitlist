@@ -15,6 +15,7 @@ interface SearchResult {
 
 export default function SearchClient() {
   const [query, setQuery] = useState('')
+  const [animeOnly, setAnimeOnly] = useState(true)
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
@@ -29,7 +30,8 @@ export default function SearchClient() {
     setResults([])
     setImportMessages({})
 
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`)
+    const params = new URLSearchParams({ q: query.trim(), animeOnly: String(animeOnly) })
+    const res = await fetch(`/api/search?${params}`)
     const data = await res.json()
 
     if (!res.ok) {
@@ -84,21 +86,32 @@ export default function SearchClient() {
 
   return (
     <div>
-      <form onSubmit={handleSearch} className="flex gap-3 mb-8">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for an anime or TV show..."
-          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100 placeholder-gray-500"
-        />
-        <button
-          type="submit"
-          disabled={searching || !query.trim()}
-          className="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
-        >
-          {searching ? 'Searching...' : 'Search'}
-        </button>
+      <form onSubmit={handleSearch} className="space-y-3 mb-8">
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for an anime or TV show..."
+            className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100 placeholder-gray-500"
+          />
+          <button
+            type="submit"
+            disabled={searching || !query.trim()}
+            className="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
+          >
+            {searching ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-gray-400 select-none cursor-pointer w-fit">
+          <input
+            type="checkbox"
+            checked={animeOnly}
+            onChange={(e) => setAnimeOnly(e.target.checked)}
+            className="rounded accent-purple-500"
+          />
+          Anime-focused (filters to animation/Japanese-origin content; uncheck for all TV)
+        </label>
       </form>
 
       {searchError && <p className="text-red-400 mb-4">{searchError}</p>}
