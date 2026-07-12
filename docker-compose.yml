@@ -12,5 +12,6 @@ services:
       - AUTH_USERNAME=${AUTH_USERNAME:-admin}
       - AUTH_PASSWORD=${AUTH_PASSWORD:-changeme}
       - AUTH_SECRET=${AUTH_SECRET:-change-this-secret-to-something-random}
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-false}
       - TMDB_API_KEY=${TMDB_API_KEY:-}
     restart: unless-stopped

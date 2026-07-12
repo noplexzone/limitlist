@@ -48,6 +48,7 @@ docker compose down
 | `AUTH_USERNAME` | Yes | Login username |
 | `AUTH_PASSWORD` | Yes | Login password |
 | `AUTH_SECRET` | Yes | Session cookie signing key — use a random 32+ char string |
+| `AUTH_COOKIE_SECURE` | No | Set `true` only when serving over HTTPS. Use `false` for plain HTTP LAN/Docker testing. |
 | `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/anime-tracker.db` |
 | `TMDB_API_KEY` | Recommended | TMDB API key for metadata search. Get one free at https://www.themoviedb.org/settings/api |
 
