@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added — Phase 3
+
+- `src/lib/stats.ts`: `computeStats(shows)` helper — computes total shows, counts by status, completion rate, total episodes watched, estimated hours watched, top genres, top studios, and average rating from an `AnimeShow[]`.
+- `/dashboard` route (`src/app/dashboard/page.tsx`): authenticated server component showing all stats as summary cards, status breakdown, and bar-chart lists for top genres/studios. Links to `/search` when the watchlist is empty.
+- Dashboard link added to the nav bar.
+- TMDB live verification performed with real API key: anime-focused and broad searches confirmed; real show imported and updated with episodes/rating/notes; dashboard rendered with non-empty stats.
+
 ### Added — Phase 2
 
 - `rating` field on `AnimeShow` (nullable Float/REAL, 0.5–5.0 half-star): displayed as `x/5` inline, editable via watchlist dropdown.

@@ -32,6 +32,9 @@ export default function Nav() {
             <Link href="/search" className={linkClass('/search')}>
               Search
             </Link>
+            <Link href="/dashboard" className={linkClass('/dashboard')}>
+              Dashboard
+            </Link>
           </div>
         </div>
         <button

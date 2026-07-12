@@ -106,9 +106,27 @@ If `TMDB_API_KEY` is not set, the search page will display a configuration messa
 Single-user. Set `AUTH_USERNAME` and `AUTH_PASSWORD` in your `.env`.
 Sessions use signed HTTP-only cookies via iron-session. Logout is available in the nav bar.
 
+## Dashboard
+
+The `/dashboard` route shows a summary of your watching habits (auth-protected):
+
+| Stat | Definition |
+|---|---|
+| Total Shows | All shows in the watchlist |
+| Completion Rate | `completed / total` as a percentage |
+| Episodes Watched | Sum of `episodesWatched` across all shows |
+| Hours Watched | `sum(episodesWatched × episodeDurationMinutes) / 60` |
+| Average Rating | Mean of all rated shows (shown only if any shows are rated) |
+| Top Genres | Top 10 genres by frequency, split from comma-separated `genres` field |
+| Top Studios | Top 10 studios by frequency, split from comma-separated `studios` field |
+
+Empty state is handled gracefully — the dashboard displays a link to search/import if no shows are tracked.
+
+Stats are computed server-side in `src/lib/stats.ts` (`computeStats(shows)`).
+
 ## Phases
 
 - **Phase 1** (complete): Core CRUD, auth, TMDB search, Docker
 - **Phase 2** (complete): Ratings/notes, anime-focused search, Docker non-root runtime
-- **Phase 3**: TBD
+- **Phase 3** (complete): Stats dashboard (`/dashboard`) with status counts, completion rate, episodes/hours watched, top genres/studios
 - **Phase 4**: In-app reminders

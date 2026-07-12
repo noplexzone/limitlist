@@ -58,8 +58,16 @@ Legacy builder required: `DOCKER_BUILDKIT=0 docker build ...` (buildx TCP upgrad
 ## Auth
 Single-user. Credentials set via env vars. Session via iron-session HTTP-only cookie.
 
+## Dashboard / Stats
+
+- Route: `/dashboard` — auth-protected server component
+- Stats helper: `src/lib/stats.ts` — `computeStats(AnimeShow[])` → `WatchStats`
+  - Counts by status, completion rate, total episodes watched, estimated hours, top genres/studios, average rating
+- Genres and studios are stored as comma-separated strings; stats helper splits and counts case-insensitively
+- No charting library — bars are pure CSS `<div>` elements with percentage widths
+
 ## Phases
 - Phase 1 (complete): Core CRUD + auth + TMDB search + Docker
 - Phase 2 (complete): Ratings/notes + anime-focused search + Docker non-root runtime
-- Phase 3: TBD
+- Phase 3 (complete): Stats dashboard at /dashboard
 - Phase 4: In-app reminders
