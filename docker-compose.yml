@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  anime-tracker:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      - DATABASE_URL=file:/data/anime-tracker.db
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-changeme}
+      - AUTH_SECRET=${AUTH_SECRET:-change-this-secret-to-something-random}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+    restart: unless-stopped

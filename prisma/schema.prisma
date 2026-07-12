@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AnimeShow {
+  id                     String   @id @default(cuid())
+  metadataProvider       String
+  metadataId             String
+  title                  String
+  originalTitle          String?
+  overview               String?
+  posterUrl              String?
+  firstAiredAt           DateTime?
+  status                 String   @default("PLAN_TO_WATCH")
+  episodesTotal          Int?
+  episodesWatched        Int         @default(0)
+  episodeDurationMinutes Int         @default(24)
+  genres                 String?
+  studios                String?
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  @@unique([metadataProvider, metadataId])
+}
