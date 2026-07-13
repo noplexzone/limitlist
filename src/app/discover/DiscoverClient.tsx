@@ -13,6 +13,11 @@ interface DiscoverResult {
   overview?: string
   posterUrl?: string
   firstAiredAt?: string
+  titles?: string[]
+  genres?: string[]
+  episodesTotal?: number
+  averageScore?: number
+  popularity?: number
   linkedTitle?: string
   linkedProviderId?: string
   inWatchlist: boolean
@@ -69,10 +74,13 @@ export default function DiscoverClient() {
         metadataProvider: result.providerName,
         metadataId: result.providerId,
         title: result.linkedTitle ?? result.title,
+        titles: result.titles,
         originalTitle: result.originalTitle,
         overview: result.overview,
         posterUrl: result.posterUrl,
         firstAiredAt: result.firstAiredAt,
+        genres: result.genres,
+        episodesTotal: result.episodesTotal,
       }),
     })
     if (res.ok || res.status === 409) {
@@ -121,7 +129,7 @@ export default function DiscoverClient() {
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-500">Ranked by AniList · page {page} · linked to TMDB for tracking</p>
+        <p className="text-xs text-gray-500">Ranked by AniList · page {page} · TMDB matching happens on import</p>
       </div>
 
       {loading && <div className="flex justify-center py-20 text-gray-400">Loading…</div>}
@@ -170,8 +178,8 @@ export default function DiscoverClient() {
 
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-2 pt-12">
                     <p className="text-[11px] font-semibold text-white leading-tight line-clamp-2 mb-1">{result.title}</p>
-                    {result.linkedTitle && result.linkedTitle !== result.title && (
-                      <p className="mb-1 line-clamp-1 text-[10px] text-blue-300">Tracks: {result.linkedTitle}</p>
+                    {result.averageScore != null && (
+                      <p className="mb-1 line-clamp-1 text-[10px] text-blue-300">AniList {result.averageScore}/100{result.episodesTotal ? ` · ${result.episodesTotal} eps` : ''}</p>
                     )}
                     {isAdded ? (
                       <p className="text-center text-xs text-green-400 font-medium">Added ✓</p>

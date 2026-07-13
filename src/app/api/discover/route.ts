@@ -7,14 +7,11 @@ import {
   getAniListOriginalTitle,
   getAniListStartDate,
   getAniListTitles,
-  getAniListYear,
+  type AniListFeedType,
 } from '@/lib/anilist'
 import { getAnimeRootTitle } from '@/lib/anime-title'
-import { getTmdbProvider } from '@/lib/tmdb'
 
-type FeedType = 'popular' | 'trending'
-
-function feedTypeFromRequest(req: NextRequest): FeedType {
+function feedTypeFromRequest(req: NextRequest): AniListFeedType {
   return req.nextUrl.searchParams.get('type') === 'trending' ? 'trending' : 'popular'
 }
 
@@ -27,29 +24,10 @@ export async function GET(req: NextRequest) {
   const user = await requireAuth()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const tmdb = getTmdbProvider()
-  if (!tmdb) {
-    return NextResponse.json(
-      {
-        error:
-          'TMDB_API_KEY not configured. Discover now uses AniList for rankings, but TMDB linking is required before imported shows can be monitored.',
-        results: [],
-      },
-      { status: 422 }
-    )
-  }
-
   const existing = await prisma.animeShow.findMany({
-    select: {
-      metadataProvider: true,
-      metadataId: true,
-      title: true,
-      originalTitle: true,
-    },
+    select: { metadataProvider: true, metadataId: true, title: true, originalTitle: true },
   })
-  const existingTmdbIds = new Set(
-    existing.filter((s) => s.metadataProvider === 'tmdb').map((s) => s.metadataId)
-  )
+  const existingProviderIds = new Set(existing.map((s) => `${s.metadataProvider}:${s.metadataId}`))
   const existingRootTitles = new Set(
     existing.flatMap((s) => [getAnimeRootTitle(s.title), getAnimeRootTitle(s.originalTitle)]).filter(Boolean)
   )
@@ -58,67 +36,37 @@ export async function GET(req: NextRequest) {
     const page = pageFromRequest(req)
     const pageSize = 42
     const discoverPage = await fetchAniListDiscover(feedTypeFromRequest(req), page, pageSize)
-    const mapItem = async (item: (typeof discoverPage.media)[number]) => {
-      const anilistTitle = getAniListDisplayTitle(item)
-      const originalTitle = getAniListOriginalTitle(item)
-      const startDate = getAniListStartDate(item)
-      const sourceRootTitles = getAniListTitles(item).map(getAnimeRootTitle).filter(Boolean)
-      const titleAlreadyTracked = sourceRootTitles.some((title) => existingRootTitles.has(title))
-
-      const tmdbMatch = await tmdb.findShowForAnime(getAniListTitles(item), getAniListYear(item))
-      if (!tmdbMatch) {
-        return {
-          sourceProvider: 'anilist',
-          sourceId: String(item.id),
-          providerId: '',
-          providerName: 'tmdb',
-          title: anilistTitle,
-          originalTitle,
-          overview: item.description || undefined,
-          posterUrl: item.coverImage?.extraLarge || item.coverImage?.large || undefined,
-          firstAiredAt: startDate,
-          inWatchlist: titleAlreadyTracked,
-          importable: false,
-          mappingStatus: 'No TMDB show match',
-        }
-      }
-
-      const rootTitles = [
-        ...sourceRootTitles,
-        getAnimeRootTitle(tmdbMatch.title),
-        getAnimeRootTitle(tmdbMatch.originalTitle),
-      ].filter(Boolean)
+    const results = discoverPage.media.map((item) => {
+      const title = getAniListDisplayTitle(item)
+      const rootTitles = getAniListTitles(item).map(getAnimeRootTitle).filter(Boolean)
       const inWatchlist =
-        existingTmdbIds.has(tmdbMatch.providerId) || rootTitles.some((title) => existingRootTitles.has(title))
+        existingProviderIds.has(`anilist:${item.id}`) ||
+        rootTitles.some((rootTitle) => existingRootTitles.has(rootTitle))
 
-      // Keep multiple AniList seasons visible, but all of them point at the same TMDB show
-      // for import/monitoring. The client marks every card with the same TMDB id as added.
       return {
         sourceProvider: 'anilist',
         sourceId: String(item.id),
-        providerId: tmdbMatch.providerId,
-        providerName: 'tmdb',
-        title: anilistTitle,
-        originalTitle: originalTitle ?? tmdbMatch.originalTitle,
-        overview: item.description || tmdbMatch.overview,
-        posterUrl: item.coverImage?.extraLarge || item.coverImage?.large || tmdbMatch.posterUrl,
-        firstAiredAt: startDate ?? tmdbMatch.firstAiredAt,
-        linkedTitle: tmdbMatch.title,
-        linkedProviderId: tmdbMatch.providerId,
+        providerId: String(item.id),
+        providerName: 'anilist',
+        title,
+        titles: getAniListTitles(item),
+        originalTitle: getAniListOriginalTitle(item),
+        overview: item.description || undefined,
+        posterUrl: item.coverImage?.extraLarge || item.coverImage?.large || undefined,
+        firstAiredAt: getAniListStartDate(item),
+        genres: item.genres ?? [],
+        episodesTotal: item.episodes ?? undefined,
+        averageScore: item.averageScore ?? undefined,
+        popularity: item.popularity ?? undefined,
         inWatchlist,
         importable: true,
+        mappingStatus: 'TMDB link resolved on import',
       }
-    }
-
-    const results = []
-    const concurrency = 6
-    for (let i = 0; i < discoverPage.media.length; i += concurrency) {
-      results.push(...(await Promise.all(discoverPage.media.slice(i, i + concurrency).map(mapItem))))
-    }
+    })
 
     return NextResponse.json({
       provider: 'anilist',
-      linkedProvider: 'tmdb',
+      linkedProvider: 'tmdb-on-import',
       page,
       pageSize,
       hasNextPage: discoverPage.hasNextPage,

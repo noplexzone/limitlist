@@ -1,4 +1,5 @@
 import type { MetadataProvider, MetadataResult, SearchOptions } from './providers'
+import { getEffectiveTmdbApiKey } from './settings'
 import { getAnimeRootTitle, isLikelySeasonSpecificTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
@@ -26,6 +27,35 @@ interface TmdbEpisode {
   episode_number: number
   air_date?: string | null
   name?: string
+  overview?: string | null
+  still_path?: string | null
+  vote_average?: number | null
+}
+
+interface TmdbSeasonSummary {
+  id: number
+  season_number: number
+  name: string
+  episode_count?: number
+  air_date?: string | null
+  overview?: string | null
+  poster_path?: string | null
+}
+
+interface TmdbSeasonDetails {
+  id: number
+  season_number: number
+  name: string
+  episodes?: TmdbEpisode[]
+}
+
+interface TmdbAggregateCredit {
+  id: number
+  name: string
+  original_name?: string
+  profile_path?: string | null
+  roles?: Array<{ character?: string | null; episode_count?: number | null }>
+  total_episode_count?: number | null
 }
 
 interface TmdbTvDetails {
@@ -41,6 +71,14 @@ interface TmdbTvDetails {
   status?: string
   next_episode_to_air?: TmdbEpisode | null
   last_episode_to_air?: TmdbEpisode | null
+  vote_average?: number | null
+  vote_count?: number | null
+  popularity?: number | null
+  original_language?: string | null
+  origin_country?: string[] | null
+  seasons?: TmdbSeasonSummary[]
+  aggregate_credits?: { cast?: TmdbAggregateCredit[] }
+  content_ratings?: { results?: Array<{ iso_3166_1: string; rating: string }> }
 }
 
 export interface TmdbAiringInfo {
@@ -108,11 +146,36 @@ export class TmdbProvider implements MetadataProvider {
   async getDetails(tmdbId: string): Promise<MetadataResult | null> {
     const url = new URL(`${TMDB_BASE}/tv/${tmdbId}`)
     url.searchParams.set('api_key', this.apiKey)
+    url.searchParams.set('append_to_response', 'aggregate_credits,content_ratings')
 
     const res = await fetch(url.toString(), { next: { revalidate: 300 } })
     if (!res.ok) return null
 
     const data: TmdbTvDetails = await res.json()
+
+    const seasons = (data.seasons ?? [])
+      .filter((season) => season.season_number > 0)
+      .map((season) => ({
+        seasonNumber: season.season_number,
+        name: season.name,
+        episodeCount: season.episode_count ?? null,
+        airDate: season.air_date ?? null,
+        overview: season.overview ?? null,
+      }))
+
+    const cast = (data.aggregate_credits?.cast ?? [])
+      .slice()
+      .sort((a, b) => (b.total_episode_count ?? 0) - (a.total_episode_count ?? 0))
+      .slice(0, 18)
+      .map((actor) => ({
+        name: actor.name,
+        originalName: actor.original_name && actor.original_name !== actor.name ? actor.original_name : undefined,
+        character: actor.roles?.map((role) => role.character).filter(Boolean).slice(0, 3).join(', ') || undefined,
+        episodeCount: actor.total_episode_count ?? actor.roles?.[0]?.episode_count ?? null,
+        profileUrl: actor.profile_path ? `${POSTER_BASE}${actor.profile_path}` : undefined,
+      }))
+
+    const usRating = data.content_ratings?.results?.find((r) => r.iso_3166_1 === 'US')?.rating
 
     return {
       providerId: String(data.id),
@@ -125,7 +188,32 @@ export class TmdbProvider implements MetadataProvider {
       genres: data.genres?.map((g) => g.name),
       studios: data.production_companies?.map((c) => c.name),
       episodesTotal: data.number_of_episodes,
+      voteAverage: data.vote_average ?? undefined,
+      voteCount: data.vote_count ?? undefined,
+      popularity: data.popularity ?? undefined,
+      originalLanguage: data.original_language ?? undefined,
+      originCountries: data.origin_country ?? undefined,
+      contentRating: usRating,
+      airingStatus: data.status ?? undefined,
+      nextEpisodeName: data.next_episode_to_air?.name ?? undefined,
+      lastEpisodeName: data.last_episode_to_air?.name ?? undefined,
+      seasons,
+      cast,
     }
+  }
+
+  async getSeasonEpisodes(tmdbId: string, seasonNumber: number): Promise<Array<{ episodeNumber: number; name: string; airDate?: string | null; voteAverage?: number | null }> | null> {
+    const url = new URL(`${TMDB_BASE}/tv/${tmdbId}/season/${seasonNumber}`)
+    url.searchParams.set('api_key', this.apiKey)
+    const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
+    if (!res.ok) return null
+    const data: TmdbSeasonDetails = await res.json()
+    return (data.episodes ?? []).map((episode) => ({
+      episodeNumber: episode.episode_number,
+      name: episode.name || `Episode ${episode.episode_number}`,
+      airDate: episode.air_date ?? null,
+      voteAverage: episode.vote_average ?? null,
+    }))
   }
 
 
@@ -229,8 +317,12 @@ function scoreTmdbAnimeMatch(
   return score
 }
 
-export function getTmdbProvider(): TmdbProvider | null {
-  const key = process.env.TMDB_API_KEY
-  if (!key) return null
-  return new TmdbProvider(key)
+export function getTmdbProvider(apiKey = process.env.TMDB_API_KEY): TmdbProvider | null {
+  if (!apiKey) return null
+  return new TmdbProvider(apiKey)
+}
+
+export async function getConfiguredTmdbProvider(): Promise<TmdbProvider | null> {
+  const key = await getEffectiveTmdbApiKey()
+  return getTmdbProvider(key ?? undefined)
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getTmdbProvider } from '@/lib/tmdb'
+import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 
 export async function GET(
   _req: NextRequest,
@@ -20,7 +20,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unsupported provider' }, { status: 404 })
   }
 
-  const tmdb = getTmdbProvider()
+  const tmdb = await getConfiguredTmdbProvider()
   if (!tmdb) return NextResponse.json({ error: 'TMDB_API_KEY is not configured.' }, { status: 503 })
   const details = await tmdb.getDetails(id)
   if (!details) return NextResponse.json({ error: 'Anime not found' }, { status: 404 })

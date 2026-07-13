@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   limitlist:
-    image: noplexzone/limitlist:v1.2.0-rc.2
+    image: noplexzone/limitlist:v1.2.0-rc.3
     build: .
     container_name: limitlist
     ports:
@@ -19,5 +19,5 @@ services:
       managed-by: jarvis
       net.unraid.docker.webui: http://[IP]:[PORT:3000]/
       net.unraid.docker.icon: https://raw.githubusercontent.com/NX211/homer-icons/master/png/myanimelist.png
-      net.unraid.docker.description: Personal anime watchlist, stats dashboard, airing schedule, and in-app reminders.
+      net.unraid.docker.description: Personal anime watchlist, stats dashboard, dashboard airing calendar, and in-app reminders.
     restart: unless-stopped

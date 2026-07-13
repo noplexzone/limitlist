@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { isShowStatus } from '@/lib/status'
-import { getTmdbProvider } from '@/lib/tmdb'
+import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 
 export async function GET(
   _req: NextRequest,
@@ -70,7 +70,7 @@ export async function PATCH(
             let lastAiredAt = current.lastAiredAt
 
             if (current.metadataProvider === 'tmdb' && (lastEpisodeNum == null || lastAiredAt == null)) {
-              const tmdb = getTmdbProvider()
+              const tmdb = await getConfiguredTmdbProvider()
               const airingInfo = tmdb ? await tmdb.getAiringDetails(current.metadataId) : null
               if (airingInfo) {
                 lastEpisodeNum = airingInfo.lastEpisodeNum

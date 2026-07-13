@@ -15,12 +15,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Discover pagination**: Discover now fetches 42 AniList items per page and exposes Previous/Next controls per tab.
 - **Rebrand to LimitList**: Application renamed to LimitList across all user-facing surfaces (title, nav, login/setup pages, layout metadata, package name, README).
 - **Profile dropdown**: Nav sign-out button replaced with an avatar/chevron profile dropdown containing Settings and Sign out options. Keyboard accessible with `Escape` to close.
-- **Settings page**: Placeholder `/settings` page showing account username, data storage notes, and about info.
+- **Settings page**: Real account settings for changing username/password, uploading a profile picture, and configuring TMDB API keys when the key is not locked by environment variables.
 - **Search icon button**: Global search is now triggered by a magnifying-glass icon button in the nav rather than being always visible. Clicking the icon reveals the search bar below the nav; clicking again or pressing Escape closes it.
-- **Airing calendar**: Schedule page now shows a mini calendar sidebar highlighting dates with upcoming episodes. Clicking a date filters the episode list to that day; clicking the date again or "show all" resets the filter.
+- **Dashboard airing sidebar**: The dashboard now owns the airing calendar/sidebar and upcoming release details, including refresh and mark-as-read actions.
 - **Mark as read**: Schedule page reminder action renamed from "Dismiss" to "Mark as read" for clarity.
 
 ### Changed
+
+- **Schedule removal**: Removed the standalone Schedule page and its nav entry; release details now live on the dashboard.
+- **Anime details**: Detail pages now include TMDB ratings, content rating, cast credits, season summaries, and episode names for recent seasons when TMDB is configured.
+- **Discover performance**: Discover now loads AniList rankings directly and defers TMDB canonical matching until import, reducing initial page wait time.
 
 - **Watchlist cards**: Tracked poster cards now navigate to their anime detail pages. Rating stars were made more compact and the clear-rating button was moved out of the star row so rated cards fit inside small poster cards.
 - **Nav redesign**: Dark navy (`slate-900`) bar inspired by AniList — logo at left links to dashboard, nav links sorted alphabetically and centered, search as icon button, profile dropdown at far right.

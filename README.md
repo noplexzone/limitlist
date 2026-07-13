@@ -52,14 +52,14 @@ There is no default username or password; you set them during setup.
 v1.1.0 runs as a single self-hosted Unraid app container:
 
 - Container name: `limitlist`
-- Image/tag: `noplexzone/limitlist:v1.2.0-rc.2`
+- Image/tag: `noplexzone/limitlist:v1.2.0-rc.3`
 - Host port: `3020` -> container port `3000`
 - Persistent data: `/mnt/user/appdata/limitlist:/data`
 - SQLite database: `/data/limitlist.db`
 - WebUI: `http://[IP]:[PORT:3020]/`
 - Labels: `project=limitlist`, `managed-by=jarvis`
 
-Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/limitlist.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search, airing refresh, and TMDB linking for AniList Discover imports.
+Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/limitlist.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search, airing refresh, cast/season enrichment, and TMDB linking for AniList Discover imports. If it is not set in the environment, configure it from Settings after first-run setup.
 
 `AUTH_USERNAME` and `AUTH_PASSWORD` are no longer required — credentials are created through the `/setup` web UI on first launch.
 
@@ -71,7 +71,7 @@ Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/li
 | `AUTH_SECRET` | Yes | Session cookie signing key — use a random 32+ char string |
 | `AUTH_COOKIE_SECURE` | No | Set `true` only when serving over HTTPS. Use `false` for plain HTTP LAN/Docker testing. |
 | `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/limitlist.db` |
-| `TMDB_API_KEY` | Recommended | TMDB API key for metadata search, airing refresh, and linking AniList Discover results to whole-show TMDB records. Get one free at https://www.themoviedb.org/settings/api |
+| `TMDB_API_KEY` | Recommended | TMDB API key for metadata search, airing refresh, detail-page enrichment, and linking AniList Discover imports to whole-show TMDB records. If omitted here, add it from Settings after setup. |
 
 `AUTH_USERNAME` and `AUTH_PASSWORD` are no longer used. Login credentials are created via the `/setup` page on first launch and stored in the database.
 
@@ -114,24 +114,24 @@ npm run db:migrate:deploy
 
 Search uses the TMDB TV endpoint and is always filtered for anime-like content. See [Anime-only search](#anime-only-search) above.
 
-Discover uses AniList for popular/trending anime rankings, then links each AniList season result to a whole-show TMDB series before import. Results are stored with `metadataProvider=tmdb` and the TMDB series ID, preventing duplicates and preserving TMDB-based airing refresh. If multiple AniList seasons map to the same TMDB show, they are all marked as already added once the show is in the watchlist.
+Discover uses AniList for popular/trending anime rankings so the page loads quickly. TMDB whole-show matching is deferred until import; matched imports are stored with `metadataProvider=tmdb` and the TMDB series ID, while unmatched/no-key imports fall back to AniList metadata.
 
-If `TMDB_API_KEY` is not set, Search and AniList-to-TMDB Discover import linking display a configuration message instead of crashing.
+If `TMDB_API_KEY` is not set, Search and TMDB-backed enrichment display a configuration message instead of crashing. Add the key from Settings unless it is locked by an environment variable.
 
 ## Auth
 
 Single-user. On first launch, visit `/setup` to create your account. Credentials are stored in the SQLite database as a `scrypt`-hashed password. Sessions use signed HTTP-only cookies via iron-session. Logout is available in the nav bar.
 
-## Airing Schedule and Reminders
+## Airing Calendar and Reminders
 
-The `/schedule` route shows your watchlist shows that have known upcoming episodes, sorted by air date (auth-protected):
+The Dashboard sidebar shows your watchlist shows that have known upcoming episodes, sorted by air date (auth-protected), plus a mini calendar for date filtering:
 
-- **Refresh All Schedules** — calls `POST /api/airing/refresh` which fetches airing info from TMDB for every TMDB-backed show in your watchlist. Requires `TMDB_API_KEY`.
+- **Refresh All Schedules** — calls `POST /api/airing/refresh` which fetches airing info from TMDB for every TMDB-backed show in your watchlist. Requires a configured TMDB API key.
 - Per-show refresh — each watchlist card has a **Refresh Schedule** button for individual shows.
-- When a next episode date is found, an `EpisodeReminder` is automatically created. Reminders appear on the Schedule page with a **Dismiss** button.
+- When a next episode date is found, an `EpisodeReminder` is automatically created. Reminders appear on the Dashboard with a **Mark as read** button.
 - Dismissed reminders are scoped to the specific show + air date. When the show next airs, a new reminder will be created on the next refresh.
-- The nav bar **Schedule** link shows a red badge with the count of undismissed reminders.
-- Missing `TMDB_API_KEY` returns a controlled error per show; it does not crash the bulk refresh.
+- The standalone `/schedule` page has been removed; release details live on `/dashboard`.
+- Missing TMDB configuration returns a controlled error per show; it does not crash the bulk refresh.
 - Non-TMDB shows are skipped during refresh with a `"Not a TMDB show"` entry in the failed list.
 
 ### Airing refresh behavior
@@ -147,7 +147,7 @@ The `/schedule` route shows your watchlist shows that have known upcoming episod
 
 ## Dashboard
 
-The `/dashboard` route shows a summary of your watching habits (auth-protected):
+The `/dashboard` route shows a summary of your watching habits plus the airing calendar/release-details sidebar (auth-protected):
 
 | Stat | Definition |
 |---|---|

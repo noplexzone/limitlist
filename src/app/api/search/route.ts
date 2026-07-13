@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
-import { getTmdbProvider } from '@/lib/tmdb'
+import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 
 export async function GET(req: NextRequest) {
   const user = await requireAuth()
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const tmdb = getTmdbProvider()
+  const tmdb = await getConfiguredTmdbProvider()
   if (!tmdb) {
     return NextResponse.json(
       { error: 'TMDB_API_KEY is not configured. Add it to your environment variables.' },

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
+import type { MetadataCastMember, MetadataSeasonSummary } from '@/lib/providers'
 
 export interface AnimeDetailsData {
   tracked: boolean
@@ -26,6 +27,16 @@ export interface AnimeDetailsData {
     nextEpisodeNum?: number | null
     lastEpisodeNum?: number | null
     upToDateStale?: boolean | null
+    voteAverage?: number | null
+    voteCount?: number | null
+    popularity?: number | null
+    originalLanguage?: string | null
+    originCountries?: string[] | null
+    contentRating?: string | null
+    nextEpisodeName?: string | null
+    lastEpisodeName?: string | null
+    cast?: MetadataCastMember[] | null
+    seasons?: MetadataSeasonSummary[] | null
   }
 }
 
@@ -113,7 +124,10 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
           {anime.firstAiredAt && <span className="rounded-full bg-gray-900 px-3 py-1">First aired {formatDate(anime.firstAiredAt)}</span>}
           {anime.episodesTotal != null && <span className="rounded-full bg-gray-900 px-3 py-1">{anime.episodesTotal} episodes</span>}
           {anime.airingStatus && <span className="rounded-full bg-gray-900 px-3 py-1">TMDB: {anime.airingStatus}</span>}
-          {anime.nextAiringAt && <span className="rounded-full bg-purple-900/70 px-3 py-1">Next: Ep {anime.nextEpisodeNum ?? '?'} · {formatDate(anime.nextAiringAt)}</span>}
+          {anime.nextAiringAt && <span className="rounded-full bg-purple-900/70 px-3 py-1">Next: Ep {anime.nextEpisodeNum ?? '?'}{anime.nextEpisodeName ? ` — ${anime.nextEpisodeName}` : ''} · {formatDate(anime.nextAiringAt)}</span>}
+          {anime.voteAverage != null && <span className="rounded-full bg-yellow-900/60 px-3 py-1">TMDB {anime.voteAverage.toFixed(1)}/10{anime.voteCount ? ` · ${anime.voteCount.toLocaleString()} votes` : ''}</span>}
+          {anime.contentRating && <span className="rounded-full bg-gray-900 px-3 py-1">Rated {anime.contentRating}</span>}
+          {anime.originalLanguage && <span className="rounded-full bg-gray-900 px-3 py-1">Language {anime.originalLanguage.toUpperCase()}</span>}
         </div>
 
         {anime.overview && <p className="max-w-3xl text-gray-300 leading-7">{anime.overview}</p>}
@@ -133,6 +147,48 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
               </div>
             )}
           </div>
+        )}
+
+        {anime.cast && anime.cast.length > 0 && (
+          <section className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
+            <h2 className="mb-3 text-lg font-semibold text-gray-200">Cast</h2>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {anime.cast.map((actor) => (
+                <div key={`${actor.name}-${actor.character ?? ''}`} className="rounded-xl border border-gray-800 bg-gray-950 p-3">
+                  <p className="font-medium text-white">{actor.name}</p>
+                  {actor.originalName && <p className="text-xs text-gray-500">Japanese/name credit: {actor.originalName}</p>}
+                  {actor.character && <p className="mt-1 text-sm text-purple-300">{actor.character}</p>}
+                  {actor.episodeCount != null && <p className="text-xs text-gray-500">{actor.episodeCount} episodes</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {anime.seasons && anime.seasons.length > 0 && (
+          <section className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
+            <h2 className="mb-3 text-lg font-semibold text-gray-200">Seasons & episodes</h2>
+            <div className="space-y-4">
+              {anime.seasons.map((season) => (
+                <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber))}>
+                  <summary className="cursor-pointer font-semibold text-gray-100">
+                    {season.name} <span className="text-sm font-normal text-gray-500">· {season.episodeCount ?? season.episodes?.length ?? '?'} episodes{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
+                  </summary>
+                  {season.overview && <p className="mt-2 text-sm text-gray-400">{season.overview}</p>}
+                  {season.episodes && season.episodes.length > 0 && (
+                    <ol className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+                      {season.episodes.map((episode) => (
+                        <li key={episode.episodeNumber} className="flex items-start justify-between gap-3 rounded-lg bg-gray-900 px-3 py-2 text-sm">
+                          <span className="text-gray-200">{episode.episodeNumber}. {episode.name}</span>
+                          <span className="shrink-0 text-xs text-gray-500">{episode.voteAverage ? `${episode.voteAverage.toFixed(1)}/10` : episode.airDate ? formatDate(episode.airDate) : ''}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </details>
+              ))}
+            </div>
+          </section>
         )}
 
         <div className="rounded-2xl border border-gray-800 bg-gray-900 p-4">

@@ -1,5 +1,5 @@
 import { prisma } from './db'
-import { getTmdbProvider } from './tmdb'
+import { getConfiguredTmdbProvider } from './tmdb'
 
 export interface RefreshResult {
   showId: string
@@ -16,7 +16,7 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
     return { showId, title: show.title, success: false, error: 'Not a TMDB show' }
   }
 
-  const provider = getTmdbProvider()
+  const provider = await getConfiguredTmdbProvider()
   if (!provider) {
     return { showId, title: show.title, success: false, error: 'TMDB_API_KEY not configured' }
   }

@@ -186,7 +186,7 @@ function AiringCalendar({
 
 // ---- Main component ----
 
-export default function ScheduleClient({ initialEntries }: { initialEntries: ScheduleEntry[] }) {
+export default function ScheduleClient({ initialEntries, compact = false }: { initialEntries: ScheduleEntry[]; compact?: boolean }) {
   const [entries, setEntries] = useState(initialEntries)
   const [dismissing, setDismissing] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -232,7 +232,7 @@ export default function ScheduleClient({ initialEntries }: { initialEntries: Sch
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className={`flex ${compact ? 'flex-col items-stretch gap-2' : 'items-center justify-between'} mb-6`}>
         <div>
           {refreshMsg && <p className="text-sm text-gray-400">{refreshMsg}</p>}
         </div>
@@ -245,7 +245,7 @@ export default function ScheduleClient({ initialEntries }: { initialEntries: Sch
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
+      <div className={compact ? 'flex flex-col-reverse gap-5' : 'grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start'}>
         {/* Episode list */}
         <div>
           {!hasEntries ? (
@@ -264,7 +264,7 @@ export default function ScheduleClient({ initialEntries }: { initialEntries: Sch
               {filtered.map((entry) => (
                 <div
                   key={`${entry.showId}-${entry.airsAt}`}
-                  className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center justify-between gap-4"
+                  className={`bg-gray-900 border border-gray-800 rounded-xl ${compact ? 'p-3 flex-col items-start' : 'p-4 items-center'} flex justify-between gap-4`}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

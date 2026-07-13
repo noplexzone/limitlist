@@ -1,6 +1,6 @@
 const ANILIST_GRAPHQL = 'https://graphql.anilist.co'
 
-type AniListFeedType = 'popular' | 'trending'
+export type AniListFeedType = 'popular' | 'trending'
 
 interface AniListDate {
   year?: number | null
@@ -42,6 +42,25 @@ export interface AniListDiscoverPage {
   media: AniListMedia[]
   hasNextPage: boolean
 }
+
+
+const MEDIA_BY_ID_QUERY = `
+  query AnimeById($id: Int!) {
+    Media(id: $id, type: ANIME) {
+      id
+      idMal
+      title { romaji english native }
+      description(asHtml: false)
+      coverImage { large extraLarge }
+      startDate { year month day }
+      seasonYear
+      episodes
+      genres
+      averageScore
+      popularity
+    }
+  }
+`
 
 const DISCOVER_QUERY = `
   query DiscoverAnime($page: Int!, $perPage: Int!, $sort: [MediaSort]) {
@@ -123,4 +142,23 @@ export async function fetchAniListDiscover(
     media: data.data?.Page?.media ?? [],
     hasNextPage: Boolean(data.data?.Page?.pageInfo?.hasNextPage),
   }
+}
+
+
+export async function fetchAniListMediaById(id: string): Promise<AniListMedia | null> {
+  const numericId = Number(id)
+  if (!Number.isInteger(numericId) || numericId <= 0) return null
+  const res = await fetch(ANILIST_GRAPHQL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ query: MEDIA_BY_ID_QUERY, variables: { id: numericId } }),
+    next: { revalidate: 3600 },
+  })
+  if (!res.ok) return null
+  const data: { data?: { Media?: AniListMedia | null }; errors?: Array<{ message: string }> } = await res.json()
+  if (data.errors?.length) return null
+  return data.data?.Media ?? null
 }

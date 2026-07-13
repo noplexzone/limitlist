@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
 import Nav from '@/components/Nav'
+import ScheduleClient from '@/app/schedule/ScheduleClient'
 
 const STATUS_LABELS: Record<string, string> = {
   WATCHING: 'Watching',
@@ -96,7 +97,17 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   if (!user) redirect('/login')
 
-  const shows = await prisma.animeShow.findMany({ orderBy: { updatedAt: 'desc' } })
+  const now = new Date()
+  const shows = await prisma.animeShow.findMany({
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      reminders: {
+        where: { airsAt: { gte: now } },
+        orderBy: { airsAt: 'asc' },
+        take: 1,
+      },
+    },
+  })
   const stats = computeStats(shows)
   const isEmpty = stats.totalShows === 0
 
@@ -108,6 +119,22 @@ export default async function DashboardPage() {
     .filter((s) => s.rating != null)
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
     .slice(0, 12)
+
+  const scheduleEntries = shows
+    .filter((show) => show.nextAiringAt)
+    .sort((a, b) => (a.nextAiringAt?.getTime() ?? 0) - (b.nextAiringAt?.getTime() ?? 0))
+    .map((show) => {
+      const reminder = show.reminders[0] ?? null
+      return {
+        showId: show.id,
+        title: show.title,
+        status: show.status,
+        episodeNumber: show.nextEpisodeNum,
+        airsAt: show.nextAiringAt!.toISOString(),
+        reminderId: reminder?.id ?? null,
+        reminderDismissed: reminder ? reminder.dismissedAt !== null : false,
+      }
+    })
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -127,21 +154,23 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Actionable shelves */}
-            <PosterShelf title="Continue Watching" shows={continueWatching} />
-            <PosterShelf title="Highest Rated" shows={highestRated} />
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_360px] xl:items-start">
+              <div className="space-y-8 min-w-0">
+                {/* Actionable shelves */}
+                <PosterShelf title="Continue Watching" shows={continueWatching} />
+                <PosterShelf title="Highest Rated" shows={highestRated} />
 
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatCard label="Total Shows" value={String(stats.totalShows)} />
-              <StatCard label="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
-              {stats.averageRating !== null && (
-                <StatCard label="Average Rating" value={`${stats.averageRating.toFixed(1)} / 5`} />
-              )}
-            </div>
+                {/* Summary cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <StatCard label="Total Shows" value={String(stats.totalShows)} />
+                  <StatCard label="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
+                  {stats.averageRating !== null && (
+                    <StatCard label="Average Rating" value={`${stats.averageRating.toFixed(1)} / 5`} />
+                  )}
+                </div>
 
-            {/* Status breakdown */}
-            <section>
+                {/* Status breakdown */}
+                <section>
               <h2 className="text-lg font-semibold text-gray-200 mb-3">By Status</h2>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {(['WATCHING', 'UP_TO_DATE', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED'] as const).map((status) => (
@@ -159,8 +188,8 @@ export default async function DashboardPage() {
               </div>
             </section>
 
-            {/* Top genres + studios */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Top genres + studios */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <section>
                 <h2 className="text-lg font-semibold text-gray-200 mb-3">Top Genres</h2>
                 {stats.topGenres.length === 0 ? (
@@ -186,6 +215,16 @@ export default async function DashboardPage() {
                   </div>
                 )}
               </section>
+                </div>
+              </div>
+
+              <aside className="xl:sticky xl:top-[5rem]">
+                <div className="mb-3">
+                  <h2 className="text-lg font-semibold text-gray-200">Airing Calendar</h2>
+                  <p className="text-sm text-gray-500">Upcoming watchlist episodes and reminders.</p>
+                </div>
+                <ScheduleClient initialEntries={scheduleEntries} compact />
+              </aside>
             </div>
           </div>
         )}

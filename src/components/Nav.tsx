@@ -9,7 +9,6 @@ import NavSearch from './NavSearch'
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/discover',  label: 'Discover' },
-  { href: '/schedule',  label: 'Schedule' },
   { href: '/watchlist', label: 'Watchlist' },
 ]
 
@@ -17,6 +16,7 @@ export default function Nav() {
   const pathname = usePathname()
   const router = useRouter()
   const [reminderCount, setReminderCount] = useState(0)
+  const [profileImageData, setProfileImageData] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
@@ -25,6 +25,10 @@ export default function Nav() {
     fetch('/api/reminders/count')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setReminderCount(data.count) })
+      .catch(() => {})
+    fetch('/api/settings')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.profileImageData !== undefined) setProfileImageData(data.profileImageData) })
       .catch(() => {})
   }, [pathname])
 
@@ -84,18 +88,20 @@ export default function Nav() {
               {NAV_LINKS.map(({ href, label }) => (
                 <Link key={href} href={href} className={`relative ${linkClass(href)}`}>
                   {label}
-                  {href === '/schedule' && reminderCount > 0 && (
-                    <span
-                      className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none"
-                      aria-label={`${reminderCount} unread reminder${reminderCount !== 1 ? 's' : ''}`}
-                    >
-                      {reminderCount > 9 ? '9+' : reminderCount}
-                    </span>
-                  )}
                 </Link>
               ))}
             </div>
           </div>
+
+          {reminderCount > 0 && (
+            <Link
+              href="/dashboard"
+              className="hidden sm:inline-flex items-center rounded-full bg-red-500/90 px-2 py-0.5 text-[10px] font-bold text-white"
+              aria-label={`${reminderCount} unread reminder${reminderCount !== 1 ? 's' : ''} on dashboard`}
+            >
+              {reminderCount > 9 ? '9+' : reminderCount}
+            </Link>
+          )}
 
           {/* Right side: search icon + profile dropdown */}
           <div className="flex items-center gap-1 shrink-0">
@@ -126,9 +132,13 @@ export default function Nav() {
                 aria-haspopup="menu"
                 className="flex items-center gap-1 p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               >
-                {/* Avatar placeholder */}
-                <span className="h-7 w-7 rounded-sm bg-purple-700 flex items-center justify-center text-xs font-bold text-white select-none" aria-hidden="true">
-                  LL
+                <span className="h-7 w-7 overflow-hidden rounded-sm bg-purple-700 flex items-center justify-center text-xs font-bold text-white select-none" aria-hidden="true">
+                  {profileImageData ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profileImageData} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    'LL'
+                  )}
                 </span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
