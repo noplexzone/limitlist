@@ -1,4 +1,5 @@
 import type { MetadataProvider, MetadataResult, SearchOptions } from './providers'
+import { getAnimeRootTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w500'
@@ -14,6 +15,7 @@ interface TmdbTvResult {
   genre_ids?: number[]
   origin_country?: string[]
   original_language?: string
+  popularity?: number
 }
 
 interface TmdbSearchResponse {
@@ -127,6 +129,39 @@ export class TmdbProvider implements MetadataProvider {
     }
   }
 
+
+
+  async findShowForAnime(
+    titles: Array<string | null | undefined>,
+    year?: number | null
+  ): Promise<MetadataResult | null> {
+    const candidates = titleCandidates(...titles)
+    if (candidates.length === 0) return null
+
+    let best: { item: TmdbTvResult; score: number } | null = null
+
+    for (const query of candidates.slice(0, 4)) {
+      const url = new URL(`${TMDB_BASE}/search/tv`)
+      url.searchParams.set('api_key', this.apiKey)
+      url.searchParams.set('query', query)
+      url.searchParams.set('include_adult', 'false')
+
+      const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
+      if (!res.ok) continue
+
+      const data: TmdbSearchResponse = await res.json()
+      for (const item of data.results ?? []) {
+        const score = scoreTmdbAnimeMatch(item, candidates, year)
+        if (!best || score > best.score) best = { item, score }
+      }
+
+      if (best && best.score >= 11) break
+    }
+
+    if (!best || best.score < 5) return null
+    return this.getDetails(String(best.item.id))
+  }
+
   async getAiringDetails(tmdbId: string): Promise<TmdbAiringInfo | null> {
     const url = new URL(`${TMDB_BASE}/tv/${tmdbId}`)
     url.searchParams.set('api_key', this.apiKey)
@@ -150,6 +185,42 @@ export class TmdbProvider implements MetadataProvider {
       lastAiredAt: parseDate(data.last_episode_to_air?.air_date),
     }
   }
+}
+
+
+function scoreTmdbAnimeMatch(
+  item: TmdbTvResult,
+  candidates: string[],
+  anilistYear?: number | null
+): number {
+  const normalizedCandidates = candidates.map(normalizeAnimeTitle).filter(Boolean)
+  const rootCandidates = candidates.map(getAnimeRootTitle).filter(Boolean)
+  const titleValues = [item.name, item.original_name].filter(Boolean) as string[]
+  const normalizedTitles = titleValues.map(normalizeAnimeTitle)
+  const rootTitles = titleValues.map(getAnimeRootTitle)
+
+  let score = 0
+  if (item.original_language === 'ja' || item.origin_country?.includes('JP')) score += 4
+  if (item.genre_ids?.includes(ANIMATION_GENRE_ID)) score += 3
+
+  for (const title of normalizedTitles) {
+    if (normalizedCandidates.includes(title)) score += 5
+  }
+  for (const title of rootTitles) {
+    if (rootCandidates.includes(title)) score += 4
+  }
+
+  if (anilistYear && item.first_air_date) {
+    const tmdbYear = Number(item.first_air_date.slice(0, 4))
+    if (!Number.isNaN(tmdbYear)) {
+      const delta = Math.abs(tmdbYear - anilistYear)
+      if (delta === 0) score += 2
+      else if (delta <= 2) score += 1
+    }
+  }
+
+  score += Math.min(item.popularity ?? 0, 100) / 100
+  return score
 }
 
 export function getTmdbProvider(): TmdbProvider | null {

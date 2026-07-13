@@ -15,7 +15,6 @@ interface SearchResult {
 
 export default function SearchClient() {
   const [query, setQuery] = useState('')
-  const [animeOnly, setAnimeOnly] = useState(true)
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
@@ -30,7 +29,7 @@ export default function SearchClient() {
     setResults([])
     setImportMessages({})
 
-    const params = new URLSearchParams({ q: query.trim(), animeOnly: String(animeOnly) })
+    const params = new URLSearchParams({ q: query.trim() })
     const res = await fetch(`/api/search?${params}`)
     const data = await res.json()
 
@@ -83,7 +82,7 @@ export default function SearchClient() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for an anime or TV show…"
+            placeholder="Search for an anime…"
             className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100 placeholder-gray-500"
           />
           <button
@@ -94,16 +93,7 @@ export default function SearchClient() {
             {searching ? 'Searching…' : 'Search'}
           </button>
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-400 select-none cursor-pointer w-fit">
-          <input
-            type="checkbox"
-            checked={animeOnly}
-            onChange={(e) => setAnimeOnly(e.target.checked)}
-            className="rounded accent-purple-500"
-          />
-          Anime-focused
-          <span className="text-gray-600 text-xs">(JP/animation only — uncheck for all TV)</span>
-        </label>
+        <p className="text-sm text-gray-500">Search is restricted to anime-focused results.</p>
       </form>
 
       {searchError && <p className="text-red-400 mb-4">{searchError}</p>}

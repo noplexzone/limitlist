@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 
 interface DiscoverResult {
+  sourceProvider?: string
+  sourceId?: string
   providerId: string
   providerName: string
   title: string
@@ -11,7 +13,11 @@ interface DiscoverResult {
   overview?: string
   posterUrl?: string
   firstAiredAt?: string
+  linkedTitle?: string
+  linkedProviderId?: string
   inWatchlist: boolean
+  importable?: boolean
+  mappingStatus?: string
 }
 
 type FeedType = 'popular' | 'trending'
@@ -48,6 +54,8 @@ export default function DiscoverClient() {
   }, [feedType, fetchDiscover])
 
   async function handleImport(result: DiscoverResult) {
+    if (!result.importable || !result.providerId) return
+
     setImporting(result.providerId)
     const res = await fetch('/api/watchlist', {
       method: 'POST',
@@ -55,7 +63,7 @@ export default function DiscoverClient() {
       body: JSON.stringify({
         metadataProvider: result.providerName,
         metadataId: result.providerId,
-        title: result.title,
+        title: result.linkedTitle ?? result.title,
         originalTitle: result.originalTitle,
         overview: result.overview,
         posterUrl: result.posterUrl,
@@ -70,20 +78,23 @@ export default function DiscoverClient() {
 
   return (
     <div>
-      <div className="flex gap-2 mb-8">
-        {(['popular', 'trending'] as FeedType[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setFeedType(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              feedType === t
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            {t === 'popular' ? 'Popular Anime' : 'Trending This Week'}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-2">
+          {(['popular', 'trending'] as FeedType[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setFeedType(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                feedType === t
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              {t === 'popular' ? 'Popular Anime' : 'Trending This Week'}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-500">Ranked by AniList · linked to TMDB for tracking</p>
       </div>
 
       {loading && (
@@ -95,7 +106,7 @@ export default function DiscoverClient() {
           <p className="text-red-400">{fetchError}</p>
           {fetchError.includes('TMDB_API_KEY') && (
             <p className="text-gray-500 text-sm mt-2">
-              Set <code className="text-gray-400">TMDB_API_KEY</code> in your environment to enable Discover.
+              AniList supplies Discover rankings, but <code className="text-gray-400">TMDB_API_KEY</code> is still needed to link imports to whole-show TMDB records.
             </p>
           )}
         </div>
@@ -108,11 +119,13 @@ export default function DiscoverClient() {
       {!loading && results.length > 0 && (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
           {results.map((result) => {
-            const isAdded = result.inWatchlist || importedIds.has(result.providerId)
+            const cardKey = `${result.sourceProvider ?? result.providerName}:${result.sourceId ?? result.providerId}`
+            const isAdded = result.inWatchlist || (!!result.providerId && importedIds.has(result.providerId))
             const isImporting = importing === result.providerId
+            const canImport = result.importable !== false && !!result.providerId
             return (
               <article
-                key={result.providerId}
+                key={cardKey}
                 className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70"
               >
                 {result.posterUrl ? (
@@ -136,12 +149,17 @@ export default function DiscoverClient() {
                 )}
 
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-2 pt-12">
-                  <p className="text-[11px] font-semibold text-white leading-tight line-clamp-2 mb-1.5">
+                  <p className="text-[11px] font-semibold text-white leading-tight line-clamp-2 mb-1">
                     {result.title}
                   </p>
+                  {result.linkedTitle && result.linkedTitle !== result.title && (
+                    <p className="mb-1 line-clamp-1 text-[10px] text-blue-300">
+                      Tracks: {result.linkedTitle}
+                    </p>
+                  )}
                   {isAdded ? (
                     <p className="text-center text-xs text-green-400 font-medium">Added ✓</p>
-                  ) : (
+                  ) : canImport ? (
                     <button
                       onClick={() => handleImport(result)}
                       disabled={isImporting}
@@ -149,6 +167,10 @@ export default function DiscoverClient() {
                     >
                       {isImporting ? 'Adding…' : '+ Add to Watchlist'}
                     </button>
+                  ) : (
+                    <p className="text-center text-[10px] text-yellow-300">
+                      {result.mappingStatus ?? 'No TMDB match'}
+                    </p>
                   )}
                 </div>
               </article>

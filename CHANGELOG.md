@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Changed
+
+- **Discover provider**: Popular/trending discovery now uses AniList rankings and links AniList season results to whole-show TMDB records before import. Duplicate detection marks other AniList seasons as added when they map to an existing TMDB watchlist show.
+- **Search scope**: Removed the Anime-focused checkbox; Search is now always anime-only and no longer exposes a broad all-TV mode.
 
 ## [1.1.0] - 2026-07-13
 

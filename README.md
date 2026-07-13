@@ -9,7 +9,7 @@ Personal anime watchlist tracker. Self-hosted, Dockerized, authenticated.
 - Prisma + SQLite
 - iron-session (HTTP-only cookie auth)
 - Tailwind CSS
-- TMDB as metadata provider
+- TMDB as tracking/airing metadata provider; AniList powers Discover rankings
 
 ## Quick start (local dev)
 
@@ -59,7 +59,7 @@ v1.1.0 runs as a single self-hosted Unraid app container:
 - WebUI: `http://[IP]:[PORT:3020]/`
 - Labels: `project=anime-tracker`, `managed-by=jarvis`
 
-Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/anime-tracker.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search and airing refresh.
+Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/anime-tracker.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search, airing refresh, and TMDB linking for AniList Discover imports.
 
 `AUTH_USERNAME` and `AUTH_PASSWORD` are no longer required — credentials are created through the `/setup` web UI on first launch.
 
@@ -71,7 +71,7 @@ Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/an
 | `AUTH_SECRET` | Yes | Session cookie signing key — use a random 32+ char string |
 | `AUTH_COOKIE_SECURE` | No | Set `true` only when serving over HTTPS. Use `false` for plain HTTP LAN/Docker testing. |
 | `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/anime-tracker.db` |
-| `TMDB_API_KEY` | Recommended | TMDB API key for metadata search. Get one free at https://www.themoviedb.org/settings/api |
+| `TMDB_API_KEY` | Recommended | TMDB API key for metadata search, airing refresh, and linking AniList Discover results to whole-show TMDB records. Get one free at https://www.themoviedb.org/settings/api |
 
 `AUTH_USERNAME` and `AUTH_PASSWORD` are no longer used. Login credentials are created via the `/setup` page on first launch and stored in the database.
 
@@ -83,19 +83,13 @@ Each show in the watchlist can have an optional rating (0.5–5.0 in half-star i
 - Type notes in the textarea; they are trimmed and stored as-is.
 - Displayed inline: `4.5/5` and the note text below the episode counter.
 
-## Anime-focused search
+## Anime-only search
 
-The search page defaults to **Anime-focused** mode, which filters TMDB results to shows that are:
+The search page is always restricted to anime-focused results. It filters TMDB results to shows that are:
 - tagged with TMDB genre id 16 (Animation), **or**
 - originally Japanese (`original_language = "ja"`) or from Japan (`origin_country` contains `"JP"`).
 
-Results within that set are sorted: Japanese/JP-origin first, then other animation.
-
-If filtering would return zero results (e.g., TMDB hasn't tagged a show correctly), the full unfiltered results are returned as a fallback.
-
-Uncheck **Anime-focused** in the search UI to get broad all-TV results. The API also accepts `?animeOnly=false` directly.
-
-Non-Japanese animation (e.g., Avatar, Arcane) will still appear in anime-focused mode because TMDB tags it as Animation (genre 16).
+Results within that set are sorted: Japanese/JP-origin first, then other animation. There is no broad all-TV mode in the UI or API because this app only tracks anime.
 
 ## Docker runtime model
 
@@ -118,11 +112,11 @@ npm run db:migrate:deploy
 
 ## Metadata provider note
 
-Search uses the TMDB TV endpoint. In anime-focused mode (default on) results are filtered and ranked for anime-like content; uncheck to see all TV. See [Anime-focused search](#anime-focused-search) above.
+Search uses the TMDB TV endpoint and is always filtered for anime-like content. See [Anime-only search](#anime-only-search) above.
 
-Results are stored with `metadataProvider=tmdb` and the TMDB series ID, preventing duplicates. TMDB models shows as a single series with seasons, which matches the preferred data model.
+Discover uses AniList for popular/trending anime rankings, then links each AniList season result to a whole-show TMDB series before import. Results are stored with `metadataProvider=tmdb` and the TMDB series ID, preventing duplicates and preserving TMDB-based airing refresh. If multiple AniList seasons map to the same TMDB show, they are all marked as already added once the show is in the watchlist.
 
-If `TMDB_API_KEY` is not set, the search page will display a configuration message instead of crashing.
+If `TMDB_API_KEY` is not set, Search and AniList-to-TMDB Discover import linking display a configuration message instead of crashing.
 
 ## Auth
 
@@ -171,13 +165,14 @@ Stats are computed server-side in `src/lib/stats.ts` (`computeStats(shows)`).
 
 ## Discover
 
-The `/discover` route shows popular and trending anime from TMDB (auth-protected):
+The `/discover` route shows popular and trending anime from AniList (auth-protected):
 
-- **Popular Anime** tab — uses the TMDB `/discover/tv` endpoint filtered to Animation genre and Japanese-origin shows, sorted by popularity.
-- **Trending This Week** tab — uses `/trending/tv/week` filtered for anime.
+- **Popular Anime** tab — uses AniList `POPULARITY_DESC` ranking.
+- **Trending This Week** tab — uses AniList `TRENDING_DESC` ranking.
+- AniList season results are linked to whole-show TMDB records before import so the app continues monitoring TMDB series/seasons.
 - One-click **Add to Watchlist** triggers the same TMDB enrichment as Search import.
-- Shows already in your watchlist are marked "In Watchlist".
-- Requires `TMDB_API_KEY`; displays a clear error if the key is not configured.
+- Shows already in your watchlist are marked "In Watchlist"; other AniList seasons mapping to the same TMDB show are also marked as added.
+- Requires `TMDB_API_KEY` for TMDB linking/import, though rankings come from AniList.
 - Results are cached for 1 hour.
 
 ## Watchlist episode tracking
