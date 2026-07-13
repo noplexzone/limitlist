@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 _No unreleased changes._
 
+## [1.0.3] - 2026-07-13
+
+### Changed
+
+- Watchlist cards are now poster-only tiles. The status dropdown overlays the top of each poster, and the star rating overlay appears at the bottom only while hovering/focusing the poster.
+
 ## [1.0.2] - 2026-07-13
 
 ### Changed

@@ -9,28 +9,23 @@ interface AnimeShow {
   metadataId: string
   title: string
   originalTitle?: string | null
-  overview?: string | null
   posterUrl?: string | null
-  firstAiredAt?: string | null
   status: 'WATCHING' | 'COMPLETED' | 'PLAN_TO_WATCH' | 'DROPPED'
-  episodesTotal?: number | null
-  episodesWatched: number
-  episodeDurationMinutes: number
-  genres?: string | null
-  studios?: string | null
   rating?: number | null
-  notes?: string | null
-  airingStatus?: string | null
-  nextEpisodeNum?: number | null
-  nextAiringAt?: string | null
-  airingRefreshedAt?: string | null
+}
+
+const STATUS_LABELS: Record<AnimeShow['status'], string> = {
+  WATCHING: 'Watching',
+  COMPLETED: 'Completed',
+  PLAN_TO_WATCH: 'Plan to Watch',
+  DROPPED: 'Dropped',
 }
 
 const STATUS_SELECT_CLASSES: Record<AnimeShow['status'], string> = {
-  WATCHING: 'bg-blue-700 border-blue-600',
-  COMPLETED: 'bg-green-700 border-green-600',
-  PLAN_TO_WATCH: 'bg-amber-700 border-amber-600',
-  DROPPED: 'bg-red-800 border-red-700',
+  WATCHING: 'bg-blue-700/90 border-blue-500/70',
+  COMPLETED: 'bg-green-700/90 border-green-500/70',
+  PLAN_TO_WATCH: 'bg-amber-700/90 border-amber-500/70',
+  DROPPED: 'bg-red-800/90 border-red-600/70',
 }
 
 function StarRating({
@@ -38,59 +33,61 @@ function StarRating({
   onRate,
 }: {
   rating: number | null
-  onRate: (v: number | null) => void
+  onRate: (value: number | null) => void
 }) {
-  const [hov, setHov] = useState<number | null>(null)
-  const effective = hov ?? rating ?? 0
+  const [hovered, setHovered] = useState<number | null>(null)
+  const effective = hovered ?? rating ?? 0
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex" onMouseLeave={() => setHov(null)}>
-        {Array.from({ length: 5 }, (_, i) => {
-          const full = i + 1
-          const half = i + 0.5
-          const isFull = effective >= full
-          const isHalf = !isFull && effective >= half
-          return (
-            <div key={i} className="relative w-6 h-6">
-              <span className="absolute inset-0 text-gray-600 text-xl leading-none select-none">
+    <div
+      className="flex items-center justify-center gap-1"
+      onMouseLeave={() => setHovered(null)}
+      aria-label="Rating"
+    >
+      {[1, 2, 3, 4, 5].map((star) => {
+        const half = star - 0.5
+        const fullActive = effective >= star
+        const halfActive = !fullActive && effective >= half
+
+        return (
+          <div key={star} className="relative h-9 w-9">
+            <span className="absolute inset-0 select-none text-center text-3xl leading-9 text-gray-500/80 drop-shadow">
+              ★
+            </span>
+            {(fullActive || halfActive) && (
+              <span
+                className="absolute inset-0 select-none overflow-hidden text-center text-3xl leading-9 text-yellow-400 drop-shadow"
+                style={halfActive ? { clipPath: 'inset(0 50% 0 0)' } : undefined}
+              >
                 ★
               </span>
-              {(isFull || isHalf) && (
-                <span
-                  className="absolute inset-0 text-yellow-400 text-xl leading-none select-none"
-                  style={isHalf ? { clipPath: 'inset(0 50% 0 0)' } : undefined}
-                >
-                  ★
-                </span>
-              )}
-              <div
-                className="absolute left-0 top-0 w-1/2 h-full z-10 cursor-pointer"
-                onMouseEnter={() => setHov(half)}
-                onClick={() => onRate(half)}
-              />
-              <div
-                className="absolute right-0 top-0 w-1/2 h-full z-10 cursor-pointer"
-                onMouseEnter={() => setHov(full)}
-                onClick={() => onRate(full)}
-              />
-            </div>
-          )
-        })}
-      </div>
-      {rating != null ? (
-        <>
-          <span className="text-yellow-400 text-sm font-semibold">{rating}/5</span>
-          <button
-            onClick={() => onRate(null)}
-            className="text-gray-500 hover:text-white text-sm leading-none"
-            title="Clear rating"
-          >
-            ✕
-          </button>
-        </>
-      ) : (
-        <span className="text-gray-500 text-xs italic">Unrated</span>
+            )}
+            <button
+              type="button"
+              aria-label={`Rate ${half} out of 5`}
+              onMouseEnter={() => setHovered(half)}
+              onClick={() => onRate(half)}
+              className="absolute left-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-l"
+            />
+            <button
+              type="button"
+              aria-label={`Rate ${star} out of 5`}
+              onMouseEnter={() => setHovered(star)}
+              onClick={() => onRate(star)}
+              className="absolute right-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-r"
+            />
+          </div>
+        )
+      })}
+      {rating != null && (
+        <button
+          type="button"
+          onClick={() => onRate(null)}
+          className="ml-1 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-gray-200 hover:bg-black/80"
+          title="Clear rating"
+        >
+          clear
+        </button>
       )}
     </div>
   )
@@ -100,8 +97,6 @@ export default function WatchlistClient() {
   const [shows, setShows] = useState<AnimeShow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [refreshingId, setRefreshingId] = useState<string | null>(null)
-  const [notesMap, setNotesMap] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchWatchlist()
@@ -111,9 +106,7 @@ export default function WatchlistClient() {
     setLoading(true)
     const res = await fetch('/api/watchlist')
     if (res.ok) {
-      const data: AnimeShow[] = await res.json()
-      setShows(data)
-      setNotesMap(Object.fromEntries(data.map((s) => [s.id, s.notes ?? ''])))
+      setShows(await res.json())
     } else {
       setError('Failed to load watchlist')
     }
@@ -122,31 +115,23 @@ export default function WatchlistClient() {
 
   async function patchShow(
     id: string,
-    patch: { status?: AnimeShow['status']; rating?: number | null; notes?: string | null }
+    patch: { status?: AnimeShow['status']; rating?: number | null }
   ) {
-    setShows((prev) => prev.map((s) => (s.id === id ? ({ ...s, ...patch } as AnimeShow) : s)))
+    const previous = shows
+    setShows((prev) => prev.map((show) => (show.id === id ? { ...show, ...patch } : show)))
+
     const res = await fetch(`/api/watchlist/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     })
+
     if (res.ok) {
       const updated: AnimeShow = await res.json()
-      setShows((prev) => prev.map((s) => (s.id === id ? updated : s)))
+      setShows((prev) => prev.map((show) => (show.id === id ? updated : show)))
+    } else {
+      setShows(previous)
     }
-  }
-
-  async function refreshAiring(id: string) {
-    setRefreshingId(id)
-    const res = await fetch(`/api/watchlist/${id}/refresh-airing`, { method: 'POST' })
-    if (res.ok) await fetchWatchlist()
-    setRefreshingId(null)
-  }
-
-  async function deleteShow(id: string, title: string) {
-    if (!confirm(`Remove "${title}" from your watchlist?`)) return
-    const res = await fetch(`/api/watchlist/${id}`, { method: 'DELETE' })
-    if (res.ok) setShows((prev) => prev.filter((s) => s.id !== id))
   }
 
   if (loading) return <p className="text-gray-400">Loading watchlist...</p>
@@ -166,117 +151,54 @@ export default function WatchlistClient() {
     )
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      {shows.map((show) => {
-        const year = show.firstAiredAt
-          ? new Date(show.firstAiredAt).getFullYear()
-          : null
-        return (
-          <div
-            key={show.id}
-            className="bg-gray-900 rounded-2xl p-5 flex gap-5 border border-gray-800 hover:border-gray-700 transition-colors"
-          >
-            {show.posterUrl ? (
-              <div className="flex-shrink-0">
-                <Image
-                  src={show.posterUrl}
-                  alt={`${show.title} poster`}
-                  width={120}
-                  height={180}
-                  className="rounded-xl object-cover"
-                />
-              </div>
-            ) : (
-              <div className="flex-shrink-0 w-[120px] h-[180px] rounded-xl bg-gray-800 flex items-center justify-center">
-                <span className="text-gray-600 text-3xl">?</span>
-              </div>
-            )}
-
-            <div className="flex-1 min-w-0 flex flex-col gap-3">
-              {/* Title block */}
-              <div>
-                <h2 className="font-bold text-xl text-white leading-tight">{show.title}</h2>
-                {show.originalTitle && show.originalTitle !== show.title && (
-                  <p className="text-gray-400 text-sm mt-0.5">{show.originalTitle}</p>
-                )}
-                {(year || show.genres || show.studios) && (
-                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                    {[year, show.genres, show.studios].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-              </div>
-
-              {/* Status tag dropdown */}
-              <select
-                value={show.status}
-                onChange={(e) =>
-                  patchShow(show.id, { status: e.target.value as AnimeShow['status'] })
-                }
-                className={`self-start rounded-full px-4 py-1 text-xs font-semibold text-white border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors ${STATUS_SELECT_CLASSES[show.status]}`}
-              >
-                <option value="PLAN_TO_WATCH">Plan to Watch</option>
-                <option value="WATCHING">Watching</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="DROPPED">Dropped</option>
-              </select>
-
-              {/* Star rating */}
-              <StarRating
-                rating={show.rating ?? null}
-                onRate={(v) => patchShow(show.id, { rating: v })}
-              />
-
-              {/* Notes */}
-              <textarea
-                value={notesMap[show.id] ?? ''}
-                onChange={(e) =>
-                  setNotesMap((m) => ({ ...m, [show.id]: e.target.value }))
-                }
-                onBlur={() => {
-                  const v = notesMap[show.id] ?? ''
-                  if (v !== (show.notes ?? '')) {
-                    patchShow(show.id, { notes: v || null })
-                  }
-                }}
-                rows={2}
-                placeholder="Add notes…"
-                className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 resize-none w-full focus:outline-none focus:border-gray-500 transition-colors"
-              />
-
-              {/* Next airing */}
-              {show.nextAiringAt && (
-                <p className="text-xs text-purple-300">
-                  Next ep{show.nextEpisodeNum != null ? ` ${show.nextEpisodeNum}` : ''}:{' '}
-                  {new Date(show.nextAiringAt).toLocaleDateString(undefined, {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </p>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-2 flex-wrap mt-auto pt-1">
-                {show.metadataProvider === 'tmdb' && (
-                  <button
-                    onClick={() => refreshAiring(show.id)}
-                    disabled={refreshingId === show.id}
-                    className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    {refreshingId === show.id ? 'Refreshing…' : 'Refresh Schedule'}
-                  </button>
-                )}
-                <button
-                  onClick={() => deleteShow(show.id, show.title)}
-                  className="px-3 py-1.5 bg-red-900 hover:bg-red-800 rounded-lg text-sm font-medium transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
+    <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+      {shows.map((show) => (
+        <article
+          key={show.id}
+          title={show.title}
+          className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70 focus-within:border-purple-500/70"
+        >
+          {show.posterUrl ? (
+            <Image
+              src={show.posterUrl}
+              alt={`${show.title} poster`}
+              fill
+              sizes="(min-width: 1536px) 14vw, (min-width: 1280px) 16vw, (min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+              {show.title}
             </div>
+          )}
+
+          <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/45 to-transparent p-2">
+            <label className="sr-only" htmlFor={`status-${show.id}`}>
+              Status for {show.title}
+            </label>
+            <select
+              id={`status-${show.id}`}
+              value={show.status}
+              onChange={(e) =>
+                patchShow(show.id, { status: e.target.value as AnimeShow['status'] })
+              }
+              className={`w-full cursor-pointer rounded-full border px-3 py-1.5 text-center text-xs font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 ${STATUS_SELECT_CLASSES[show.status]}`}
+            >
+              <option value="PLAN_TO_WATCH">{STATUS_LABELS.PLAN_TO_WATCH}</option>
+              <option value="WATCHING">{STATUS_LABELS.WATCHING}</option>
+              <option value="COMPLETED">{STATUS_LABELS.COMPLETED}</option>
+              <option value="DROPPED">{STATUS_LABELS.DROPPED}</option>
+            </select>
           </div>
-        )
-      })}
+
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-2 pb-3 pt-12 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+            <StarRating
+              rating={show.rating ?? null}
+              onRate={(value) => patchShow(show.id, { rating: value })}
+            />
+          </div>
+        </article>
+      ))}
     </div>
   )
 }
