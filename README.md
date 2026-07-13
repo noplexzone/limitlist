@@ -41,6 +41,21 @@ To stop:
 docker compose down
 ```
 
+## Unraid deployment
+
+v1.0.0 is intended to run as a single self-hosted Unraid app container:
+
+- Container name: `anime-tracker`
+- Image/tag: `anime-tracker:v1.0.0` locally, or the published registry tag once CI publishing is wired
+- Host port: `3020` -> container port `3000`
+- Persistent data: `/mnt/user/appdata/anime-tracker:/data`
+- SQLite database: `/data/anime-tracker.db`
+- WebUI: `http://[IP]:[PORT:3020]/`
+- Labels: `project=anime-tracker`, `managed-by=jarvis`
+
+Required environment variables are `AUTH_USERNAME`, `AUTH_PASSWORD`, `AUTH_SECRET`, and `DATABASE_URL=file:/data/anime-tracker.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search and airing refresh.
+
+
 ## Environment variables
 
 | Variable | Required | Description |
