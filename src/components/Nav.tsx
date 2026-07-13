@@ -3,7 +3,11 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
-export default function Nav() {
+interface NavProps {
+  reminderCount?: number
+}
+
+export default function Nav({ reminderCount }: NavProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -34,6 +38,14 @@ export default function Nav() {
             </Link>
             <Link href="/dashboard" className={linkClass('/dashboard')}>
               Dashboard
+            </Link>
+            <Link href="/schedule" className={`${linkClass('/schedule')} relative`}>
+              Schedule
+              {reminderCount != null && reminderCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                  {reminderCount > 9 ? '9+' : reminderCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

@@ -20,6 +20,10 @@ interface AnimeShow {
   studios?: string | null
   rating?: number | null
   notes?: string | null
+  airingStatus?: string | null
+  nextEpisodeNum?: number | null
+  nextAiringAt?: string | null
+  airingRefreshedAt?: string | null
 }
 
 const RATING_OPTIONS: { value: number | null; label: string }[] = [
@@ -58,6 +62,7 @@ export default function WatchlistClient() {
   const [editValues, setEditValues] = useState<Partial<AnimeShow>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [refreshingId, setRefreshingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchWatchlist()
@@ -112,6 +117,15 @@ export default function WatchlistClient() {
       setSaveError(data.error ?? 'Save failed')
     }
     setSaving(false)
+  }
+
+  async function refreshAiring(id: string) {
+    setRefreshingId(id)
+    const res = await fetch(`/api/watchlist/${id}/refresh-airing`, { method: 'POST' })
+    if (res.ok) {
+      await fetchWatchlist()
+    }
+    setRefreshingId(null)
   }
 
   async function deleteShow(id: string, title: string) {
@@ -195,6 +209,17 @@ export default function WatchlistClient() {
             </div>
             {show.notes && (
               <p className="text-gray-400 text-sm mt-1 italic">{show.notes}</p>
+            )}
+
+            {show.nextAiringAt && (
+              <p className="text-xs text-purple-300 mt-1">
+                Next ep{show.nextEpisodeNum != null ? ` ${show.nextEpisodeNum}` : ''}:{' '}
+                {new Date(show.nextAiringAt).toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </p>
             )}
 
             {editing === show.id ? (
@@ -313,13 +338,22 @@ export default function WatchlistClient() {
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-3 flex-wrap">
                 <button
                   onClick={() => startEdit(show)}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium"
                 >
                   Edit
                 </button>
+                {show.metadataProvider === 'tmdb' && (
+                  <button
+                    onClick={() => refreshAiring(show.id)}
+                    disabled={refreshingId === show.id}
+                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded text-sm font-medium"
+                  >
+                    {refreshingId === show.id ? 'Refreshing...' : 'Refresh Schedule'}
+                  </button>
+                )}
                 <button
                   onClick={() => deleteShow(show.id, show.title)}
                   className="px-3 py-1 bg-red-800 hover:bg-red-700 rounded text-sm font-medium"

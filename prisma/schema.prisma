@@ -8,7 +8,7 @@ datasource db {
 }
 
 model AnimeShow {
-  id                     String   @id @default(cuid())
+  id                     String    @id @default(cuid())
   metadataProvider       String
   metadataId             String
   title                  String
@@ -16,16 +16,35 @@ model AnimeShow {
   overview               String?
   posterUrl              String?
   firstAiredAt           DateTime?
-  status                 String   @default("PLAN_TO_WATCH")
+  status                 String    @default("PLAN_TO_WATCH")
   episodesTotal          Int?
-  episodesWatched        Int         @default(0)
-  episodeDurationMinutes Int         @default(24)
+  episodesWatched        Int       @default(0)
+  episodeDurationMinutes Int       @default(24)
   genres                 String?
   studios                String?
   rating                 Float?
   notes                  String?
-  createdAt              DateTime    @default(now())
-  updatedAt              DateTime    @updatedAt
+  airingStatus           String?
+  nextEpisodeNum         Int?
+  nextAiringAt           DateTime?
+  lastEpisodeNum         Int?
+  lastAiredAt            DateTime?
+  airingRefreshedAt      DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  reminders              EpisodeReminder[]
 
   @@unique([metadataProvider, metadataId])
+}
+
+model EpisodeReminder {
+  id            String    @id @default(cuid())
+  animeShowId   String
+  episodeNumber Int?
+  airsAt        DateTime
+  dismissedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)
+
+  @@unique([animeShowId, airsAt])
 }

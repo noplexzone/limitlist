@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added — Phase 4
+
+- Airing metadata fields on `AnimeShow`: `airingStatus`, `nextEpisodeNum`, `nextAiringAt`, `lastEpisodeNum`, `lastAiredAt`, `airingRefreshedAt`.
+- `EpisodeReminder` model: show relation, nullable episode number, `airsAt`, `dismissedAt`, unique on `(animeShowId, airsAt)`.
+- Prisma migration `20260713000301_phase4_airing_reminders` applies both schema additions.
+- `src/lib/airing.ts`: `refreshShowAiring(showId)` and `refreshAllShowsAiring()` — fetch TMDB airing info, update show fields, auto-create/upsert a reminder for the next episode if it airs in the future. Missing API key, non-TMDB shows, and bad TMDB responses return controlled per-show error objects rather than crashing.
+- `TmdbProvider.getAiringDetails(tmdbId)` in `src/lib/tmdb.ts`: fetches `status`, `next_episode_to_air`, `last_episode_to_air` from TMDB TV details endpoint.
+- `POST /api/watchlist/[id]/refresh-airing`: authenticated per-show airing refresh.
+- `POST /api/airing/refresh`: authenticated bulk airing refresh; reports per-show successes and failures.
+- `GET /api/reminders/count`: authenticated count of undismissed reminders.
+- `POST /api/reminders/[id]/dismiss`: set `dismissedAt` on a specific reminder.
+- `/schedule` route: authenticated server component showing upcoming episodes sorted by `nextAiringAt` ASC, with title, watchlist status badge, episode number, readable air date, and per-reminder dismiss button. Empty state shown when no upcoming episodes are known.
+- Schedule link added to the nav bar with an active-reminder badge (red dot showing count, max `9+`).
+- Watchlist cards now show next airing date/episode inline when known, plus a "Refresh Schedule" button for TMDB-backed shows.
+
 ### Added — Phase 3
 
 - `src/lib/stats.ts`: `computeStats(shows)` helper — computes total shows, counts by status, completion rate, total episodes watched, estimated hours watched, top genres, top studios, and average rating from an `AnimeShow[]`.

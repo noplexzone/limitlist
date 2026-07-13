@@ -22,15 +22,19 @@ npm run lint             # eslint
 ```
 src/
   app/                   # Next.js App Router pages
-    api/                 # API routes (auth, watchlist, search)
+    api/                 # API routes (auth, watchlist, search, airing, reminders)
     login/               # Login page
     watchlist/           # Watchlist page
     search/              # Search/import page
+    schedule/            # Airing schedule + reminders page
+    dashboard/           # Stats dashboard
   lib/
     auth.ts              # iron-session config + helpers
     db.ts                # Prisma client singleton
-    tmdb.ts              # TMDB provider implementation
+    tmdb.ts              # TMDB provider implementation + getAiringDetails()
     providers.ts         # Provider abstraction
+    airing.ts            # refreshShowAiring() / refreshAllShowsAiring()
+    stats.ts             # computeStats()
 prisma/
   schema.prisma          # Database schema
 ```
@@ -66,8 +70,24 @@ Single-user. Credentials set via env vars. Session via iron-session HTTP-only co
 - Genres and studios are stored as comma-separated strings; stats helper splits and counts case-insensitively
 - No charting library — bars are pure CSS `<div>` elements with percentage widths
 
+## Schedule / Airing Reminders (Phase 4)
+
+- Route: `/schedule` — auth-protected server component
+- Airing fields on `AnimeShow`: `airingStatus`, `nextEpisodeNum`, `nextAiringAt`, `lastEpisodeNum`, `lastAiredAt`, `airingRefreshedAt`
+- `EpisodeReminder` model: unique on `(animeShowId, airsAt)`, has nullable `dismissedAt`
+- `src/lib/airing.ts`: `refreshShowAiring(id)` and `refreshAllShowsAiring()` — fetch TMDB, update show, upsert reminder
+- `TmdbProvider.getAiringDetails(tmdbId)` uses `cache: 'no-store'` for live data (unlike `getDetails` which revalidates at 300s)
+- Bulk refresh (`POST /api/airing/refresh`) never aborts on per-show failure — errors are collected and reported
+- Nav badge shows undismissed reminder count, passed as `reminderCount` prop from server page; other pages pass no prop (no badge shown)
+- Reminder dismissal is scoped to `(showId, airsAt)` — future episodes produce new reminders on next refresh
+
+### Verification notes
+- Missing `TMDB_API_KEY`: per-show error `"TMDB_API_KEY not configured"`, 422 on per-show endpoint, `failed[]` entry on bulk
+- Non-TMDB show: per-show error `"Not a TMDB show"`
+- Schedule page: empty state if `nextAiringAt` is null for all shows
+
 ## Phases
 - Phase 1 (complete): Core CRUD + auth + TMDB search + Docker
 - Phase 2 (complete): Ratings/notes + anime-focused search + Docker non-root runtime
 - Phase 3 (complete): Stats dashboard at /dashboard
-- Phase 4: In-app reminders
+- Phase 4 (complete): Airing schedule tracking + in-app reminders at /schedule

@@ -20,6 +20,12 @@ interface TmdbSearchResponse {
   results: TmdbTvResult[]
 }
 
+interface TmdbEpisode {
+  episode_number: number
+  air_date?: string | null
+  name?: string
+}
+
 interface TmdbTvDetails {
   id: number
   name: string
@@ -30,6 +36,17 @@ interface TmdbTvDetails {
   genres?: { id: number; name: string }[]
   production_companies?: { id: number; name: string }[]
   number_of_episodes?: number
+  status?: string
+  next_episode_to_air?: TmdbEpisode | null
+  last_episode_to_air?: TmdbEpisode | null
+}
+
+export interface TmdbAiringInfo {
+  airingStatus: string | null
+  nextEpisodeNum: number | null
+  nextAiringAt: Date | null
+  lastEpisodeNum: number | null
+  lastAiredAt: Date | null
 }
 
 export class TmdbProvider implements MetadataProvider {
@@ -107,6 +124,30 @@ export class TmdbProvider implements MetadataProvider {
       genres: data.genres?.map((g) => g.name),
       studios: data.production_companies?.map((c) => c.name),
       episodesTotal: data.number_of_episodes,
+    }
+  }
+
+  async getAiringDetails(tmdbId: string): Promise<TmdbAiringInfo | null> {
+    const url = new URL(`${TMDB_BASE}/tv/${tmdbId}`)
+    url.searchParams.set('api_key', this.apiKey)
+
+    const res = await fetch(url.toString(), { cache: 'no-store' })
+    if (!res.ok) return null
+
+    const data: TmdbTvDetails = await res.json()
+
+    const parseDate = (d?: string | null): Date | null => {
+      if (!d) return null
+      const parsed = new Date(d)
+      return isNaN(parsed.getTime()) ? null : parsed
+    }
+
+    return {
+      airingStatus: data.status ?? null,
+      nextEpisodeNum: data.next_episode_to_air?.episode_number ?? null,
+      nextAiringAt: parseDate(data.next_episode_to_air?.air_date),
+      lastEpisodeNum: data.last_episode_to_air?.episode_number ?? null,
+      lastAiredAt: parseDate(data.last_episode_to_air?.air_date),
     }
   }
 }

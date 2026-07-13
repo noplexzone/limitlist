@@ -106,6 +106,29 @@ If `TMDB_API_KEY` is not set, the search page will display a configuration messa
 Single-user. Set `AUTH_USERNAME` and `AUTH_PASSWORD` in your `.env`.
 Sessions use signed HTTP-only cookies via iron-session. Logout is available in the nav bar.
 
+## Airing Schedule and Reminders
+
+The `/schedule` route shows your watchlist shows that have known upcoming episodes, sorted by air date (auth-protected):
+
+- **Refresh All Schedules** — calls `POST /api/airing/refresh` which fetches airing info from TMDB for every TMDB-backed show in your watchlist. Requires `TMDB_API_KEY`.
+- Per-show refresh — each watchlist card has a **Refresh Schedule** button for individual shows.
+- When a next episode date is found, an `EpisodeReminder` is automatically created. Reminders appear on the Schedule page with a **Dismiss** button.
+- Dismissed reminders are scoped to the specific show + air date. When the show next airs, a new reminder will be created on the next refresh.
+- The nav bar **Schedule** link shows a red badge with the count of undismissed reminders.
+- Missing `TMDB_API_KEY` returns a controlled error per show; it does not crash the bulk refresh.
+- Non-TMDB shows are skipped during refresh with a `"Not a TMDB show"` entry in the failed list.
+
+### Airing refresh behavior
+
+| Scenario | Result |
+|---|---|
+| `TMDB_API_KEY` not set | Per-show error: `"TMDB_API_KEY not configured"` |
+| Non-TMDB show | Per-show error: `"Not a TMDB show"` |
+| TMDB returns no data | Per-show error: `"TMDB returned no data"` |
+| TMDB fetch error | Per-show error with HTTP status description |
+| Success + next episode in future | Show updated, reminder upserted |
+| Success + no upcoming episode | Show updated, no reminder created |
+
 ## Dashboard
 
 The `/dashboard` route shows a summary of your watching habits (auth-protected):
@@ -129,4 +152,4 @@ Stats are computed server-side in `src/lib/stats.ts` (`computeStats(shows)`).
 - **Phase 1** (complete): Core CRUD, auth, TMDB search, Docker
 - **Phase 2** (complete): Ratings/notes, anime-focused search, Docker non-root runtime
 - **Phase 3** (complete): Stats dashboard (`/dashboard`) with status counts, completion rate, episodes/hours watched, top genres/studios
-- **Phase 4**: In-app reminders
+- **Phase 4** (complete): Airing schedule tracking + in-app reminders
