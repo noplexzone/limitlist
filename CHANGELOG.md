@@ -6,22 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Changed
-
-- **Discover provider**: Popular/trending discovery now uses AniList rankings and links AniList season results to whole-show TMDB records before import. Duplicate detection marks other AniList seasons as added when they map to an existing TMDB watchlist show.
-- **Search scope**: Removed the Anime-focused checkbox; Search is now always anime-only and no longer exposes a broad all-TV mode.
-- **Discover posters**: Allow optimized AniList cover images so Discover cards show posters.
-- **Watchlist progress**: Removed episode-progress tracking from the app workflow; show status now carries progress state.
-- **Rating stars**: Replaced text-star clipping with SVG stars for clean full-star and half-star rendering.
+_No unreleased changes._
 
 ## [1.1.0] - 2026-07-13
 
 ### Added
 
-- **Favicon / app icon**: Uses the provided blue anime-eye artwork for `/favicon.ico`, `/favicon.png`, `/icon.png`, and Apple/app icon assets. Metadata explicitly advertises the browser and Apple icons, and `themeColor` moved to `Viewport` export per Next.js 15.
-- **Discover page** (`/discover`): New auth-protected page listing popular and trending anime from TMDB. Tab switcher between "Popular Anime" (`/discover/tv` filtered by Animation + Japanese origin, popularity-sorted) and "Trending This Week" (`/trending/tv/week` filtered for anime). One-click Add to Watchlist with TMDB enrichment. Shows already in the watchlist are marked "In Watchlist". Requires `TMDB_API_KEY`; shows a clear error if not configured.
+- **Favicon / app icon**: Uses the provided anime-eye artwork for `/favicon.ico`, `/favicon.png`, `/icon.png`, and Apple/app icon assets, including the transparent-background favicon artwork.
+- **Discover page** (`/discover`): New auth-protected page with popular and trending anime ranked by AniList and linked to whole-show TMDB records before import. One-click Add to Watchlist uses TMDB enrichment/monitoring, and all visible AniList seasons mapped to an existing TMDB show are marked "In Watchlist".
 - **Global reminder badge**: Nav now self-fetches `/api/reminders/count` on every route change — the Schedule badge is visible from any page, not only when the Schedule page passes a prop. `reminderCount` prop removed from Nav.
-- **Watchlist episode +1 button**: Episode progress counter ("Ep X/Y") and +1 button appear in the hover overlay on every watchlist card. Incrementing auto-caps at `episodesTotal`; reaching the final episode auto-sets status to Completed.
 - **Watchlist title overlay**: Always-visible title strip at the bottom of each poster card so posters are no longer anonymous.
 - **Poster image error fallback**: Broken remote poster URLs now show a title placeholder via the new `PosterImage` client component (`src/components/PosterImage.tsx`) used across Watchlist, Search, and Discover.
 - **Dashboard shelves**: "Continue Watching" and "Highest Rated" horizontal poster strips at the top of the Dashboard, derived from existing watchlist data. Shelves are hidden when empty.
@@ -29,8 +22,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **Discover provider**: Popular/trending discovery now uses AniList rankings instead of TMDB rankings. AniList poster hosts are allowed for optimized image loading.
+- **TMDB linking**: AniList season results are normalized and matched to anime whole-show TMDB records for tracking; season/arc-specific and non-anime TMDB collisions are penalized during matching.
+- **Search scope**: Removed the Anime-focused checkbox; Search is now always anime-only and no longer exposes a broad all-TV mode.
+- **Watchlist progress**: Removed episode-progress tracking from the app workflow; show status now carries progress state.
+- **Rating stars**: Replaced text-star clipping with SVG stars for clean full-star and half-star rendering.
 - **Nav mobile responsiveness**: Links use smaller padding/text on mobile (`px-2 text-xs`), the link strip is horizontally scrollable, Dashboard link is hidden below the `md` breakpoint, and the brand abbreviates to "AT" below `sm`.
-- **Search results** restyled from a vertical list into a responsive poster-grid (2–6 columns) consistent with Watchlist and Discover. "Anime-focused" checkbox label shortened.
+- **Search results** restyled from a vertical list into a responsive poster-grid (2–6 columns) consistent with Watchlist and Discover.
 
 ## [1.0.3] - 2026-07-13
 
