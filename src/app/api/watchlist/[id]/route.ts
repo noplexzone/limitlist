@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { isShowStatus } from '@/lib/status'
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireAuth()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id } = await params
+  const show = await prisma.animeShow.findUnique({ where: { id } })
+  if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 })
+  return NextResponse.json(show)
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -13,8 +27,7 @@ export async function PATCH(
   const body = await req.json()
 
   // Validation
-  const validStatuses = ['WATCHING', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED']
-  if (body.status && !validStatuses.includes(body.status)) {
+  if (body.status && !isShowStatus(body.status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
@@ -39,6 +52,9 @@ export async function PATCH(
     'rating',
     'notes',
   ]
+  const current = await prisma.animeShow.findUnique({ where: { id } })
+  if (!current) return NextResponse.json({ error: 'Show not found' }, { status: 404 })
+
   const updateData: Record<string, unknown> = {}
   for (const field of allowedFields) {
     if (field in body) {
@@ -47,6 +63,15 @@ export async function PATCH(
         updateData.notes = trimmed || null
       } else {
         updateData[field] = body[field]
+        if (field === 'status') {
+          if (body.status === 'UP_TO_DATE') {
+            updateData.upToDateEpisodeNum = current.lastEpisodeNum ?? 0
+            updateData.upToDateStale = false
+          } else {
+            updateData.upToDateEpisodeNum = null
+            updateData.upToDateStale = false
+          }
+        }
       }
     }
   }

@@ -6,7 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+
+- **Global anime search**: Nav now includes an app-wide search bar with quick results, direct detail navigation, and an inline `+` import button. The standalone `/search` page now redirects back to the watchlist.
+- **Anime details pages**: Added `/anime/[provider]/[id]` pages for search results and tracked shows, with poster, metadata, airing info, add-to-watchlist action, and tracked status controls.
+- **Up-to-Date status**: Added `UP_TO_DATE` as a watchlist status plus persisted `upToDateEpisodeNum` / `upToDateStale` fields. Airing refreshes now flag Up-to-Date shows when TMDB reports a newer aired episode.
+- **Watchlist navigation controls**: Added status filters, a Needs Update filter, and sort options for recent updates, title, rating, and first-air date.
+- **Discover pagination**: Discover now fetches 42 AniList items per page and exposes Previous/Next controls per tab.
+
+### Changed
+
+- **Watchlist cards**: Tracked poster cards now navigate to their anime detail pages. Rating stars were made more compact and the clear-rating button was moved out of the star row so rated cards fit inside small poster cards.
+- **Nav brand**: Replaced the text title with the configured favicon artwork.
+- **Dashboard/Schedule status labels**: Include the new Up-to-Date status throughout status summaries and badges.
 
 ## [1.1.0] - 2026-07-13
 

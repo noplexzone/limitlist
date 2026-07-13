@@ -8,6 +8,7 @@ import Nav from '@/components/Nav'
 
 const STATUS_LABELS: Record<string, string> = {
   WATCHING: 'Watching',
+  UP_TO_DATE: 'Up-to-Date',
   COMPLETED: 'Completed',
   PLAN_TO_WATCH: 'Plan to Watch',
   DROPPED: 'Dropped',
@@ -15,6 +16,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   WATCHING: 'bg-blue-500',
+  UP_TO_DATE: 'bg-cyan-500',
   COMPLETED: 'bg-green-500',
   PLAN_TO_WATCH: 'bg-gray-500',
   DROPPED: 'bg-red-500',
@@ -99,7 +101,7 @@ export default async function DashboardPage() {
   const isEmpty = stats.totalShows === 0
 
   const continueWatching: ShelfShow[] = shows
-    .filter((s) => s.status === 'WATCHING')
+    .filter((s) => s.status === 'WATCHING' || s.status === 'UP_TO_DATE')
     .slice(0, 12)
 
   const highestRated: ShelfShow[] = shows
@@ -117,10 +119,10 @@ export default async function DashboardPage() {
           <div className="text-center py-20 text-gray-500">
             <p className="text-lg mb-4">No shows tracked yet.</p>
             <Link
-              href="/search"
+              href="/watchlist"
               className="inline-block px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
             >
-              Search &amp; import anime
+              Use the search bar above to import anime
             </Link>
           </div>
         ) : (
@@ -141,8 +143,8 @@ export default async function DashboardPage() {
             {/* Status breakdown */}
             <section>
               <h2 className="text-lg font-semibold text-gray-200 mb-3">By Status</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {(['WATCHING', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED'] as const).map((status) => (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {(['WATCHING', 'UP_TO_DATE', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED'] as const).map((status) => (
                   <div
                     key={status}
                     className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-3"

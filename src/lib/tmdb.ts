@@ -94,7 +94,7 @@ export class TmdbProvider implements MetadataProvider {
       })
     }
 
-    return items.slice(0, 10).map((item) => ({
+    return items.slice(0, options?.limit ?? 10).map((item) => ({
       providerId: String(item.id),
       providerName: 'tmdb',
       title: item.name,

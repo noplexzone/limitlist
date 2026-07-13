@@ -1,6 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
+import GlobalAnimeSearch from './GlobalAnimeSearch'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -32,17 +34,16 @@ export default function Nav() {
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 px-3 py-2 sm:px-4 sm:py-3">
-      <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-3">
-        <span className="font-bold text-purple-400 shrink-0">
-          <span className="hidden sm:inline text-lg">Anime Tracker</span>
-          <span className="sm:hidden text-base">AT</span>
-        </span>
+      <div className="max-w-7xl mx-auto flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/watchlist" className="shrink-0 rounded-xl p-1 transition-colors hover:bg-gray-800" aria-label="Anime Tracker home">
+            <Image src="/favicon.png" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" priority />
+          </Link>
 
-        <div className="flex-1 min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          <div className="flex gap-0.5 sm:gap-1 ml-1 sm:ml-3">
-            <Link href="/watchlist" className={linkClass('/watchlist')}>Watchlist</Link>
-            <Link href="/search" className={linkClass('/search')}>Search</Link>
-            <Link href="/discover" className={linkClass('/discover')}>Discover</Link>
+          <div className="flex-1 min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <div className="flex gap-0.5 sm:gap-1 ml-1 sm:ml-3">
+              <Link href="/watchlist" className={linkClass('/watchlist')}>Watchlist</Link>
+              <Link href="/discover" className={linkClass('/discover')}>Discover</Link>
             <Link href="/dashboard" className={`${linkClass('/dashboard')} hidden md:inline-flex`}>
               Dashboard
             </Link>
@@ -54,15 +55,20 @@ export default function Nav() {
                 </span>
               )}
             </Link>
+            </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            className="shrink-0 text-xs sm:text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            Sign out
+          </button>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="shrink-0 text-xs sm:text-sm text-gray-400 hover:text-white transition-colors"
-        >
-          Sign out
-        </button>
+        <div className="lg:ml-auto lg:w-[28rem]">
+          <GlobalAnimeSearch />
+        </div>
       </div>
     </nav>
   )

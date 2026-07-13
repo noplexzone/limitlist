@@ -33,6 +33,12 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
     return { showId, title: show.title, success: false, error: 'TMDB returned no data' }
   }
 
+  const upToDateBecameStale =
+    show.status === 'UP_TO_DATE' &&
+    !show.upToDateStale &&
+    typeof airingInfo.lastEpisodeNum === 'number' &&
+    airingInfo.lastEpisodeNum > (show.upToDateEpisodeNum ?? 0)
+
   await prisma.animeShow.update({
     where: { id: showId },
     data: {
@@ -42,6 +48,7 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
       lastEpisodeNum: airingInfo.lastEpisodeNum,
       lastAiredAt: airingInfo.lastAiredAt,
       airingRefreshedAt: new Date(),
+      ...(upToDateBecameStale ? { upToDateStale: true } : {}),
     },
   })
 

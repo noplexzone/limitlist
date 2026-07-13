@@ -19,8 +19,11 @@ export async function GET(req: NextRequest) {
     )
   }
 
+  const rawLimit = Number(req.nextUrl.searchParams.get('limit') ?? '10')
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 20) : 10
+
   try {
-    const results = await tmdb.search(query.trim(), { animeOnly: true })
+    const results = await tmdb.search(query.trim(), { animeOnly: true, limit })
     return NextResponse.json({ results })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Search failed'

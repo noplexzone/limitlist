@@ -18,6 +18,11 @@ function feedTypeFromRequest(req: NextRequest): FeedType {
   return req.nextUrl.searchParams.get('type') === 'trending' ? 'trending' : 'popular'
 }
 
+function pageFromRequest(req: NextRequest): number {
+  const raw = Number(req.nextUrl.searchParams.get('page') ?? '1')
+  return Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), 25) : 1
+}
+
 export async function GET(req: NextRequest) {
   const user = await requireAuth()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -50,7 +55,9 @@ export async function GET(req: NextRequest) {
   )
 
   try {
-    const media = await fetchAniListDiscover(feedTypeFromRequest(req))
+    const page = pageFromRequest(req)
+    const pageSize = 42
+    const media = await fetchAniListDiscover(feedTypeFromRequest(req), page, pageSize)
     const results = []
     for (const item of media) {
       const anilistTitle = getAniListDisplayTitle(item)
@@ -103,10 +110,9 @@ export async function GET(req: NextRequest) {
         inWatchlist,
         importable: true,
       })
-      if (results.filter((r) => r.importable).length >= 24) break
     }
 
-    return NextResponse.json({ provider: 'anilist', linkedProvider: 'tmdb', results })
+    return NextResponse.json({ provider: 'anilist', linkedProvider: 'tmdb', page, pageSize, hasNextPage: media.length === pageSize, results })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'AniList request failed'
     return NextResponse.json({ error: message, results: [] }, { status: 502 })

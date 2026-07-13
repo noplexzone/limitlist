@@ -14,12 +14,14 @@ interface ScheduleEntry {
 
 const STATUS_COLORS: Record<string, string> = {
   WATCHING: 'bg-blue-600',
+  UP_TO_DATE: 'bg-cyan-600',
   COMPLETED: 'bg-green-600',
   PLAN_TO_WATCH: 'bg-yellow-600',
   DROPPED: 'bg-red-600',
 }
 const STATUS_LABELS: Record<string, string> = {
   WATCHING: 'Watching',
+  UP_TO_DATE: 'Up-to-Date',
   COMPLETED: 'Completed',
   PLAN_TO_WATCH: 'Plan to Watch',
   DROPPED: 'Dropped',

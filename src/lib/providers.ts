@@ -13,6 +13,7 @@ export interface MetadataResult {
 
 export interface SearchOptions {
   animeOnly?: boolean
+  limit?: number
 }
 
 export interface MetadataProvider {

@@ -83,7 +83,11 @@ export function getAniListTitles(media: AniListMedia): string[] {
   return [media.title.english, media.title.romaji, media.title.native].filter(Boolean) as string[]
 }
 
-export async function fetchAniListDiscover(type: AniListFeedType): Promise<AniListMedia[]> {
+export async function fetchAniListDiscover(
+  type: AniListFeedType,
+  page = 1,
+  perPage = 42
+): Promise<AniListMedia[]> {
   const sort = type === 'trending' ? ['TRENDING_DESC'] : ['POPULARITY_DESC']
 
   const res = await fetch(ANILIST_GRAPHQL, {
@@ -94,7 +98,7 @@ export async function fetchAniListDiscover(type: AniListFeedType): Promise<AniLi
     },
     body: JSON.stringify({
       query: DISCOVER_QUERY,
-      variables: { page: 1, perPage: 30, sort },
+      variables: { page, perPage, sort },
     }),
     next: { revalidate: 3600 },
   })

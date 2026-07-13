@@ -2,6 +2,7 @@ import type { AnimeShow } from '@prisma/client'
 
 export interface StatusCounts {
   WATCHING: number
+  UP_TO_DATE: number
   COMPLETED: number
   PLAN_TO_WATCH: number
   DROPPED: number
@@ -53,6 +54,7 @@ export function computeStats(shows: AnimeShow[]): WatchStats {
 
   const byStatus: StatusCounts = {
     WATCHING: 0,
+    UP_TO_DATE: 0,
     COMPLETED: 0,
     PLAN_TO_WATCH: 0,
     DROPPED: 0,
