@@ -4,6 +4,12 @@ export interface MetadataCastMember {
   character?: string
   episodeCount?: number | null
   profileUrl?: string
+  characterImageUrl?: string
+}
+
+export interface MetadataVoiceCastGroup {
+  english: MetadataCastMember[]
+  japanese: MetadataCastMember[]
 }
 
 export interface MetadataSeasonSummary {
@@ -41,6 +47,7 @@ export interface MetadataResult {
   nextEpisodeName?: string
   lastEpisodeName?: string
   cast?: MetadataCastMember[]
+  voiceCast?: MetadataVoiceCastGroup
   seasons?: MetadataSeasonSummary[]
   sourceProvider?: string
   sourceId?: string

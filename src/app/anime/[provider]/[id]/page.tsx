@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 import type { MetadataSeasonSummary } from '@/lib/providers'
+import { fetchJikanVoiceCast } from '@/lib/jikan'
 import Nav from '@/components/Nav'
 import AnimeDetailsClient, { type AnimeDetailsData } from './AnimeDetailsClient'
 
@@ -52,6 +53,10 @@ export default async function AnimeDetailsPage({
         enrichedDetails.seasons = await enrichSeasonEpisodes(tmdb, id, enrichedDetails.seasons)
       }
     }
+    const voiceCast = await fetchJikanVoiceCast(
+      [tracked.title, tracked.originalTitle, enrichedDetails?.title, enrichedDetails?.originalTitle],
+      tracked.firstAiredAt?.getFullYear()
+    )
     data = {
       tracked: true,
       anime: {
@@ -75,6 +80,7 @@ export default async function AnimeDetailsPage({
         originCountries: enrichedDetails?.originCountries,
         contentRating: enrichedDetails?.contentRating,
         cast: enrichedDetails?.cast,
+        voiceCast,
         seasons: enrichedDetails?.seasons,
         nextEpisodeName: enrichedDetails?.nextEpisodeName,
         lastEpisodeName: enrichedDetails?.lastEpisodeName,
@@ -92,14 +98,18 @@ export default async function AnimeDetailsPage({
     const details = tmdb ? await tmdb.getDetails(id) : null
     if (details) {
       const seasons = await enrichSeasonEpisodes(tmdb, id, details.seasons)
-      data = { tracked: false, anime: { ...details, seasons } }
+      const voiceCast = await fetchJikanVoiceCast(
+        [details.title, details.originalTitle],
+        details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
+      )
+      data = { tracked: false, anime: { ...details, seasons, voiceCast } }
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-950">
       <Nav />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8">
         {data ? (
           <AnimeDetailsClient initialData={data} />
         ) : (

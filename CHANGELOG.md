@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **Anime detail controls**: Status and personal rating controls moved onto the poster overlay so tracked details remain directly editable.
+- **Anime detail layout**: Cast and seasons/episodes sections now span the full detail page width, with cast photos and wider season boxes.
+- **Voice cast**: Detail pages now show a language toggle for English and Japanese voice actors when Jikan cast data is available.
+- **Profile pictures**: Upload limit increased from 512 KB to 2 MB; images are still stored as bounded local database data URLs.
+
 - **Schedule removal**: Removed the standalone Schedule page and its nav entry; release details now live on the dashboard.
 - **Anime details**: Detail pages now include TMDB ratings, content rating, cast credits, season summaries, and episode names for recent seasons when TMDB is configured.
 - **Discover performance**: Discover now loads AniList rankings directly and defers TMDB canonical matching until import, reducing initial page wait time.

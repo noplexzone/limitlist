@@ -146,6 +146,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
               onChange={(e) => uploadProfileImage(e.target.files?.[0] ?? null)}
               className="block text-sm text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-800 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-100 hover:file:bg-gray-700"
             />
+            <p className="text-xs text-gray-500">Stored in the local database as an image data URL; max 2 MB.</p>
             {settings.profileImageData && (
               <button type="button" onClick={() => savePatch({ profileImageData: null }, 'Profile picture removed.')} className="text-xs text-gray-400 underline hover:text-white">
                 Remove picture

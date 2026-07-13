@@ -52,7 +52,7 @@ There is no default username or password; you set them during setup.
 v1.1.0 runs as a single self-hosted Unraid app container:
 
 - Container name: `limitlist`
-- Image/tag: `noplexzone/limitlist:v1.2.0-rc.4`
+- Image/tag: `noplexzone/limitlist:v1.2.0-rc.5`
 - Host port: `3020` -> container port `3000`
 - Persistent data: `/mnt/user/appdata/limitlist:/data`
 - SQLite database: `/data/limitlist.db`

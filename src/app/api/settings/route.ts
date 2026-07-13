@@ -10,7 +10,7 @@ import {
   upsertStoredSetting,
 } from '@/lib/settings'
 
-const MAX_PROFILE_IMAGE_BYTES = 512 * 1024
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024
 
 function maskKey(value: string | null) {
   if (!value) return null
@@ -27,7 +27,7 @@ function validateProfileImageData(value: unknown): string | null {
   const base64 = value.split(',', 2)[1] ?? ''
   const approxBytes = Math.floor((base64.length * 3) / 4)
   if (approxBytes > MAX_PROFILE_IMAGE_BYTES) {
-    throw new Error('Profile image must be 512 KB or smaller')
+    throw new Error('Profile image must be 2 MB or smaller')
   }
   return value
 }

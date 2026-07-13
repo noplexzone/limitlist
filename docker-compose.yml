@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   limitlist:
-    image: noplexzone/limitlist:v1.2.0-rc.4
+    image: noplexzone/limitlist:v1.2.0-rc.5
     build: .
     container_name: limitlist
     ports:
