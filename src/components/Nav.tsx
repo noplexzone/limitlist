@@ -26,11 +26,20 @@ export default function Nav() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setReminderCount(data.count) })
       .catch(() => {})
-    fetch('/api/settings')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.profileImageData !== undefined) setProfileImageData(data.profileImageData) })
-      .catch(() => {})
   }, [pathname])
+
+  useEffect(() => {
+    function refreshProfileImage() {
+      fetch('/api/settings')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => { if (data?.profileImageData !== undefined) setProfileImageData(data.profileImageData) })
+        .catch(() => {})
+    }
+
+    refreshProfileImage()
+    window.addEventListener('limitlist:profile-image-updated', refreshProfileImage)
+    return () => window.removeEventListener('limitlist:profile-image-updated', refreshProfileImage)
+  }, [])
 
   // Close profile dropdown on outside click
   useEffect(() => {

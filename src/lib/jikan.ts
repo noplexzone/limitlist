@@ -47,37 +47,41 @@ export async function fetchJikanVoiceCast(
   search.searchParams.set('sfw', 'true')
   search.searchParams.set('limit', '5')
 
-  const searchRes = await fetch(search.toString(), { next: { revalidate: 86400 } })
-  if (!searchRes.ok) return undefined
-  const searchData: JikanAnimeSearchResponse = await searchRes.json()
-  const best = (searchData.data ?? [])
-    .map((item) => ({ item, score: scoreAnimeMatch(item, usableTitles, year) }))
-    .sort((a, b) => b.score - a.score)[0]
-  if (!best || best.score < 4) return undefined
+  try {
+    const searchRes = await fetch(search.toString(), { next: { revalidate: 86400 } })
+    if (!searchRes.ok) return undefined
+    const searchData: JikanAnimeSearchResponse = await searchRes.json()
+    const best = (searchData.data ?? [])
+      .map((item) => ({ item, score: scoreAnimeMatch(item, usableTitles, year) }))
+      .sort((a, b) => b.score - a.score)[0]
+    if (!best || best.score < 4) return undefined
 
-  const charactersRes = await fetch(`${JIKAN_BASE}/anime/${best.item.mal_id}/characters`, { next: { revalidate: 86400 } })
-  if (!charactersRes.ok) return undefined
-  const charactersData: JikanCharactersResponse = await charactersRes.json()
-  const groups: MetadataVoiceCastGroup = { english: [], japanese: [] }
+    const charactersRes = await fetch(`${JIKAN_BASE}/anime/${best.item.mal_id}/characters`, { next: { revalidate: 86400 } })
+    if (!charactersRes.ok) return undefined
+    const charactersData: JikanCharactersResponse = await charactersRes.json()
+    const groups: MetadataVoiceCastGroup = { english: [], japanese: [] }
 
-  for (const row of charactersData.data ?? []) {
-    const character = row.character?.name
-    if (!character) continue
-    const characterImageUrl = row.character?.images?.jpg?.image_url ?? undefined
-    for (const actor of row.voice_actors ?? []) {
-      const language = actor.language?.toLowerCase()
-      const target = language === 'english' ? groups.english : language === 'japanese' ? groups.japanese : null
-      if (!target || !actor.person?.name) continue
-      target.push({
-        name: actor.person.name,
-        character,
-        profileUrl: actor.person.images?.jpg?.image_url ?? characterImageUrl,
-        characterImageUrl,
-      })
+    for (const row of charactersData.data ?? []) {
+      const character = row.character?.name
+      if (!character) continue
+      const characterImageUrl = row.character?.images?.jpg?.image_url ?? undefined
+      for (const actor of row.voice_actors ?? []) {
+        const language = actor.language?.toLowerCase()
+        const target = language === 'english' ? groups.english : language === 'japanese' ? groups.japanese : null
+        if (!target || !actor.person?.name) continue
+        target.push({
+          name: actor.person.name,
+          character,
+          profileUrl: actor.person.images?.jpg?.image_url ?? characterImageUrl,
+          characterImageUrl,
+        })
+      }
     }
-  }
 
-  groups.english = groups.english.slice(0, 24)
-  groups.japanese = groups.japanese.slice(0, 24)
-  return groups.english.length || groups.japanese.length ? groups : undefined
+    groups.english = groups.english.slice(0, 24)
+    groups.japanese = groups.japanese.slice(0, 24)
+    return groups.english.length || groups.japanese.length ? groups : undefined
+  } catch {
+    return undefined
+  }
 }

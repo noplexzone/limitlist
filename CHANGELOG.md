@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Voice-cast enrichment now fails open so Jikan network/runtime errors cannot 500 anime detail pages.
+- Navigation no longer refetches the potentially-large profile image data URL on every route change; it loads once and refreshes when the Settings page changes the avatar.
 - Hardened AniList Discover imports so they require a valid TMDB match before creating a watchlist row, preventing unrefreshable AniList-only records.
 - Persisted AniList source ids on TMDB-backed imports so Discover can keep already-imported cards marked as in-watchlist after deferred matching.
 - Settings now requires current-password verification for username changes and validates TMDB API keys before saving them.

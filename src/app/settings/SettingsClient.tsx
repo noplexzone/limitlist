@@ -47,6 +47,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
       setError(data.error ?? 'Settings update failed')
     } else {
       setSettings(data)
+      if ('profileImageData' in body) window.dispatchEvent(new Event('limitlist:profile-image-updated'))
       setMessage(success)
     }
     setSaving(false)
