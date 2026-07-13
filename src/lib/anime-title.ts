@@ -1,12 +1,16 @@
-const SEASON_PATTERNS: RegExp[] = [
+const EXPLICIT_SEASON_PATTERNS: RegExp[] = [
   /\b(?:season|series)\s*\d+\b/gi,
   /\b\d+(?:st|nd|rd|th)\s+season\b/gi,
   /\bpart\s*\d+\b/gi,
   /\bcour\s*\d+\b/gi,
   /\bfinal\s+season\b/gi,
   /\bthe\s+final\s+season\b/gi,
-  /\b[ivxlcdm]+\b$/gi,
-  /\b\d+\b$/g,
+]
+
+const ARC_SUFFIX_PATTERNS: RegExp[] = [
+  /\s+[-–—:]\s+.*\b(?:arc|season|part|cour)\b.*$/i,
+  /\s+\b(?:mugen train|entertainment district|swordsmith village|hashira training)\s+arc\b.*$/i,
+  /\s+\b[a-z0-9][a-z0-9'’ -]{1,60}\s+arc\b.*$/i,
 ]
 
 export function normalizeAnimeTitle(title?: string | null): string {
@@ -23,15 +27,29 @@ export function normalizeAnimeTitle(title?: string | null): string {
     .replace(/\s+/g, ' ')
 }
 
+export function isLikelySeasonSpecificTitle(title?: string | null): boolean {
+  if (!title) return false
+  return (
+    EXPLICIT_SEASON_PATTERNS.some((pattern) => {
+      pattern.lastIndex = 0
+      return pattern.test(title)
+    }) ||
+    ARC_SUFFIX_PATTERNS.some((pattern) => pattern.test(title))
+  )
+}
+
 export function getAnimeRootTitle(title?: string | null): string {
   if (!title) return ''
 
   let value = title
     .replace(/\([^)]*\)/g, ' ')
     .replace(/\[[^\]]*\]/g, ' ')
-    .replace(/\s+[-–—:]\s+(?:season|part|cour|final)\b.*$/i, ' ')
 
-  for (const pattern of SEASON_PATTERNS) {
+  for (const pattern of ARC_SUFFIX_PATTERNS) {
+    value = value.replace(pattern, ' ')
+  }
+  for (const pattern of EXPLICIT_SEASON_PATTERNS) {
+    pattern.lastIndex = 0
     value = value.replace(pattern, ' ')
   }
 
@@ -40,20 +58,27 @@ export function getAnimeRootTitle(title?: string | null): string {
 
 export function titleCandidates(...titles: Array<string | null | undefined>): string[] {
   const seen = new Set<string>()
-  const candidates: string[] = []
+  const roots: string[] = []
+  const rawTitles: string[] = []
 
   for (const title of titles) {
     if (!title) continue
 
     const raw = title.trim()
     const root = getAnimeRootTitle(raw)
-    for (const candidate of [raw, root]) {
-      const normalized = normalizeAnimeTitle(candidate)
-      if (!normalized || seen.has(normalized)) continue
-      seen.add(normalized)
-      candidates.push(candidate)
+    const normalizedRaw = normalizeAnimeTitle(raw)
+
+    if (root && !seen.has(root)) {
+      seen.add(root)
+      roots.push(root)
+    }
+    if (normalizedRaw && normalizedRaw !== root && !seen.has(normalizedRaw)) {
+      seen.add(normalizedRaw)
+      rawTitles.push(raw)
     }
   }
 
-  return candidates
+  // Root titles first: Discover should link AniList season entries to TMDB's
+  // whole-show records before considering raw season/arc-specific titles.
+  return [...roots, ...rawTitles]
 }
