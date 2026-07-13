@@ -18,8 +18,6 @@ model AnimeShow {
   firstAiredAt           DateTime?
   status                 String    @default("PLAN_TO_WATCH")
   episodesTotal          Int?
-  episodesWatched        Int       @default(0)
-  episodeDurationMinutes Int       @default(24)
   genres                 String?
   studios                String?
   rating                 Float?

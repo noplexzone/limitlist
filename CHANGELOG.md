@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 _No unreleased changes._
 
+## [1.1.0] - 2026-07-13
+
+### Added
+
+- **Favicon / app icon**: Uses the provided anime-eye artwork for `/favicon.ico`, `/favicon.png`, `/icon.png`, and Apple/app icon assets, including the transparent-background favicon artwork.
+- **Discover page** (`/discover`): New auth-protected page with popular and trending anime ranked by AniList and linked to whole-show TMDB records before import. One-click Add to Watchlist uses TMDB enrichment/monitoring, and all visible AniList seasons mapped to an existing TMDB show are marked "In Watchlist".
+- **Global reminder badge**: Nav now self-fetches `/api/reminders/count` on every route change — the Schedule badge is visible from any page, not only when the Schedule page passes a prop. `reminderCount` prop removed from Nav.
+- **Watchlist title overlay**: Always-visible title strip at the bottom of each poster card so posters are no longer anonymous.
+- **Poster image error fallback**: Broken remote poster URLs now show a title placeholder via the new `PosterImage` client component (`src/components/PosterImage.tsx`) used across Watchlist, Search, and Discover.
+- **Dashboard shelves**: "Continue Watching" and "Highest Rated" horizontal poster strips at the top of the Dashboard, derived from existing watchlist data. Shelves are hidden when empty.
+- **Discover link** added to the Nav bar.
+
+### Changed
+
+- **Discover provider**: Popular/trending discovery now uses AniList rankings instead of TMDB rankings. AniList poster hosts are allowed for optimized image loading.
+- **TMDB linking**: AniList season results are normalized and matched to anime whole-show TMDB records for tracking; season/arc-specific and non-anime TMDB collisions are penalized during matching.
+- **Search scope**: Removed the Anime-focused checkbox; Search is now always anime-only and no longer exposes a broad all-TV mode.
+- **Watchlist progress**: Removed episode-progress tracking from the app workflow; show status now carries progress state.
+- **Rating stars**: Replaced text-star clipping with SVG stars for clean full-star and half-star rendering.
+- **Nav mobile responsiveness**: Links use smaller padding/text on mobile (`px-2 text-xs`), the link strip is horizontally scrollable, Dashboard link is hidden below the `md` breakpoint, and the brand abbreviates to "AT" below `sm`.
+- **Search results** restyled from a vertical list into a responsive poster-grid (2–6 columns) consistent with Watchlist and Discover.
+
 ## [1.0.3] - 2026-07-13
 
 ### Changed

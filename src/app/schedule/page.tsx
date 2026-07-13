@@ -36,11 +36,9 @@ export default async function SchedulePage() {
     }
   })
 
-  const activeCount = entries.filter((e) => e.reminderId && !e.reminderDismissed).length
-
   return (
     <div className="min-h-screen bg-gray-950">
-      <Nav reminderCount={activeCount} />
+      <Nav />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-400">Airing Schedule</h1>

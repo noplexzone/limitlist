@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
@@ -28,15 +29,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   )
 }
 
-function TokenBar({
-  name,
-  count,
-  max,
-}: {
-  name: string
-  count: number
-  max: number
-}) {
+function TokenBar({ name, count, max }: { name: string; count: number; max: number }) {
   const pct = max === 0 ? 0 : Math.round((count / max) * 100)
   return (
     <div className="flex items-center gap-3">
@@ -44,13 +37,56 @@ function TokenBar({
         {name}
       </span>
       <div className="flex-1 bg-gray-800 rounded-full h-2">
-        <div
-          className="bg-purple-500 h-2 rounded-full transition-all"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="bg-purple-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-sm text-gray-400 w-6 text-right shrink-0">{count}</span>
     </div>
+  )
+}
+
+interface ShelfShow {
+  id: string
+  title: string
+  posterUrl: string | null
+  rating: number | null
+}
+
+function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
+  if (shows.length === 0) return null
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold text-gray-200">{title}</h2>
+        <Link href="/watchlist" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+          Go to Watchlist →
+        </Link>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-700">
+        {shows.map((show) => (
+          <Link key={show.id} href="/watchlist" className="shrink-0 w-24 group">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-gray-800 bg-gray-900 group-hover:border-purple-500/70 transition-colors">
+              {show.posterUrl ? (
+                <Image
+                  src={show.posterUrl}
+                  alt={`${show.title} poster`}
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-xs text-gray-500 text-center p-1">
+                  {show.title}
+                </div>
+              )}
+            </div>
+            <p className="mt-1 text-[10px] text-gray-400 leading-tight line-clamp-2">{show.title}</p>
+            {show.rating != null && (
+              <p className="text-[10px] text-yellow-400">★ {show.rating}</p>
+            )}
+          </Link>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -58,10 +94,18 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   if (!user) redirect('/login')
 
-  const shows = await prisma.animeShow.findMany()
+  const shows = await prisma.animeShow.findMany({ orderBy: { updatedAt: 'desc' } })
   const stats = computeStats(shows)
-
   const isEmpty = stats.totalShows === 0
+
+  const continueWatching: ShelfShow[] = shows
+    .filter((s) => s.status === 'WATCHING')
+    .slice(0, 12)
+
+  const highestRated: ShelfShow[] = shows
+    .filter((s) => s.rating != null)
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    .slice(0, 12)
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -81,26 +125,16 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-8">
+            {/* Actionable shelves */}
+            <PosterShelf title="Continue Watching" shows={continueWatching} />
+            <PosterShelf title="Highest Rated" shows={highestRated} />
+
             {/* Summary cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <StatCard label="Total Shows" value={String(stats.totalShows)} />
-              <StatCard
-                label="Completion Rate"
-                value={`${stats.completionRate.toFixed(1)}%`}
-              />
-              <StatCard
-                label="Episodes Watched"
-                value={stats.totalEpisodesWatched.toLocaleString()}
-              />
-              <StatCard
-                label="Hours Watched"
-                value={stats.estimatedHoursWatched.toFixed(1)}
-              />
+              <StatCard label="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
               {stats.averageRating !== null && (
-                <StatCard
-                  label="Average Rating"
-                  value={`${stats.averageRating.toFixed(1)} / 5`}
-                />
+                <StatCard label="Average Rating" value={`${stats.averageRating.toFixed(1)} / 5`} />
               )}
             </div>
 
@@ -108,21 +142,15 @@ export default async function DashboardPage() {
             <section>
               <h2 className="text-lg font-semibold text-gray-200 mb-3">By Status</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {(
-                  ['WATCHING', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED'] as const
-                ).map((status) => (
+                {(['WATCHING', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED'] as const).map((status) => (
                   <div
                     key={status}
                     className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-3"
                   >
-                    <div
-                      className={`w-3 h-3 rounded-full shrink-0 ${STATUS_COLORS[status]}`}
-                    />
+                    <div className={`w-3 h-3 rounded-full shrink-0 ${STATUS_COLORS[status]}`} />
                     <div>
                       <p className="text-xs text-gray-400">{STATUS_LABELS[status]}</p>
-                      <p className="text-xl font-bold text-white">
-                        {stats.byStatus[status]}
-                      </p>
+                      <p className="text-xl font-bold text-white">{stats.byStatus[status]}</p>
                     </div>
                   </div>
                 ))}
@@ -138,12 +166,7 @@ export default async function DashboardPage() {
                 ) : (
                   <div className="space-y-2">
                     {stats.topGenres.map((g) => (
-                      <TokenBar
-                        key={g.name}
-                        name={g.name}
-                        count={g.count}
-                        max={stats.topGenres[0].count}
-                      />
+                      <TokenBar key={g.name} name={g.name} count={g.count} max={stats.topGenres[0].count} />
                     ))}
                   </div>
                 )}
@@ -156,12 +179,7 @@ export default async function DashboardPage() {
                 ) : (
                   <div className="space-y-2">
                     {stats.topStudios.map((s) => (
-                      <TokenBar
-                        key={s.name}
-                        name={s.name}
-                        count={s.count}
-                        max={stats.topStudios[0].count}
-                      />
+                      <TokenBar key={s.name} name={s.name} count={s.count} max={stats.topStudios[0].count} />
                     ))}
                   </div>
                 )}

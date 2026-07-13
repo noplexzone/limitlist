@@ -16,8 +16,6 @@ export interface WatchStats {
   totalShows: number
   byStatus: StatusCounts
   completionRate: number
-  totalEpisodesWatched: number
-  estimatedHoursWatched: number
   topGenres: TokenCount[]
   topStudios: TokenCount[]
   averageRating: number | null
@@ -60,17 +58,12 @@ export function computeStats(shows: AnimeShow[]): WatchStats {
     DROPPED: 0,
   }
 
-  let totalEpisodesWatched = 0
-  let estimatedHoursWatched = 0
   let ratingSum = 0
   let ratingCount = 0
 
   for (const show of shows) {
     const status = show.status as keyof StatusCounts
     if (status in byStatus) byStatus[status]++
-
-    totalEpisodesWatched += show.episodesWatched
-    estimatedHoursWatched += (show.episodesWatched * show.episodeDurationMinutes) / 60
 
     if (show.rating != null) {
       ratingSum += show.rating
@@ -85,8 +78,6 @@ export function computeStats(shows: AnimeShow[]): WatchStats {
     totalShows,
     byStatus,
     completionRate,
-    totalEpisodesWatched,
-    estimatedHoursWatched,
     topGenres: countTokens(shows, 'genres', 10),
     topStudios: countTokens(shows, 'studios', 10),
     averageRating,

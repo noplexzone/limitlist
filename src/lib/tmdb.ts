@@ -1,4 +1,5 @@
 import type { MetadataProvider, MetadataResult, SearchOptions } from './providers'
+import { getAnimeRootTitle, isLikelySeasonSpecificTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w500'
@@ -14,6 +15,7 @@ interface TmdbTvResult {
   genre_ids?: number[]
   origin_country?: string[]
   original_language?: string
+  popularity?: number
 }
 
 interface TmdbSearchResponse {
@@ -72,9 +74,8 @@ export class TmdbProvider implements MetadataProvider {
     const data: TmdbSearchResponse = await res.json()
     let items = data.results
 
-    // Anime-focused mode: filter to Animation genre (id 16) or Japanese-origin content.
-    // Falls back to all results if filtering would return nothing (prevents empty results
-    // for valid anime that TMDB hasn't tagged correctly).
+    // Anime-only mode: filter to Animation genre (id 16) or Japanese-origin content.
+    // Do not fall back to broad TV results; this app intentionally tracks anime only.
     if (options?.animeOnly !== false) {
       const filtered = items.filter(
         (item) =>
@@ -82,7 +83,7 @@ export class TmdbProvider implements MetadataProvider {
           item.original_language === 'ja' ||
           item.origin_country?.includes('JP')
       )
-      items = filtered.length > 0 ? filtered : items
+      items = filtered
 
       // Sort: Japanese/JP-origin first, then Animation genre, then rest
       items = [...items].sort((a, b) => {
@@ -127,6 +128,39 @@ export class TmdbProvider implements MetadataProvider {
     }
   }
 
+
+
+  async findShowForAnime(
+    titles: Array<string | null | undefined>,
+    year?: number | null
+  ): Promise<MetadataResult | null> {
+    const candidates = titleCandidates(...titles)
+    if (candidates.length === 0) return null
+
+    let best: { item: TmdbTvResult; score: number } | null = null
+
+    for (const query of candidates.slice(0, 4)) {
+      const url = new URL(`${TMDB_BASE}/search/tv`)
+      url.searchParams.set('api_key', this.apiKey)
+      url.searchParams.set('query', query)
+      url.searchParams.set('include_adult', 'false')
+
+      const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
+      if (!res.ok) continue
+
+      const data: TmdbSearchResponse = await res.json()
+      for (const item of data.results ?? []) {
+        const score = scoreTmdbAnimeMatch(item, candidates, year)
+        if (!best || score > best.score) best = { item, score }
+      }
+
+      if (best && best.score >= 11) break
+    }
+
+    if (!best || best.score < 5) return null
+    return this.getDetails(String(best.item.id))
+  }
+
   async getAiringDetails(tmdbId: string): Promise<TmdbAiringInfo | null> {
     const url = new URL(`${TMDB_BASE}/tv/${tmdbId}`)
     url.searchParams.set('api_key', this.apiKey)
@@ -150,6 +184,49 @@ export class TmdbProvider implements MetadataProvider {
       lastAiredAt: parseDate(data.last_episode_to_air?.air_date),
     }
   }
+}
+
+
+function scoreTmdbAnimeMatch(
+  item: TmdbTvResult,
+  candidates: string[],
+  anilistYear?: number | null
+): number {
+  const normalizedCandidates = candidates.map(normalizeAnimeTitle).filter(Boolean)
+  const rootCandidates = candidates.map(getAnimeRootTitle).filter(Boolean)
+  const titleValues = [item.name, item.original_name].filter(Boolean) as string[]
+  const normalizedTitles = titleValues.map(normalizeAnimeTitle)
+  const rootTitles = titleValues.map(getAnimeRootTitle)
+  const seasonSpecificTitle = titleValues.some(isLikelySeasonSpecificTitle)
+
+  let score = 0
+  const animeScore =
+    (item.original_language === 'ja' || item.origin_country?.includes('JP') ? 4 : 0) +
+    (item.genre_ids?.includes(ANIMATION_GENRE_ID) ? 3 : 0)
+  score += animeScore
+
+  for (const title of rootTitles) {
+    if (rootCandidates.includes(title)) score += 8
+  }
+  for (const title of normalizedTitles) {
+    if (!seasonSpecificTitle && normalizedCandidates.includes(title)) score += 3
+  }
+  if (seasonSpecificTitle) score -= 4
+  // AniList Discover should link to anime whole-show records. Generic/non-anime
+  // TMDB title collisions such as live-action adaptations should not beat anime records.
+  if (animeScore === 0) score -= 6
+
+  if (anilistYear && item.first_air_date) {
+    const tmdbYear = Number(item.first_air_date.slice(0, 4))
+    if (!Number.isNaN(tmdbYear)) {
+      const delta = Math.abs(tmdbYear - anilistYear)
+      if (delta === 0) score += 0.5
+      else if (delta <= 2) score += 0.25
+    }
+  }
+
+  score += Math.min(item.popularity ?? 0, 100) / 100
+  return score
 }
 
 export function getTmdbProvider(): TmdbProvider | null {
