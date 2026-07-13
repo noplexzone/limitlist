@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **AniList detail metadata**: Anime detail pages now use AniList for similar recommendations, official related movies/specials, season grouping, and Japanese voice-cast fallback.
+
 - **Anime detail recommendations**: Detail pages now show recommended similar anime and related movie/special cards at the bottom.
 - **Episode and movie ratings**: Tracked anime now support half-star child ratings for individual episodes and related movies/specials while keeping them under the main anime title.
 
@@ -24,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Mark as read**: Schedule page reminder action renamed from "Dismiss" to "Mark as read" for clarity.
 
 ### Changed
+
+- **Anime detail provider priority**: TMDB remains the monitoring source for tracked shows, but detail-page related metadata now prefers AniList so titles like Jujutsu Kaisen do not collapse into one aggregate season or include stage/fan-made movie results.
 
 - **Anime detail ratings**: Detail-page poster overlays now use the same clickable half-star rating control as watchlist poster cards.
 - **Anime detail performance**: Remote cast, season episode, recommendation, and movie enrichment are bounded and fail open so detail pages do not hang on provider slowness.
