@@ -42,6 +42,8 @@ export interface MetadataResult {
   lastEpisodeName?: string
   cast?: MetadataCastMember[]
   seasons?: MetadataSeasonSummary[]
+  sourceProvider?: string
+  sourceId?: string
 }
 
 export interface SearchOptions {

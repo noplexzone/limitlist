@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession, requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hashPassword, verifyPassword } from '@/lib/password'
+import { getTmdbProvider } from '@/lib/tmdb'
 import {
   TMDB_API_KEY_SETTING,
   getStoredSetting,
@@ -59,6 +60,17 @@ export async function PATCH(req: NextRequest) {
 
   const data: { username?: string; passwordHash?: string; profileImageData?: string | null } = {}
 
+  const usernameChangeRequested =
+    'username' in body && typeof body.username === 'string' && body.username.trim() !== appUser.username
+  const passwordChangeRequested = Boolean(body.newPassword || body.currentPassword)
+  const requiresCurrentPassword = usernameChangeRequested || passwordChangeRequested
+
+  if (requiresCurrentPassword) {
+    if (typeof body.currentPassword !== 'string' || !(await verifyPassword(body.currentPassword, appUser.passwordHash))) {
+      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
+    }
+  }
+
   if ('username' in body) {
     if (typeof body.username !== 'string' || body.username.trim().length === 0) {
       return NextResponse.json({ error: 'Username is required' }, { status: 400 })
@@ -71,10 +83,7 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  if (body.newPassword || body.currentPassword) {
-    if (typeof body.currentPassword !== 'string' || !(await verifyPassword(body.currentPassword, appUser.passwordHash))) {
-      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
-    }
+  if (passwordChangeRequested) {
     if (typeof body.newPassword !== 'string' || body.newPassword.length < 8) {
       return NextResponse.json({ error: 'New password must be at least 8 characters' }, { status: 400 })
     }
@@ -97,7 +106,13 @@ export async function PATCH(req: NextRequest) {
     if (typeof body.tmdbApiKey !== 'string' || body.tmdbApiKey.trim().length === 0) {
       return NextResponse.json({ error: 'TMDB API key cannot be blank' }, { status: 400 })
     }
-    await upsertStoredSetting(TMDB_API_KEY_SETTING, body.tmdbApiKey.trim())
+    const trimmedTmdbKey = body.tmdbApiKey.trim()
+    const candidateTmdb = getTmdbProvider(trimmedTmdbKey)
+    const validTmdbKey = candidateTmdb ? await candidateTmdb.validateApiKey() : false
+    if (!validTmdbKey) {
+      return NextResponse.json({ error: 'TMDB API key could not be validated' }, { status: 400 })
+    }
+    await upsertStoredSetting(TMDB_API_KEY_SETTING, trimmedTmdbKey)
   }
 
   if (updated.username !== user.username) {

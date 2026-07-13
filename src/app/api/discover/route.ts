@@ -25,9 +25,21 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const existing = await prisma.animeShow.findMany({
-    select: { metadataProvider: true, metadataId: true, title: true, originalTitle: true },
+    select: {
+      metadataProvider: true,
+      metadataId: true,
+      sourceProvider: true,
+      sourceId: true,
+      title: true,
+      originalTitle: true,
+    },
   })
   const existingProviderIds = new Set(existing.map((s) => `${s.metadataProvider}:${s.metadataId}`))
+  const existingSourceIds = new Set(
+    existing
+      .filter((s) => s.sourceProvider && s.sourceId)
+      .map((s) => `${s.sourceProvider}:${s.sourceId}`)
+  )
   const existingRootTitles = new Set(
     existing.flatMap((s) => [getAnimeRootTitle(s.title), getAnimeRootTitle(s.originalTitle)]).filter(Boolean)
   )
@@ -41,6 +53,7 @@ export async function GET(req: NextRequest) {
       const rootTitles = getAniListTitles(item).map(getAnimeRootTitle).filter(Boolean)
       const inWatchlist =
         existingProviderIds.has(`anilist:${item.id}`) ||
+        existingSourceIds.has(`anilist:${item.id}`) ||
         rootTitles.some((rootTitle) => existingRootTitles.has(rootTitle))
 
       return {

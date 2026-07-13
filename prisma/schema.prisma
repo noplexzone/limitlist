@@ -11,6 +11,8 @@ model AnimeShow {
   id                     String    @id @default(cuid())
   metadataProvider       String
   metadataId             String
+  sourceProvider         String?
+  sourceId               String?
   title                  String
   originalTitle          String?
   overview               String?
@@ -36,6 +38,7 @@ model AnimeShow {
   reminders              EpisodeReminder[]
 
   @@unique([metadataProvider, metadataId])
+  @@unique([sourceProvider, sourceId])
 }
 
 model EpisodeReminder {

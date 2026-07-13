@@ -58,6 +58,8 @@ export default async function AnimeDetailsPage({
         id: tracked.id,
         providerId: tracked.metadataId,
         providerName: tracked.metadataProvider,
+        sourceProvider: tracked.sourceProvider ?? undefined,
+        sourceId: tracked.sourceId ?? undefined,
         title: tracked.title,
         originalTitle: tracked.originalTitle,
         overview: tracked.overview,

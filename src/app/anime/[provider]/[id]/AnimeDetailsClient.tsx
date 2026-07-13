@@ -12,6 +12,8 @@ export interface AnimeDetailsData {
     id?: string
     providerId: string
     providerName: string
+    sourceProvider?: string | null
+    sourceId?: string | null
     title: string
     originalTitle?: string | null
     overview?: string | null

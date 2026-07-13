@@ -98,6 +98,14 @@ export class TmdbProvider implements MetadataProvider {
     this.apiKey = apiKey
   }
 
+
+  async validateApiKey(): Promise<boolean> {
+    const url = new URL(`${TMDB_BASE}/configuration`)
+    url.searchParams.set('api_key', this.apiKey)
+    const res = await fetch(url.toString(), { cache: 'no-store' })
+    return res.ok
+  }
+
   async search(query: string, options?: SearchOptions): Promise<MetadataResult[]> {
     const url = new URL(`${TMDB_BASE}/search/tv`)
     url.searchParams.set('api_key', this.apiKey)

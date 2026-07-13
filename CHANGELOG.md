@@ -35,6 +35,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Hardened AniList Discover imports so they require a valid TMDB match before creating a watchlist row, preventing unrefreshable AniList-only records.
+- Persisted AniList source ids on TMDB-backed imports so Discover can keep already-imported cards marked as in-watchlist after deferred matching.
+- Settings now requires current-password verification for username changes and validates TMDB API keys before saving them.
 - Hardened Up-to-Date baselines so shows with no previous airing refresh do not immediately become stale on the first refresh.
 - Fixed status PATCH validation for invalid falsy status values.
 - Discover now uses AniList `pageInfo.hasNextPage` and bounded TMDB mapping concurrency to reduce pagination/rate-limit issues.

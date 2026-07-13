@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { metadataProvider, metadataId } = body
 
-  // Prevent duplicates
+  // Prevent duplicates by the requested provider/source id. For AniList imports,
+  // also check sourceProvider/sourceId below after the canonical TMDB mapping path.
   const existing = await prisma.animeShow.findUnique({
     where: { metadataProvider_metadataId: { metadataProvider, metadataId } },
   })
@@ -41,9 +42,26 @@ export async function POST(req: NextRequest) {
   const tmdb = await getConfiguredTmdbProvider()
 
   if (metadataProvider === 'anilist') {
+    if (!tmdb) {
+      return NextResponse.json(
+        { error: 'TMDB API key is required before AniList Discover imports can be monitored. Add a valid key in Settings, then import again.' },
+        { status: 422 }
+      )
+    }
+
+    const existingSource = await prisma.animeShow.findUnique({
+      where: { sourceProvider_sourceId: { sourceProvider: 'anilist', sourceId: metadataId } },
+    })
+    if (existingSource) {
+      return NextResponse.json(
+        { error: 'This show is already in your watchlist', existing: existingSource },
+        { status: 409 }
+      )
+    }
+
     const media = await fetchAniListMediaById(metadataId)
     const titles = Array.isArray(body.titles) ? body.titles : media ? getAniListTitles(media) : [body.title]
-    const tmdbMatch = tmdb ? await tmdb.findShowForAnime(titles, media ? getAniListYear(media) : null) : null
+    const tmdbMatch = await tmdb.findShowForAnime(titles, media ? getAniListYear(media) : null)
     if (tmdbMatch) {
       createProvider = tmdbMatch.providerName
       createProviderId = tmdbMatch.providerId
@@ -68,10 +86,10 @@ export async function POST(req: NextRequest) {
         episodesTotal: tmdbMatch.episodesTotal ?? body.episodesTotal,
       }
     } else {
-      enriched = {
-        ...body,
-        genres: Array.isArray(body.genres) ? body.genres.join(', ') : body.genres,
-      }
+      return NextResponse.json(
+        { error: 'No TMDB show match was found for this AniList result. It was not imported so monitoring does not get stuck on an unrefreshable source record.' },
+        { status: 422 }
+      )
     }
   } else if (metadataProvider === 'tmdb' && tmdb) {
     const details = await tmdb.getDetails(metadataId)
@@ -94,6 +112,8 @@ export async function POST(req: NextRequest) {
     data: {
       metadataProvider: createProvider,
       metadataId: createProviderId,
+      sourceProvider: metadataProvider === 'anilist' ? 'anilist' : null,
+      sourceId: metadataProvider === 'anilist' ? metadataId : null,
       title: enriched.title,
       originalTitle: enriched.originalTitle ?? null,
       overview: enriched.overview ?? null,
