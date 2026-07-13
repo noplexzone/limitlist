@@ -1,4 +1,4 @@
-# Anime Tracker
+# LimitList
 
 Personal anime watchlist tracker. Self-hosted, Dockerized, authenticated.
 
@@ -34,7 +34,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-App runs at http://localhost:3000. Data persists in `./data/anime-tracker.db`.
+App runs at http://localhost:3000. Data persists in `./data/limitlist.db`.
 
 To stop:
 ```bash
@@ -51,15 +51,15 @@ There is no default username or password; you set them during setup.
 
 v1.1.0 runs as a single self-hosted Unraid app container:
 
-- Container name: `anime-tracker`
-- Image/tag: `anime-tracker:v1.1.0`
+- Container name: `limitlist`
+- Image/tag: `noplexzone/limitlist:v1.2.0-rc.2`
 - Host port: `3020` -> container port `3000`
-- Persistent data: `/mnt/user/appdata/anime-tracker:/data`
-- SQLite database: `/data/anime-tracker.db`
+- Persistent data: `/mnt/user/appdata/limitlist:/data`
+- SQLite database: `/data/limitlist.db`
 - WebUI: `http://[IP]:[PORT:3020]/`
-- Labels: `project=anime-tracker`, `managed-by=jarvis`
+- Labels: `project=limitlist`, `managed-by=jarvis`
 
-Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/anime-tracker.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search, airing refresh, and TMDB linking for AniList Discover imports.
+Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/limitlist.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search, airing refresh, and TMDB linking for AniList Discover imports.
 
 `AUTH_USERNAME` and `AUTH_PASSWORD` are no longer required — credentials are created through the `/setup` web UI on first launch.
 
@@ -70,7 +70,7 @@ Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/an
 |---|---|---|
 | `AUTH_SECRET` | Yes | Session cookie signing key — use a random 32+ char string |
 | `AUTH_COOKIE_SECURE` | No | Set `true` only when serving over HTTPS. Use `false` for plain HTTP LAN/Docker testing. |
-| `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/anime-tracker.db` |
+| `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/limitlist.db` |
 | `TMDB_API_KEY` | Recommended | TMDB API key for metadata search, airing refresh, and linking AniList Discover results to whole-show TMDB records. Get one free at https://www.themoviedb.org/settings/api |
 
 `AUTH_USERNAME` and `AUTH_PASSWORD` are no longer used. Login credentials are created via the `/setup` page on first launch and stored in the database.

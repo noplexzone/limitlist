@@ -16,7 +16,7 @@ function buildSessionOptions(): SessionOptions {
   }
   return {
     password: secret,
-    cookieName: 'anime-tracker-session',
+    cookieName: 'limitlist-session',
     cookieOptions: {
       // Docker/Unraid deployments may run plain HTTP behind a LAN or reverse proxy.
       // Enable Secure cookies only when the deployment explicitly uses HTTPS.

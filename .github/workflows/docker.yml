@@ -42,7 +42,7 @@ jobs:
           context: .
           push: true
           tags: |
-            noplexzone/anime-tracker:develop
-            noplexzone/anime-tracker:v${{ steps.package.outputs.version }}
+            noplexzone/limitlist:develop
+            noplexzone/limitlist:v${{ steps.package.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

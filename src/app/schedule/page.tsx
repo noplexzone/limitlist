@@ -39,7 +39,7 @@ export default async function SchedulePage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <Nav />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-400">Airing Schedule</h1>
           <p className="text-gray-400 mt-1 text-sm">

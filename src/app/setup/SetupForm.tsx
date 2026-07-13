@@ -38,7 +38,7 @@ export default function SetupForm() {
     })
 
     if (res.ok) {
-      router.push('/watchlist')
+      router.push('/dashboard')
     } else {
       const data = await res.json()
       setError(data.error ?? 'Setup failed')

@@ -13,12 +13,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Up-to-Date status**: Added `UP_TO_DATE` as a watchlist status plus persisted `upToDateEpisodeNum`, `upToDateAiredAt`, and `upToDateStale` fields. Airing refreshes now flag Up-to-Date shows when TMDB reports a newer aired episode/date, including new seasons whose episode numbers reset.
 - **Watchlist navigation controls**: Added status filters, a Needs Update filter, and sort options for recent updates, title, rating, and first-air date.
 - **Discover pagination**: Discover now fetches 42 AniList items per page and exposes Previous/Next controls per tab.
+- **Rebrand to LimitList**: Application renamed to LimitList across all user-facing surfaces (title, nav, login/setup pages, layout metadata, package name, README).
+- **Profile dropdown**: Nav sign-out button replaced with an avatar/chevron profile dropdown containing Settings and Sign out options. Keyboard accessible with `Escape` to close.
+- **Settings page**: Placeholder `/settings` page showing account username, data storage notes, and about info.
+- **Search icon button**: Global search is now triggered by a magnifying-glass icon button in the nav rather than being always visible. Clicking the icon reveals the search bar below the nav; clicking again or pressing Escape closes it.
+- **Airing calendar**: Schedule page now shows a mini calendar sidebar highlighting dates with upcoming episodes. Clicking a date filters the episode list to that day; clicking the date again or "show all" resets the filter.
+- **Mark as read**: Schedule page reminder action renamed from "Dismiss" to "Mark as read" for clarity.
 
 ### Changed
 
 - **Watchlist cards**: Tracked poster cards now navigate to their anime detail pages. Rating stars were made more compact and the clear-rating button was moved out of the star row so rated cards fit inside small poster cards.
-- **Nav brand**: Replaced the text title with the configured favicon artwork.
+- **Nav redesign**: Dark navy (`slate-900`) bar inspired by AniList — logo at left links to dashboard, nav links sorted alphabetically and centered, search as icon button, profile dropdown at far right.
 - **Dashboard/Schedule status labels**: Include the new Up-to-Date status throughout status summaries and badges.
+- **Dashboard home**: Root `/` and post-login/setup flows now redirect to `/dashboard` instead of `/watchlist`. Logo links to `/dashboard`.
+- **Continue Watching shelf**: UP_TO_DATE shows are excluded from the Continue Watching shelf unless `upToDateStale` is true (new episodes have aired since the user marked themselves up-to-date).
+- **Nav link order**: Links sorted alphabetically — Dashboard, Discover, Schedule, Watchlist.
+
 ### Fixed
 
 - Hardened Up-to-Date baselines so shows with no previous airing refresh do not immediately become stale on the first refresh.

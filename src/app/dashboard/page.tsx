@@ -101,7 +101,7 @@ export default async function DashboardPage() {
   const isEmpty = stats.totalShows === 0
 
   const continueWatching: ShelfShow[] = shows
-    .filter((s) => s.status === 'WATCHING' || s.status === 'UP_TO_DATE')
+    .filter((s) => s.status === 'WATCHING' || (s.status === 'UP_TO_DATE' && s.upToDateStale))
     .slice(0, 12)
 
   const highestRated: ShelfShow[] = shows
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
               href="/watchlist"
               className="inline-block px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
             >
-              Use the search bar above to import anime
+              Use the search button above to import anime
             </Link>
           </div>
         ) : (

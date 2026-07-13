@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  anime-tracker:
-    image: anime-tracker:v1.0.3
+  limitlist:
+    image: noplexzone/limitlist:v1.2.0-rc.2
     build: .
-    container_name: anime-tracker
+    container_name: limitlist
     ports:
       - "3020:3000"
     volumes:
-      - /mnt/user/appdata/anime-tracker:/data
+      - /mnt/user/appdata/limitlist:/data
     environment:
-      DATABASE_URL: file:/data/anime-tracker.db
+      DATABASE_URL: file:/data/limitlist.db
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       TMDB_API_KEY: ${TMDB_API_KEY:-}
     labels:
-      project: anime-tracker
+      project: limitlist
       managed-by: jarvis
       net.unraid.docker.webui: http://[IP]:[PORT:3000]/
       net.unraid.docker.icon: https://raw.githubusercontent.com/NX211/homer-icons/master/png/myanimelist.png

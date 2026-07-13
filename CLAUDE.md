@@ -1,4 +1,4 @@
-# Anime Tracker — Claude Code Context
+# LimitList — Claude Code Context
 
 ## Stack
 - Next.js 15 App Router + TypeScript
@@ -48,7 +48,7 @@ prisma/
 | AUTH_SECRET | Session cookie signing secret (32+ chars) — still required |
 | AUTH_USERNAME | **Removed** — credentials are now stored in the DB via the setup flow |
 | AUTH_PASSWORD | **Removed** — credentials are now stored in the DB via the setup flow |
-| DATABASE_URL | SQLite path (file:./dev.db or file:/data/anime-tracker.db) |
+| DATABASE_URL | SQLite path (file:./dev.db or file:/data/limitlist.db) |
 | TMDB_API_KEY | TMDB API key for metadata search |
 
 ## Auth / First-run setup

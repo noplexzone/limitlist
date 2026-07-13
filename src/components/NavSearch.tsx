@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface SearchResult {
   providerId: string
@@ -13,15 +13,20 @@ interface SearchResult {
   firstAiredAt?: string
 }
 
-export default function GlobalAnimeSearch() {
+export default function NavSearch({ onClose }: { onClose: () => void }) {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
   const [adding, setAdding] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-focus the input when opened
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current)
@@ -48,7 +53,6 @@ export default function GlobalAnimeSearch() {
           setResults(data.results ?? [])
           setError('')
         }
-        setOpen(true)
       } catch (err) {
         if (controller.signal.aborted) return
         setError(err instanceof Error ? err.message : 'Network error')
@@ -72,7 +76,7 @@ export default function GlobalAnimeSearch() {
     e.preventDefault()
     const first = results[0]
     if (first) {
-      setOpen(false)
+      onClose()
       router.push(detailsUrl(first))
     }
   }
@@ -97,50 +101,49 @@ export default function GlobalAnimeSearch() {
     })
     setAdding(null)
     if (res.ok || res.status === 409) {
-      setOpen(false)
+      onClose()
       router.push(detailsUrl(result))
       router.refresh()
     }
   }
 
+  const showDropdown = query.trim().length >= 2
+
   return (
-    <div className="relative w-full max-w-xl">
+    <div className="relative">
       <form onSubmit={submit} role="search">
-        <label htmlFor="global-anime-search" className="sr-only">Search anime to add</label>
+        <label htmlFor="nav-search" className="sr-only">Search anime to add</label>
         <input
-          id="global-anime-search"
+          id="nav-search"
+          ref={inputRef}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setOpen(true)}
           placeholder="Search anime to add…"
-          className="w-full rounded-full border border-gray-700 bg-gray-950/80 px-4 py-2 text-sm text-gray-100 placeholder-gray-500 outline-none transition-colors focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
+          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-gray-100 placeholder-slate-400 outline-none transition-colors focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
         />
       </form>
 
-      {open && query.trim().length >= 2 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-800 bg-gray-950 shadow-2xl shadow-black/60">
-          {searching && <p className="px-4 py-3 text-sm text-gray-400">Searching…</p>}
+      {showDropdown && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60">
+          {searching && <p className="px-4 py-3 text-sm text-slate-400">Searching…</p>}
           {!searching && error && <p className="px-4 py-3 text-sm text-red-400">{error}</p>}
           {!searching && !error && results.length === 0 && (
-            <p className="px-4 py-3 text-sm text-gray-500">No results found.</p>
+            <p className="px-4 py-3 text-sm text-slate-500">No results found.</p>
           )}
           {!searching && !error && results.map((result) => {
             const key = `${result.providerName}:${result.providerId}`
             return (
               <div
                 key={key}
-                className="flex w-full items-center gap-3 border-b border-gray-900 px-3 py-2 text-left last:border-b-0 hover:bg-gray-900"
+                className="flex w-full items-center gap-3 border-b border-slate-800 px-3 py-2 last:border-b-0 hover:bg-slate-800"
               >
                 <button
                   type="button"
-                  onClick={() => {
-                    setOpen(false)
-                    router.push(detailsUrl(result))
-                  }}
+                  onClick={() => { onClose(); router.push(detailsUrl(result)) }}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <span className="h-14 w-10 shrink-0 overflow-hidden rounded bg-gray-800">
+                  <span className="h-14 w-10 shrink-0 overflow-hidden rounded bg-slate-800">
                     {result.posterUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={result.posterUrl} alt="" className="h-full w-full object-cover" />
@@ -148,7 +151,9 @@ export default function GlobalAnimeSearch() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-white">{result.title}</span>
-                    {result.firstAiredAt && <span className="block text-xs text-gray-500">{result.firstAiredAt.slice(0, 4)}</span>}
+                    {result.firstAiredAt && (
+                      <span className="block text-xs text-slate-500">{result.firstAiredAt.slice(0, 4)}</span>
+                    )}
                   </span>
                 </button>
                 <button

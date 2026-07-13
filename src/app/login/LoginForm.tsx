@@ -24,7 +24,7 @@ export default function LoginForm() {
     })
 
     if (res.ok) {
-      router.push('/watchlist')
+      router.push('/dashboard')
     } else {
       const data = await res.json()
       setError(data.error ?? 'Login failed')
