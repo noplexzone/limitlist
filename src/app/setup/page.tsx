@@ -1,0 +1,33 @@
+import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/auth'
+import { isSetupComplete } from '@/lib/setup'
+import SetupForm from './SetupForm'
+
+export default async function SetupPage() {
+  // Call getSession() first to use cookies(), which opts the page out of static
+  // prerendering and prevents build-time Prisma errors when DATABASE_URL is absent.
+  const session = await getSession()
+  const setupDone = await isSetupComplete()
+
+  if (setupDone) {
+    if (session.user) {
+      redirect('/watchlist')
+    } else {
+      redirect('/login')
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="bg-gray-900 p-8 rounded-xl shadow-lg w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-center mb-2 text-purple-400">
+          Anime Tracker
+        </h1>
+        <p className="text-center text-sm text-gray-400 mb-6">
+          First-run setup — create your account to get started
+        </p>
+        <SetupForm />
+      </div>
+    </div>
+  )
+}

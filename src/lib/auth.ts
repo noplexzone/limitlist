@@ -1,5 +1,7 @@
 import { getIronSession, SessionOptions } from 'iron-session'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { isSetupComplete } from './setup'
 
 export interface SessionData {
   user?: {
@@ -31,7 +33,12 @@ export async function getSession() {
 }
 
 export async function requireAuth() {
+  // Call getSession() first — it calls cookies() which opts the page out of static
+  // prerendering, preventing build-time Prisma errors when DATABASE_URL is absent.
   const session = await getSession()
+  if (!(await isSetupComplete())) {
+    redirect('/setup')
+  }
   if (!session.user) {
     return null
   }

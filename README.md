@@ -41,31 +41,39 @@ To stop:
 docker compose down
 ```
 
+## First-run setup
+
+On first launch with an empty database, every route redirects to `/setup`. Enter a username and password to create your account — credentials are stored in the database with a scrypt hash. After setup, use `/login` with those credentials.
+
+There is no default username or password; you set them during setup.
+
 ## Unraid deployment
 
-v1.0.0 is intended to run as a single self-hosted Unraid app container:
+v1.0.1 runs as a single self-hosted Unraid app container:
 
 - Container name: `anime-tracker`
-- Image/tag: `anime-tracker:v1.0.0` locally, or the published registry tag once CI publishing is wired
+- Image/tag: `anime-tracker:v1.0.1`
 - Host port: `3020` -> container port `3000`
 - Persistent data: `/mnt/user/appdata/anime-tracker:/data`
 - SQLite database: `/data/anime-tracker.db`
 - WebUI: `http://[IP]:[PORT:3020]/`
 - Labels: `project=anime-tracker`, `managed-by=jarvis`
 
-Required environment variables are `AUTH_USERNAME`, `AUTH_PASSWORD`, `AUTH_SECRET`, and `DATABASE_URL=file:/data/anime-tracker.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search and airing refresh.
+Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/anime-tracker.db`. Set `AUTH_COOKIE_SECURE=false` for plain HTTP LAN use and `true` only behind HTTPS. `TMDB_API_KEY` enables metadata search and airing refresh.
+
+`AUTH_USERNAME` and `AUTH_PASSWORD` are no longer required — credentials are created through the `/setup` web UI on first launch.
 
 
 ## Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `AUTH_USERNAME` | Yes | Login username |
-| `AUTH_PASSWORD` | Yes | Login password |
 | `AUTH_SECRET` | Yes | Session cookie signing key — use a random 32+ char string |
 | `AUTH_COOKIE_SECURE` | No | Set `true` only when serving over HTTPS. Use `false` for plain HTTP LAN/Docker testing. |
 | `DATABASE_URL` | Yes | SQLite path. Local: `file:./dev.db`. Docker: `file:/data/anime-tracker.db` |
 | `TMDB_API_KEY` | Recommended | TMDB API key for metadata search. Get one free at https://www.themoviedb.org/settings/api |
+
+`AUTH_USERNAME` and `AUTH_PASSWORD` are no longer used. Login credentials are created via the `/setup` page on first launch and stored in the database.
 
 ## Ratings and notes
 
@@ -118,8 +126,7 @@ If `TMDB_API_KEY` is not set, the search page will display a configuration messa
 
 ## Auth
 
-Single-user. Set `AUTH_USERNAME` and `AUTH_PASSWORD` in your `.env`.
-Sessions use signed HTTP-only cookies via iron-session. Logout is available in the nav bar.
+Single-user. On first launch, visit `/setup` to create your account. Credentials are stored in the SQLite database as a `scrypt`-hashed password. Sessions use signed HTTP-only cookies via iron-session. Logout is available in the nav bar.
 
 ## Airing Schedule and Reminders
 

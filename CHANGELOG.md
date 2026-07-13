@@ -4,9 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.0.1] - 2026-07-12
 
-_No unreleased changes._
+### Added
+
+- First-run setup flow at `/setup`: on first launch with an empty database every route redirects to `/setup` instead of the login page.
+- `AppUser` Prisma model: `id`, `username` (unique), `passwordHash`, timestamps. Migration `app_user_setup` adds the table.
+- `src/lib/password.ts`: `hashPassword()` / `verifyPassword()` using `crypto.scrypt` + `crypto.timingSafeEqual` (Node built-ins, no new runtime deps). Stored format: `scrypt:<hex-salt>:<hex-hash>`.
+- `src/lib/setup.ts`: `isSetupComplete()` — returns `true` when at least one `AppUser` row exists.
+- `POST /api/setup`: creates the first `AppUser` with a hashed password, opens a session, and returns 409 if called when already set up.
+- `/setup` page: dark UI consistent with `/login`; fields for username, password, and confirm-password; client-side and server-side validation (username required, password ≥ 8 chars, confirmation match).
+
+### Changed
+
+- `requireAuth()` now calls `isSetupComplete()` first and redirects to `/setup` when no user exists; all auth-protected pages and the login page gain this behaviour automatically.
+- Login route (`POST /api/auth/login`) now authenticates against the `AppUser` DB table using `verifyPassword()`. Returns 409 with a hint when called before setup is complete.
+- `AUTH_USERNAME` and `AUTH_PASSWORD` environment variables are no longer required or used for authentication. Only `AUTH_SECRET` remains required.
+- `docker-compose.yml`: removed `AUTH_USERNAME` and `AUTH_PASSWORD` entries.
+- `.env.example`: `AUTH_USERNAME` and `AUTH_PASSWORD` removed; comment explains they have been replaced by the setup flow.
+- `package.json`: version bumped to `1.0.1`.
 
 ## [1.0.0] - 2026-07-12
 

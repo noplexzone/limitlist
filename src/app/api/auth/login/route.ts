@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
+import { prisma } from '@/lib/db'
+import { verifyPassword } from '@/lib/password'
+import { isSetupComplete } from '@/lib/setup'
 
 export async function POST(req: NextRequest) {
+  if (!(await isSetupComplete())) {
+    return NextResponse.json(
+      { error: 'Setup not complete. Please visit /setup first.' },
+      { status: 409 }
+    )
+  }
+
   const { username, password } = await req.json()
 
-  const expectedUser = process.env.AUTH_USERNAME
-  const expectedPass = process.env.AUTH_PASSWORD
+  const appUser = await prisma.appUser.findUnique({ where: { username } })
+  if (!appUser) {
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+  }
 
-  if (
-    !expectedUser ||
-    !expectedPass ||
-    username !== expectedUser ||
-    password !== expectedPass
-  ) {
+  const valid = await verifyPassword(password, appUser.passwordHash)
+  if (!valid) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
   }
 

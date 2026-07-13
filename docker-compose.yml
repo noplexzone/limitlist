@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   anime-tracker:
-    image: anime-tracker:v1.0.0
+    image: anime-tracker:v1.0.1
     build: .
     container_name: anime-tracker
     ports:
@@ -11,8 +11,6 @@ services:
       - /mnt/user/appdata/anime-tracker:/data
     environment:
       DATABASE_URL: file:/data/anime-tracker.db
-      AUTH_USERNAME: ${AUTH_USERNAME:?set AUTH_USERNAME}
-      AUTH_PASSWORD: ${AUTH_PASSWORD:?set AUTH_PASSWORD}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       TMDB_API_KEY: ${TMDB_API_KEY:-}

@@ -22,15 +22,18 @@ npm run lint             # eslint
 ```
 src/
   app/                   # Next.js App Router pages
-    api/                 # API routes (auth, watchlist, search, airing, reminders)
+    api/                 # API routes (auth, setup, watchlist, search, airing, reminders)
     login/               # Login page
+    setup/               # First-run setup page (creates AppUser)
     watchlist/           # Watchlist page
     search/              # Search/import page
     schedule/            # Airing schedule + reminders page
     dashboard/           # Stats dashboard
   lib/
-    auth.ts              # iron-session config + helpers
+    auth.ts              # iron-session config + helpers; requireAuth() redirects to /setup if no AppUser exists
     db.ts                # Prisma client singleton
+    password.ts          # scrypt hash/verify (Node crypto built-ins, no extra deps)
+    setup.ts             # isSetupComplete() — counts AppUser rows
     tmdb.ts              # TMDB provider implementation + getAiringDetails()
     providers.ts         # Provider abstraction
     airing.ts            # refreshShowAiring() / refreshAllShowsAiring()
@@ -42,11 +45,23 @@ prisma/
 ## Environment variables
 | Variable | Purpose |
 |---|---|
-| AUTH_USERNAME | Login username |
-| AUTH_PASSWORD | Login password |
-| AUTH_SECRET | Session cookie signing secret (32+ chars) |
+| AUTH_SECRET | Session cookie signing secret (32+ chars) — still required |
+| AUTH_USERNAME | **Removed** — credentials are now stored in the DB via the setup flow |
+| AUTH_PASSWORD | **Removed** — credentials are now stored in the DB via the setup flow |
 | DATABASE_URL | SQLite path (file:./dev.db or file:/data/anime-tracker.db) |
 | TMDB_API_KEY | TMDB API key for metadata search |
+
+## Auth / First-run setup
+
+Single-user. On first launch with an empty database, every route redirects to `/setup`.
+The setup page creates an `AppUser` record with a `scrypt`-hashed password and starts a session.
+After setup, login is via `/login` which verifies credentials against the `AppUser` table.
+
+- `AppUser` model: `id`, `username` (unique), `passwordHash` (`scrypt:<salt>:<hash>`), timestamps
+- `src/lib/setup.ts`: `isSetupComplete()` — returns true if any AppUser row exists
+- `src/lib/password.ts`: `hashPassword()` / `verifyPassword()` — Node crypto, no deps
+- `src/app/api/setup` (`POST`): creates the first user + session; 409 if already set up
+- `requireAuth()` in `auth.ts` calls `isSetupComplete()` and redirects to `/setup` if false
 
 ## Docker
 ```bash
@@ -58,9 +73,6 @@ Data persists in Docker volume mapped to ./data on host.
 The entrypoint (`docker-entrypoint.sh`) briefly starts as root to chown `/data`, then drops to UID 1001 (`nextjs`) via `gosu` before running migrations and the server. No manual host `chown` required for bind mounts.
 
 Legacy builder required: `DOCKER_BUILDKIT=0 docker build ...` (buildx TCP upgrade is blocked in this environment).
-
-## Auth
-Single-user. Credentials set via env vars. Session via iron-session HTTP-only cookie.
 
 ## Dashboard / Stats
 
@@ -91,3 +103,4 @@ Single-user. Credentials set via env vars. Session via iron-session HTTP-only co
 - Phase 2 (complete): Ratings/notes + anime-focused search + Docker non-root runtime
 - Phase 3 (complete): Stats dashboard at /dashboard
 - Phase 4 (complete): Airing schedule tracking + in-app reminders at /schedule
+- v1.0.1 hotfix (complete): First-run setup flow; credentials stored in DB, AUTH_USERNAME/AUTH_PASSWORD removed
