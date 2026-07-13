@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
+import PosterImage from '@/components/PosterImage'
 
 interface AnimeShow {
   id: string
@@ -12,6 +12,14 @@ interface AnimeShow {
   posterUrl?: string | null
   status: 'WATCHING' | 'COMPLETED' | 'PLAN_TO_WATCH' | 'DROPPED'
   rating?: number | null
+  episodesWatched: number
+  episodesTotal?: number | null
+}
+
+type PatchPayload = {
+  status?: AnimeShow['status']
+  rating?: number | null
+  episodesWatched?: number
 }
 
 const STATUS_LABELS: Record<AnimeShow['status'], string> = {
@@ -113,10 +121,7 @@ export default function WatchlistClient() {
     setLoading(false)
   }
 
-  async function patchShow(
-    id: string,
-    patch: { status?: AnimeShow['status']; rating?: number | null }
-  ) {
+  async function patchShow(id: string, patch: PatchPayload) {
     const previous = shows
     setShows((prev) => prev.map((show) => (show.id === id ? { ...show, ...patch } : show)))
 
@@ -132,6 +137,21 @@ export default function WatchlistClient() {
     } else {
       setShows(previous)
     }
+  }
+
+  function handlePlusOne(show: AnimeShow) {
+    const newCount = show.episodesWatched + 1
+    const capped =
+      show.episodesTotal != null ? Math.min(newCount, show.episodesTotal) : newCount
+    const patch: PatchPayload = { episodesWatched: capped }
+    if (
+      show.episodesTotal != null &&
+      capped >= show.episodesTotal &&
+      show.status !== 'COMPLETED'
+    ) {
+      patch.status = 'COMPLETED'
+    }
+    patchShow(show.id, patch)
   }
 
   if (loading) return <p className="text-gray-400">Loading watchlist...</p>
@@ -152,53 +172,83 @@ export default function WatchlistClient() {
 
   return (
     <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
-      {shows.map((show) => (
-        <article
-          key={show.id}
-          title={show.title}
-          className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70 focus-within:border-purple-500/70"
-        >
-          {show.posterUrl ? (
-            <Image
-              src={show.posterUrl}
-              alt={`${show.title} poster`}
-              fill
-              sizes="(min-width: 1536px) 14vw, (min-width: 1280px) 16vw, (min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
-              {show.title}
+      {shows.map((show) => {
+        const canIncrement =
+          show.episodesTotal == null || show.episodesWatched < show.episodesTotal
+
+        return (
+          <article
+            key={show.id}
+            className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70 focus-within:border-purple-500/70"
+          >
+            {/* Poster */}
+            {show.posterUrl ? (
+              <PosterImage
+                src={show.posterUrl}
+                alt={`${show.title} poster`}
+                title={show.title}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+                {show.title}
+              </div>
+            )}
+
+            {/* Status dropdown — top */}
+            <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/45 to-transparent p-2">
+              <label className="sr-only" htmlFor={`status-${show.id}`}>
+                Status for {show.title}
+              </label>
+              <select
+                id={`status-${show.id}`}
+                value={show.status}
+                onChange={(e) =>
+                  patchShow(show.id, { status: e.target.value as AnimeShow['status'] })
+                }
+                className={`w-full cursor-pointer rounded-full border px-3 py-1.5 text-center text-xs font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 ${STATUS_SELECT_CLASSES[show.status]}`}
+              >
+                <option value="PLAN_TO_WATCH">{STATUS_LABELS.PLAN_TO_WATCH}</option>
+                <option value="WATCHING">{STATUS_LABELS.WATCHING}</option>
+                <option value="COMPLETED">{STATUS_LABELS.COMPLETED}</option>
+                <option value="DROPPED">{STATUS_LABELS.DROPPED}</option>
+              </select>
             </div>
-          )}
 
-          <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/45 to-transparent p-2">
-            <label className="sr-only" htmlFor={`status-${show.id}`}>
-              Status for {show.title}
-            </label>
-            <select
-              id={`status-${show.id}`}
-              value={show.status}
-              onChange={(e) =>
-                patchShow(show.id, { status: e.target.value as AnimeShow['status'] })
-              }
-              className={`w-full cursor-pointer rounded-full border px-3 py-1.5 text-center text-xs font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 ${STATUS_SELECT_CLASSES[show.status]}`}
-            >
-              <option value="PLAN_TO_WATCH">{STATUS_LABELS.PLAN_TO_WATCH}</option>
-              <option value="WATCHING">{STATUS_LABELS.WATCHING}</option>
-              <option value="COMPLETED">{STATUS_LABELS.COMPLETED}</option>
-              <option value="DROPPED">{STATUS_LABELS.DROPPED}</option>
-            </select>
-          </div>
+            {/* Title strip — always visible at bottom */}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-2 pb-2 pt-8 pointer-events-none">
+              <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">
+                {show.title}
+              </p>
+            </div>
 
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-2 pb-3 pt-12 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-            <StarRating
-              rating={show.rating ?? null}
-              onRate={(value) => patchShow(show.id, { rating: value })}
-            />
-          </div>
-        </article>
-      ))}
+            {/* Hover overlay — rating + episode progress */}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-3 pt-16 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+              <StarRating
+                rating={show.rating ?? null}
+                onRate={(value) => patchShow(show.id, { rating: value })}
+              />
+              <div className="mt-1.5 flex items-center justify-between gap-1">
+                <span className="text-xs text-gray-300">
+                  Ep {show.episodesWatched}
+                  {show.episodesTotal != null ? `/${show.episodesTotal}` : ''}
+                </span>
+                {canIncrement && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePlusOne(show)
+                    }}
+                    className="rounded bg-purple-600/80 px-2 py-0.5 text-xs font-medium text-white hover:bg-purple-500 transition-colors"
+                  >
+                    +1
+                  </button>
+                )}
+              </div>
+            </div>
+          </article>
+        )
+      })}
     </div>
   )
 }
