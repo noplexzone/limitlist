@@ -49,8 +49,6 @@ interface ShelfShow {
   title: string
   posterUrl: string | null
   rating: number | null
-  episodesWatched: number
-  episodesTotal: number | null
 }
 
 function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
@@ -84,11 +82,6 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
             <p className="mt-1 text-[10px] text-gray-400 leading-tight line-clamp-2">{show.title}</p>
             {show.rating != null && (
               <p className="text-[10px] text-yellow-400">★ {show.rating}</p>
-            )}
-            {show.episodesTotal != null && (
-              <p className="text-[10px] text-gray-500">
-                {show.episodesWatched}/{show.episodesTotal} ep
-              </p>
             )}
           </Link>
         ))}
@@ -140,11 +133,6 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <StatCard label="Total Shows" value={String(stats.totalShows)} />
               <StatCard label="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
-              <StatCard
-                label="Episodes Watched"
-                value={stats.totalEpisodesWatched.toLocaleString()}
-              />
-              <StatCard label="Hours Watched" value={stats.estimatedHoursWatched.toFixed(1)} />
               {stats.averageRating !== null && (
                 <StatCard label="Average Rating" value={`${stats.averageRating.toFixed(1)} / 5`} />
               )}

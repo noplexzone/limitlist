@@ -13,27 +13,6 @@ export async function PATCH(
   const body = await req.json()
 
   // Validation
-  if (body.episodesWatched !== undefined && body.episodesWatched < 0) {
-    return NextResponse.json({ error: 'Episodes watched cannot be negative' }, { status: 400 })
-  }
-  if (body.episodesTotal !== undefined && body.episodesTotal !== null && body.episodesTotal < 0) {
-    return NextResponse.json({ error: 'Episodes total cannot be negative' }, { status: 400 })
-  }
-  if (
-    body.episodesWatched !== undefined &&
-    body.episodesTotal !== undefined &&
-    body.episodesTotal !== null &&
-    body.episodesWatched > body.episodesTotal
-  ) {
-    return NextResponse.json(
-      { error: 'Episodes watched cannot exceed total episodes' },
-      { status: 400 }
-    )
-  }
-  if (body.episodeDurationMinutes !== undefined && body.episodeDurationMinutes <= 0) {
-    return NextResponse.json({ error: 'Episode duration must be positive' }, { status: 400 })
-  }
-
   const validStatuses = ['WATCHING', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED']
   if (body.status && !validStatuses.includes(body.status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
@@ -57,9 +36,6 @@ export async function PATCH(
 
   const allowedFields = [
     'status',
-    'episodesWatched',
-    'episodesTotal',
-    'episodeDurationMinutes',
     'rating',
     'notes',
   ]

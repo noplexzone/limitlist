@@ -153,15 +153,13 @@ The `/dashboard` route shows a summary of your watching habits (auth-protected):
 |---|---|
 | Total Shows | All shows in the watchlist |
 | Completion Rate | `completed / total` as a percentage |
-| Episodes Watched | Sum of `episodesWatched` across all shows |
-| Hours Watched | `sum(episodesWatched × episodeDurationMinutes) / 60` |
 | Average Rating | Mean of all rated shows (shown only if any shows are rated) |
 | Top Genres | Top 10 genres by frequency, split from comma-separated `genres` field |
 | Top Studios | Top 10 studios by frequency, split from comma-separated `studios` field |
 
 Empty state is handled gracefully — the dashboard displays a link to search/import if no shows are tracked.
 
-Stats are computed server-side in `src/lib/stats.ts` (`computeStats(shows)`).
+Stats are computed server-side in `src/lib/stats.ts` (`computeStats(shows)`) from show status, ratings, genres, and studios.
 
 ## Discover
 
@@ -175,11 +173,9 @@ The `/discover` route shows popular and trending anime from AniList (auth-protec
 - Requires `TMDB_API_KEY` for TMDB linking/import, though rankings come from AniList.
 - Results are cached for 1 hour.
 
-## Watchlist episode tracking
+## Watchlist status tracking
 
-Each watchlist card shows:
-- **Ep X/Y** counter in the hover overlay (or "Ep X" when total episodes are unknown).
-- **+1 button** to increment episodes watched without entering edit mode.  Capped at `episodesTotal`; automatically sets status to **Completed** when the final episode is reached.
+Episode-progress tracking has been removed from the primary workflow. Use the card status — **Plan to Watch**, **Watching**, **Completed**, or **Dropped** — to track progress at the show level.
 
 ## Global reminder badge
 

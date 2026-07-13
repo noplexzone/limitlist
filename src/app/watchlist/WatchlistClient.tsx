@@ -12,14 +12,11 @@ interface AnimeShow {
   posterUrl?: string | null
   status: 'WATCHING' | 'COMPLETED' | 'PLAN_TO_WATCH' | 'DROPPED'
   rating?: number | null
-  episodesWatched: number
-  episodesTotal?: number | null
 }
 
 type PatchPayload = {
   status?: AnimeShow['status']
   rating?: number | null
-  episodesWatched?: number
 }
 
 const STATUS_LABELS: Record<AnimeShow['status'], string> = {
@@ -34,6 +31,22 @@ const STATUS_SELECT_CLASSES: Record<AnimeShow['status'], string> = {
   COMPLETED: 'bg-green-700/90 border-green-500/70',
   PLAN_TO_WATCH: 'bg-amber-700/90 border-amber-500/70',
   DROPPED: 'bg-red-800/90 border-red-600/70',
+}
+
+function StarIcon({ fillPct }: { fillPct: number }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7 drop-shadow">
+      <path
+        d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
+        className="fill-gray-500/80"
+      />
+      <path
+        d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
+        className="fill-yellow-400"
+        style={{ clipPath: `inset(0 ${100 - fillPct}% 0 0)` }}
+      />
+    </svg>
+  )
 }
 
 function StarRating({
@@ -54,26 +67,16 @@ function StarRating({
     >
       {[1, 2, 3, 4, 5].map((star) => {
         const half = star - 0.5
-        const fullActive = effective >= star
-        const halfActive = !fullActive && effective >= half
+        const fillPct = Math.max(0, Math.min(1, effective - (star - 1))) * 100
 
         return (
-          <div key={star} className="relative h-9 w-9">
-            <span className="absolute inset-0 select-none text-center text-3xl leading-9 text-gray-500/80 drop-shadow">
-              ★
-            </span>
-            {(fullActive || halfActive) && (
-              <span
-                className="absolute inset-0 select-none overflow-hidden text-center text-3xl leading-9 text-yellow-400 drop-shadow"
-                style={halfActive ? { clipPath: 'inset(0 50% 0 0)' } : undefined}
-              >
-                ★
-              </span>
-            )}
+          <div key={star} className="relative h-7 w-7">
+            <StarIcon fillPct={fillPct} />
             <button
               type="button"
               aria-label={`Rate ${half} out of 5`}
               onMouseEnter={() => setHovered(half)}
+              onFocus={() => setHovered(half)}
               onClick={() => onRate(half)}
               className="absolute left-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-l"
             />
@@ -81,6 +84,7 @@ function StarRating({
               type="button"
               aria-label={`Rate ${star} out of 5`}
               onMouseEnter={() => setHovered(star)}
+              onFocus={() => setHovered(star)}
               onClick={() => onRate(star)}
               className="absolute right-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-r"
             />
@@ -91,10 +95,11 @@ function StarRating({
         <button
           type="button"
           onClick={() => onRate(null)}
-          className="ml-1 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-gray-200 hover:bg-black/80"
+          aria-label="Clear rating"
+          className="ml-0.5 rounded-full bg-black/50 px-1.5 py-0.5 text-xs font-medium text-gray-200 hover:bg-black/80"
           title="Clear rating"
         >
-          clear
+          ×
         </button>
       )}
     </div>
@@ -139,20 +144,6 @@ export default function WatchlistClient() {
     }
   }
 
-  function handlePlusOne(show: AnimeShow) {
-    const newCount = show.episodesWatched + 1
-    const capped =
-      show.episodesTotal != null ? Math.min(newCount, show.episodesTotal) : newCount
-    const patch: PatchPayload = { episodesWatched: capped }
-    if (
-      show.episodesTotal != null &&
-      capped >= show.episodesTotal &&
-      show.status !== 'COMPLETED'
-    ) {
-      patch.status = 'COMPLETED'
-    }
-    patchShow(show.id, patch)
-  }
 
   if (loading) return <p className="text-gray-400">Loading watchlist...</p>
   if (error) return <p className="text-red-400">{error}</p>
@@ -173,9 +164,6 @@ export default function WatchlistClient() {
   return (
     <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
       {shows.map((show) => {
-        const canIncrement =
-          show.episodesTotal == null || show.episodesWatched < show.episodesTotal
-
         return (
           <article
             key={show.id}
@@ -221,30 +209,12 @@ export default function WatchlistClient() {
               </p>
             </div>
 
-            {/* Hover overlay — rating + episode progress */}
+            {/* Hover overlay — rating */}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-3 pt-16 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
               <StarRating
                 rating={show.rating ?? null}
                 onRate={(value) => patchShow(show.id, { rating: value })}
               />
-              <div className="mt-1.5 flex items-center justify-between gap-1">
-                <span className="text-xs text-gray-300">
-                  Ep {show.episodesWatched}
-                  {show.episodesTotal != null ? `/${show.episodesTotal}` : ''}
-                </span>
-                {canIncrement && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handlePlusOne(show)
-                    }}
-                    className="rounded bg-purple-600/80 px-2 py-0.5 text-xs font-medium text-white hover:bg-purple-500 transition-colors"
-                  >
-                    +1
-                  </button>
-                )}
-              </div>
             </div>
           </article>
         )

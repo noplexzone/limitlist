@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Discover provider**: Popular/trending discovery now uses AniList rankings and links AniList season results to whole-show TMDB records before import. Duplicate detection marks other AniList seasons as added when they map to an existing TMDB watchlist show.
 - **Search scope**: Removed the Anime-focused checkbox; Search is now always anime-only and no longer exposes a broad all-TV mode.
+- **Discover posters**: Allow optimized AniList cover images so Discover cards show posters.
+- **Watchlist progress**: Removed episode-progress tracking from the app workflow; show status now carries progress state.
+- **Rating stars**: Replaced text-star clipping with SVG stars for clean full-star and half-star rendering.
 
 ## [1.1.0] - 2026-07-13
 
