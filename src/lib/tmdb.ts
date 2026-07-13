@@ -1,4 +1,4 @@
-import type { MetadataProvider, MetadataResult, SearchOptions } from './providers'
+import type { MetadataProvider, MetadataRelatedItem, MetadataResult, SearchOptions } from './providers'
 import { getEffectiveTmdbApiKey } from './settings'
 import { getAnimeRootTitle, isLikelySeasonSpecificTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
 
@@ -21,6 +21,26 @@ interface TmdbTvResult {
 
 interface TmdbSearchResponse {
   results: TmdbTvResult[]
+}
+
+interface TmdbMovieResult {
+  id: number
+  title: string
+  original_title?: string
+  overview?: string
+  poster_path?: string | null
+  release_date?: string
+  genre_ids?: number[]
+  original_language?: string
+  popularity?: number
+}
+
+interface TmdbTvListResponse {
+  results?: TmdbTvResult[]
+}
+
+interface TmdbMovieSearchResponse {
+  results?: TmdbMovieResult[]
 }
 
 interface TmdbEpisode {
@@ -99,6 +119,45 @@ export class TmdbProvider implements MetadataProvider {
   }
 
 
+  private mapTvResult(item: TmdbTvResult): MetadataRelatedItem {
+    return {
+      providerId: String(item.id),
+      providerName: 'tmdb',
+      title: item.name,
+      originalTitle: item.original_name !== item.name ? item.original_name : undefined,
+      overview: item.overview || undefined,
+      posterUrl: item.poster_path ? `${POSTER_BASE}${item.poster_path}` : undefined,
+      firstAiredAt: item.first_air_date || undefined,
+    }
+  }
+
+  private mapMovieResult(item: TmdbMovieResult): MetadataRelatedItem {
+    return {
+      providerId: String(item.id),
+      providerName: 'tmdb-movie',
+      title: item.title,
+      originalTitle: item.original_title !== item.title ? item.original_title : undefined,
+      overview: item.overview || undefined,
+      posterUrl: item.poster_path ? `${POSTER_BASE}${item.poster_path}` : undefined,
+      firstAiredAt: item.release_date || undefined,
+    }
+  }
+
+  private async fetchJson<T>(url: URL, revalidate: number, timeoutMs = 3000): Promise<T | null> {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const res = await fetch(url.toString(), { next: { revalidate }, signal: controller.signal })
+      if (!res.ok) return null
+      return (await res.json()) as T
+    } catch {
+      return null
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+
   async validateApiKey(): Promise<boolean> {
     const url = new URL(`${TMDB_BASE}/configuration`)
     url.searchParams.set('api_key', this.apiKey)
@@ -140,15 +199,7 @@ export class TmdbProvider implements MetadataProvider {
       })
     }
 
-    return items.slice(0, options?.limit ?? 10).map((item) => ({
-      providerId: String(item.id),
-      providerName: 'tmdb',
-      title: item.name,
-      originalTitle: item.original_name !== item.name ? item.original_name : undefined,
-      overview: item.overview || undefined,
-      posterUrl: item.poster_path ? `${POSTER_BASE}${item.poster_path}` : undefined,
-      firstAiredAt: item.first_air_date || undefined,
-    }))
+    return items.slice(0, options?.limit ?? 10).map((item) => this.mapTvResult(item))
   }
 
   async getDetails(tmdbId: string): Promise<MetadataResult | null> {
@@ -213,15 +264,50 @@ export class TmdbProvider implements MetadataProvider {
   async getSeasonEpisodes(tmdbId: string, seasonNumber: number): Promise<Array<{ episodeNumber: number; name: string; airDate?: string | null; voteAverage?: number | null }> | null> {
     const url = new URL(`${TMDB_BASE}/tv/${tmdbId}/season/${seasonNumber}`)
     url.searchParams.set('api_key', this.apiKey)
-    const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
-    if (!res.ok) return null
-    const data: TmdbSeasonDetails = await res.json()
+    const data = await this.fetchJson<TmdbSeasonDetails>(url, 3600, 2500)
+    if (!data) return null
     return (data.episodes ?? []).map((episode) => ({
       episodeNumber: episode.episode_number,
       name: episode.name || `Episode ${episode.episode_number}`,
       airDate: episode.air_date ?? null,
       voteAverage: episode.vote_average ?? null,
     }))
+  }
+
+  async getRecommendations(tmdbId: string, limit = 12): Promise<MetadataRelatedItem[]> {
+    const url = new URL(`${TMDB_BASE}/tv/${tmdbId}/recommendations`)
+    url.searchParams.set('api_key', this.apiKey)
+    const data = await this.fetchJson<TmdbTvListResponse>(url, 3600, 2500)
+    return (data?.results ?? [])
+      .filter((item) => item.genre_ids?.includes(ANIMATION_GENRE_ID) || item.original_language === 'ja' || item.origin_country?.includes('JP'))
+      .slice(0, limit)
+      .map((item) => this.mapTvResult(item))
+  }
+
+  async getRelatedMovies(titles: Array<string | null | undefined>, limit = 8): Promise<MetadataRelatedItem[]> {
+    const candidates = titleCandidates(...titles).slice(0, 2)
+    const seen = new Set<string>()
+    const movies: TmdbMovieResult[] = []
+
+    for (const query of candidates) {
+      const url = new URL(`${TMDB_BASE}/search/movie`)
+      url.searchParams.set('api_key', this.apiKey)
+      url.searchParams.set('query', query)
+      url.searchParams.set('include_adult', 'false')
+      const data = await this.fetchJson<TmdbMovieSearchResponse>(url, 3600, 2500)
+      for (const item of data?.results ?? []) {
+        if (seen.has(String(item.id))) continue
+        if (!(item.genre_ids?.includes(ANIMATION_GENRE_ID) || item.original_language === 'ja')) continue
+        seen.add(String(item.id))
+        movies.push(item)
+      }
+      if (movies.length >= limit) break
+    }
+
+    return movies
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
+      .slice(0, limit)
+      .map((item) => this.mapMovieResult(item))
   }
 
 

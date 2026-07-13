@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Anime detail recommendations**: Detail pages now show recommended similar anime and related movie/special cards at the bottom.
+- **Episode and movie ratings**: Tracked anime now support half-star child ratings for individual episodes and related movies/specials while keeping them under the main anime title.
+
 - **Global anime search**: Nav now includes an app-wide search bar with quick results, direct detail navigation, and an inline `+` import button. The standalone `/search` page now redirects back to the watchlist.
 - **Anime details pages**: Added `/anime/[provider]/[id]` pages for search results and tracked shows, with poster, metadata, airing info, add-to-watchlist action, and tracked status controls.
 - **Up-to-Date status**: Added `UP_TO_DATE` as a watchlist status plus persisted `upToDateEpisodeNum`, `upToDateAiredAt`, and `upToDateStale` fields. Airing refreshes now flag Up-to-Date shows when TMDB reports a newer aired episode/date, including new seasons whose episode numbers reset.
@@ -21,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Mark as read**: Schedule page reminder action renamed from "Dismiss" to "Mark as read" for clarity.
 
 ### Changed
+
+- **Anime detail ratings**: Detail-page poster overlays now use the same clickable half-star rating control as watchlist poster cards.
+- **Anime detail performance**: Remote cast, season episode, recommendation, and movie enrichment are bounded and fail open so detail pages do not hang on provider slowness.
+- **Anime detail seasons**: Season cards now label per-season episode counts and episode rows use season-aware keys.
 
 - **Anime detail controls**: Status and personal rating controls moved onto the poster overlay so tracked details remain directly editable.
 - **Anime detail layout**: Cast and seasons/episodes sections now span the full detail page width, with cast photos and wider season boxes.

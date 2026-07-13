@@ -1,10 +1,25 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
-import type { MetadataCastMember, MetadataSeasonSummary, MetadataVoiceCastGroup } from '@/lib/providers'
+import type { MetadataCastMember, MetadataRelatedItem, MetadataSeasonSummary, MetadataVoiceCastGroup } from '@/lib/providers'
+
+interface ChildRating {
+  id?: string
+  kind: string
+  key: string
+  providerName?: string | null
+  providerId?: string | null
+  seasonNumber?: number | null
+  episodeNumber?: number | null
+  title: string
+  posterUrl?: string | null
+  airDate?: string | null
+  rating?: number | null
+}
 
 export interface AnimeDetailsData {
   tracked: boolean
@@ -40,10 +55,69 @@ export interface AnimeDetailsData {
     cast?: MetadataCastMember[] | null
     voiceCast?: MetadataVoiceCastGroup | null
     seasons?: MetadataSeasonSummary[] | null
+    recommendations?: MetadataRelatedItem[] | null
+    relatedMovies?: MetadataRelatedItem[] | null
+    childRatings?: ChildRating[] | null
   }
 }
 
-const RATING_VALUES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+
+function StarIcon({ fillPct, small = false }: { fillPct: number; small?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={`${small ? 'h-4 w-4' : 'h-5 w-5 sm:h-6 sm:w-6'} drop-shadow`}>
+      <path
+        d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
+        className="fill-gray-500/80"
+      />
+      <path
+        d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
+        className="fill-yellow-400"
+        style={{ clipPath: `inset(0 ${100 - fillPct}% 0 0)` }}
+      />
+    </svg>
+  )
+}
+
+function StarRating({ rating, onRate, compact = false }: { rating: number | null; onRate: (value: number | null) => void; compact?: boolean }) {
+  const [hovered, setHovered] = useState<number | null>(null)
+  const effective = hovered ?? rating ?? 0
+
+  function click(e: MouseEvent, value: number | null) {
+    e.stopPropagation()
+    onRate(value)
+  }
+
+  function stopKeyNavigation(e: KeyboardEvent) {
+    e.stopPropagation()
+  }
+
+  return (
+    <div className={`relative ${compact ? 'w-32 px-3' : 'w-full px-5'}`} aria-label="Rating">
+      <div className="flex items-center justify-center gap-0.5" onMouseLeave={() => setHovered(null)}>
+        {[1, 2, 3, 4, 5].map((star) => {
+          const half = star - 0.5
+          const fillPct = Math.max(0, Math.min(1, effective - (star - 1))) * 100
+          return (
+            <div key={star} className={`relative ${compact ? 'h-4 w-4' : 'h-5 w-5 sm:h-6 sm:w-6'}`}>
+              <StarIcon fillPct={fillPct} small={compact} />
+              <button type="button" aria-label={`Rate ${half} out of 5`} onMouseEnter={() => setHovered(half)} onFocus={() => setHovered(half)} onClick={(e) => click(e, half)} onKeyDown={stopKeyNavigation} className="absolute left-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-l" />
+              <button type="button" aria-label={`Rate ${star} out of 5`} onMouseEnter={() => setHovered(star)} onFocus={() => setHovered(star)} onClick={(e) => click(e, star)} onKeyDown={stopKeyNavigation} className="absolute right-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-r" />
+            </div>
+          )
+        })}
+      </div>
+      {rating != null && (
+        <button type="button" onClick={(e) => click(e, null)} onKeyDown={stopKeyNavigation} aria-label="Clear rating" className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-0.5 text-xs font-medium text-gray-200 hover:bg-black/90" title="Clear rating">×</button>
+      )}
+    </div>
+  )
+}
+
+function childRatingKey(kind: 'EPISODE' | 'MOVIE', parts: { seasonNumber?: number; episodeNumber?: number; providerName?: string; providerId?: string }) {
+  if (kind === 'EPISODE') return `${parts.seasonNumber}:${parts.episodeNumber}`
+  return `${parts.providerName}:${parts.providerId}`
+}
+
 
 function asTextList(value: string[] | string | null | undefined) {
   if (Array.isArray(value)) return value.join(', ')
@@ -88,9 +162,18 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [busy, setBusy] = useState(false)
-  const [voiceLanguage, setVoiceLanguage] = useState<'english' | 'japanese'>('english')
+  const [childRatings, setChildRatings] = useState<ChildRating[]>(initialData.anime.childRatings ?? [])
   const anime = data.anime
+  const englishCount = anime.voiceCast?.english.length ?? 0
+  const japaneseCount = anime.voiceCast?.japanese.length ?? 0
+  const [voiceLanguage, setVoiceLanguage] = useState<'english' | 'japanese'>(englishCount > 0 ? 'english' : 'japanese')
   const voiceCast = anime.voiceCast?.[voiceLanguage] ?? []
+  const childRatingMap = useMemo(() => new Map(childRatings.map((rating) => [`${rating.kind}:${rating.key}`, rating])), [childRatings])
+
+  useEffect(() => {
+    if (voiceLanguage === 'english' && englishCount === 0 && japaneseCount > 0) setVoiceLanguage('japanese')
+    if (voiceLanguage === 'japanese' && japaneseCount === 0 && englishCount > 0) setVoiceLanguage('english')
+  }, [englishCount, japaneseCount, voiceLanguage])
 
   async function addToWatchlist() {
     setBusy(true)
@@ -133,6 +216,22 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
     setBusy(false)
   }
 
+  async function patchChildRating(payload: Record<string, unknown>, rating: number | null) {
+    if (!anime.id) return
+    const res = await fetch(`/api/watchlist/${anime.id}/ratings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, rating }),
+    })
+    if (res.ok) {
+      const updated: ChildRating = await res.json()
+      setChildRatings((current) => {
+        const key = `${updated.kind}:${updated.key}`
+        return [...current.filter((item) => `${item.kind}:${item.key}` !== key), updated]
+      })
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
@@ -159,20 +258,10 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                     ))}
                   </select>
                 </label>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-300">
-                  Rating
-                  <select
-                    value={anime.rating ?? ''}
-                    disabled={busy}
-                    onChange={(e) => patchTracked({ rating: e.target.value ? Number(e.target.value) : null })}
-                    className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950/95 px-3 py-2 text-sm normal-case text-gray-100 outline-none focus:border-purple-500"
-                  >
-                    <option value="">Unrated</option>
-                    {RATING_VALUES.map((rating) => (
-                      <option key={rating} value={rating}>{rating.toFixed(1)} / 5</option>
-                    ))}
-                  </select>
-                </label>
+                <div>
+                  <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-300">Rating</p>
+                  <StarRating rating={anime.rating ?? null} onRate={(value) => patchTracked({ rating: value })} />
+                </div>
               </div>
             ) : (
               <button
@@ -236,7 +325,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-gray-200">Voice cast</h2>
-              <p className="text-sm text-gray-500">Switch between English dub and Japanese cast.</p>
+              <p className="text-sm text-gray-500">Choose the dub/sub cast list.</p>
             </div>
             <div className="rounded-full border border-gray-700 bg-gray-950 p-1">
               {(['english', 'japanese'] as const).map((language) => (
@@ -244,11 +333,12 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                   key={language}
                   type="button"
                   onClick={() => setVoiceLanguage(language)}
+                  disabled={(anime.voiceCast?.[language].length ?? 0) === 0}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
-                    voiceLanguage === language ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+                    voiceLanguage === language ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white disabled:cursor-not-allowed disabled:text-gray-700'
                   }`}
                 >
-                  {language}
+                  {language} <span className="text-xs opacity-75">{anime.voiceCast?.[language].length ?? 0}</span>
                 </button>
               ))}
             </div>
@@ -279,17 +369,30 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
             {anime.seasons.map((season) => (
               <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
                 <summary className="cursor-pointer font-semibold text-gray-100">
-                  {season.name} <span className="text-sm font-normal text-gray-500">· {season.episodeCount ?? season.episodes?.length ?? '?'} episodes{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
+                  {season.name} <span className="text-sm font-normal text-gray-500">· {season.episodeCount ?? season.episodes?.length ?? '?'} episodes in this season{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
                 </summary>
                 {season.overview && <p className="mt-2 text-sm text-gray-400">{season.overview}</p>}
                 {season.episodes && season.episodes.length > 0 && (
                   <ol className="mt-3 max-h-96 space-y-2 overflow-y-auto pr-1">
-                    {season.episodes.map((episode) => (
-                      <li key={episode.episodeNumber} className="flex items-start justify-between gap-3 rounded-lg bg-gray-900 px-3 py-2 text-sm">
-                        <span className="text-gray-200">{episode.episodeNumber}. {episode.name}</span>
-                        <span className="shrink-0 text-xs text-gray-500">{episode.voteAverage ? `${episode.voteAverage.toFixed(1)}/10` : episode.airDate ? formatDate(episode.airDate) : ''}</span>
-                      </li>
-                    ))}
+                    {season.episodes.map((episode) => {
+                      const key = childRatingKey('EPISODE', { seasonNumber: season.seasonNumber, episodeNumber: episode.episodeNumber })
+                      const child = childRatingMap.get(`EPISODE:${key}`)
+                      return (
+                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className="flex items-start justify-between gap-3 rounded-lg bg-gray-900 px-3 py-2 text-sm">
+                          <div className="min-w-0">
+                            <span className="text-gray-200">{episode.episodeNumber}. {episode.name}</span>
+                            <p className="text-xs text-gray-500">{episode.voteAverage ? `TMDB ${episode.voteAverage.toFixed(1)}/10` : episode.airDate ? formatDate(episode.airDate) : ''}</p>
+                          </div>
+                          {data.tracked && (
+                            <StarRating
+                              compact
+                              rating={child?.rating ?? null}
+                              onRate={(value) => patchChildRating({ kind: 'EPISODE', seasonNumber: season.seasonNumber, episodeNumber: episode.episodeNumber, title: episode.name, airDate: episode.airDate }, value)}
+                            />
+                          )}
+                        </li>
+                      )
+                    })}
                   </ol>
                 )}
               </details>
@@ -297,6 +400,59 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
           </div>
         </section>
       )}
+
+      {anime.relatedMovies && anime.relatedMovies.length > 0 && (
+        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+          <h2 className="mb-1 text-lg font-semibold text-gray-200">Movies and specials</h2>
+          <p className="mb-4 text-sm text-gray-500">Rated under {anime.title}, not added as separate watchlist shows.</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {anime.relatedMovies.map((movie) => {
+              const key = childRatingKey('MOVIE', { providerName: movie.providerName, providerId: movie.providerId })
+              const child = childRatingMap.get(`MOVIE:${key}`)
+              return (
+                <div key={key} className="rounded-xl border border-gray-800 bg-gray-950 p-3">
+                  <div className="flex gap-3">
+                    {movie.posterUrl && (
+                      <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-800">
+                        <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="line-clamp-2 font-medium text-gray-100">{movie.title}</p>
+                      {movie.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(movie.firstAiredAt)}</p>}
+                      {data.tracked && (
+                        <div className="mt-3">
+                          <StarRating compact rating={child?.rating ?? null} onRate={(value) => patchChildRating({ kind: 'MOVIE', providerName: movie.providerName, providerId: movie.providerId, title: movie.title, posterUrl: movie.posterUrl, airDate: movie.firstAiredAt }, value)} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {anime.recommendations && anime.recommendations.length > 0 && (
+        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+          <h2 className="mb-4 text-lg font-semibold text-gray-200">Recommended similar anime</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {anime.recommendations.map((item) => (
+              <Link key={`${item.providerName}-${item.providerId}`} href={`/anime/${encodeURIComponent(item.providerName)}/${encodeURIComponent(item.providerId)}`} className="group overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition-colors hover:border-purple-500">
+                <div className="relative aspect-[2/3] bg-gray-800">
+                  {item.posterUrl ? <PosterImage src={item.posterUrl} alt={`${item.title} poster`} title={item.title} /> : <div className="flex h-full items-center justify-center p-3 text-center text-xs text-gray-500">{item.title}</div>}
+                </div>
+                <div className="p-2">
+                  <p className="line-clamp-2 text-sm font-medium text-gray-100 group-hover:text-purple-200">{item.title}</p>
+                  {item.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(item.firstAiredAt)}</p>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
     </div>
   )
 }

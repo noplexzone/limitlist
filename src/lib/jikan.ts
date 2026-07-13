@@ -2,6 +2,20 @@ import type { MetadataVoiceCastGroup } from './providers'
 
 const JIKAN_BASE = 'https://api.jikan.moe/v4'
 
+async function fetchJikanJson<T>(url: string, timeoutMs = 2500): Promise<T | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { next: { revalidate: 86400 }, signal: controller.signal })
+    if (!res.ok) return null
+    return (await res.json()) as T
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 interface JikanAnimeSearchResponse {
   data?: Array<{ mal_id: number; title?: string; title_english?: string; title_japanese?: string; year?: number | null }>
 }
@@ -48,17 +62,15 @@ export async function fetchJikanVoiceCast(
   search.searchParams.set('limit', '5')
 
   try {
-    const searchRes = await fetch(search.toString(), { next: { revalidate: 86400 } })
-    if (!searchRes.ok) return undefined
-    const searchData: JikanAnimeSearchResponse = await searchRes.json()
+    const searchData = await fetchJikanJson<JikanAnimeSearchResponse>(search.toString())
+    if (!searchData) return undefined
     const best = (searchData.data ?? [])
       .map((item) => ({ item, score: scoreAnimeMatch(item, usableTitles, year) }))
       .sort((a, b) => b.score - a.score)[0]
     if (!best || best.score < 4) return undefined
 
-    const charactersRes = await fetch(`${JIKAN_BASE}/anime/${best.item.mal_id}/characters`, { next: { revalidate: 86400 } })
-    if (!charactersRes.ok) return undefined
-    const charactersData: JikanCharactersResponse = await charactersRes.json()
+    const charactersData = await fetchJikanJson<JikanCharactersResponse>(`${JIKAN_BASE}/anime/${best.item.mal_id}/characters`)
+    if (!charactersData) return undefined
     const groups: MetadataVoiceCastGroup = { english: [], japanese: [] }
 
     for (const row of charactersData.data ?? []) {

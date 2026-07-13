@@ -36,6 +36,7 @@ model AnimeShow {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
   reminders              EpisodeReminder[]
+  childRatings           AnimeChildRating[]
 
   @@unique([metadataProvider, metadataId])
   @@unique([sourceProvider, sourceId])
@@ -51,6 +52,27 @@ model EpisodeReminder {
   animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)
 
   @@unique([animeShowId, airsAt])
+}
+
+model AnimeChildRating {
+  id            String    @id @default(cuid())
+  animeShowId   String
+  kind          String
+  key           String
+  providerName  String?
+  providerId    String?
+  seasonNumber  Int?
+  episodeNumber Int?
+  title         String
+  posterUrl     String?
+  airDate       DateTime?
+  rating        Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)
+
+  @@unique([animeShowId, kind, key])
+  @@index([animeShowId, kind])
 }
 
 model AppUser {

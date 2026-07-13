@@ -12,6 +12,16 @@ export interface MetadataVoiceCastGroup {
   japanese: MetadataCastMember[]
 }
 
+export interface MetadataRelatedItem {
+  providerId: string
+  providerName: string
+  title: string
+  originalTitle?: string
+  overview?: string
+  posterUrl?: string
+  firstAiredAt?: string
+}
+
 export interface MetadataSeasonSummary {
   seasonNumber: number
   name: string
@@ -51,6 +61,8 @@ export interface MetadataResult {
   seasons?: MetadataSeasonSummary[]
   sourceProvider?: string
   sourceId?: string
+  recommendations?: MetadataRelatedItem[]
+  relatedMovies?: MetadataRelatedItem[]
 }
 
 export interface SearchOptions {
