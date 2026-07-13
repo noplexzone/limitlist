@@ -29,6 +29,7 @@ model AnimeShow {
   lastAiredAt            DateTime?
   airingRefreshedAt      DateTime?
   upToDateEpisodeNum     Int?
+  upToDateAiredAt        DateTime?
   upToDateStale          Boolean   @default(false)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt

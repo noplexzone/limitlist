@@ -57,9 +57,8 @@ export async function GET(req: NextRequest) {
   try {
     const page = pageFromRequest(req)
     const pageSize = 42
-    const media = await fetchAniListDiscover(feedTypeFromRequest(req), page, pageSize)
-    const results = []
-    for (const item of media) {
+    const discoverPage = await fetchAniListDiscover(feedTypeFromRequest(req), page, pageSize)
+    const mapItem = async (item: (typeof discoverPage.media)[number]) => {
       const anilistTitle = getAniListDisplayTitle(item)
       const originalTitle = getAniListOriginalTitle(item)
       const startDate = getAniListStartDate(item)
@@ -68,7 +67,7 @@ export async function GET(req: NextRequest) {
 
       const tmdbMatch = await tmdb.findShowForAnime(getAniListTitles(item), getAniListYear(item))
       if (!tmdbMatch) {
-        results.push({
+        return {
           sourceProvider: 'anilist',
           sourceId: String(item.id),
           providerId: '',
@@ -81,8 +80,7 @@ export async function GET(req: NextRequest) {
           inWatchlist: titleAlreadyTracked,
           importable: false,
           mappingStatus: 'No TMDB show match',
-        })
-        continue
+        }
       }
 
       const rootTitles = [
@@ -95,7 +93,7 @@ export async function GET(req: NextRequest) {
 
       // Keep multiple AniList seasons visible, but all of them point at the same TMDB show
       // for import/monitoring. The client marks every card with the same TMDB id as added.
-      results.push({
+      return {
         sourceProvider: 'anilist',
         sourceId: String(item.id),
         providerId: tmdbMatch.providerId,
@@ -109,10 +107,23 @@ export async function GET(req: NextRequest) {
         linkedProviderId: tmdbMatch.providerId,
         inWatchlist,
         importable: true,
-      })
+      }
     }
 
-    return NextResponse.json({ provider: 'anilist', linkedProvider: 'tmdb', page, pageSize, hasNextPage: media.length === pageSize, results })
+    const results = []
+    const concurrency = 6
+    for (let i = 0; i < discoverPage.media.length; i += concurrency) {
+      results.push(...(await Promise.all(discoverPage.media.slice(i, i + concurrency).map(mapItem))))
+    }
+
+    return NextResponse.json({
+      provider: 'anilist',
+      linkedProvider: 'tmdb',
+      page,
+      pageSize,
+      hasNextPage: discoverPage.hasNextPage,
+      results,
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'AniList request failed'
     return NextResponse.json({ error: message, results: [] }, { status: 502 })

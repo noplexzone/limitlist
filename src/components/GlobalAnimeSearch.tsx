@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, MouseEvent, useEffect, useRef, useState } from 'react'
 
 interface SearchResult {
   providerId: string
@@ -25,20 +25,22 @@ export default function GlobalAnimeSearch() {
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current)
+    const controller = new AbortController()
     const trimmed = query.trim()
     if (trimmed.length < 2) {
       setResults([])
       setError('')
       setSearching(false)
-      return
+      return () => controller.abort()
     }
 
     setSearching(true)
     timer.current = setTimeout(async () => {
       try {
         const params = new URLSearchParams({ q: trimmed, limit: '8' })
-        const res = await fetch(`/api/search?${params}`)
+        const res = await fetch(`/api/search?${params}`, { signal: controller.signal })
         const data = await res.json()
+        if (controller.signal.aborted) return
         if (!res.ok) {
           setError(data.error ?? 'Search failed')
           setResults([])
@@ -47,15 +49,17 @@ export default function GlobalAnimeSearch() {
           setError('')
         }
         setOpen(true)
-      } catch {
-        setError('Network error')
+      } catch (err) {
+        if (controller.signal.aborted) return
+        setError(err instanceof Error ? err.message : 'Network error')
         setResults([])
       } finally {
-        setSearching(false)
+        if (!controller.signal.aborted) setSearching(false)
       }
     }, 250)
 
     return () => {
+      controller.abort()
       if (timer.current) clearTimeout(timer.current)
     }
   }, [query])
@@ -73,7 +77,7 @@ export default function GlobalAnimeSearch() {
     }
   }
 
-  async function addResult(e: React.MouseEvent<HTMLButtonElement>, result: SearchResult) {
+  async function addResult(e: MouseEvent<HTMLButtonElement>, result: SearchResult) {
     e.preventDefault()
     e.stopPropagation()
     const key = `${result.providerName}:${result.providerId}`

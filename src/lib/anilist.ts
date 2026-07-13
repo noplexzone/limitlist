@@ -32,14 +32,21 @@ interface AniListResponse {
   data?: {
     Page?: {
       media?: AniListMedia[]
+      pageInfo?: { hasNextPage?: boolean | null } | null
     }
   }
   errors?: Array<{ message: string }>
 }
 
+export interface AniListDiscoverPage {
+  media: AniListMedia[]
+  hasNextPage: boolean
+}
+
 const DISCOVER_QUERY = `
   query DiscoverAnime($page: Int!, $perPage: Int!, $sort: [MediaSort]) {
     Page(page: $page, perPage: $perPage) {
+      pageInfo { hasNextPage }
       media(type: ANIME, sort: $sort, isAdult: false) {
         id
         idMal
@@ -87,7 +94,7 @@ export async function fetchAniListDiscover(
   type: AniListFeedType,
   page = 1,
   perPage = 42
-): Promise<AniListMedia[]> {
+): Promise<AniListDiscoverPage> {
   const sort = type === 'trending' ? ['TRENDING_DESC'] : ['POPULARITY_DESC']
 
   const res = await fetch(ANILIST_GRAPHQL, {
@@ -112,5 +119,8 @@ export async function fetchAniListDiscover(
     throw new Error(data.errors.map((e) => e.message).join('; '))
   }
 
-  return data.data?.Page?.media ?? []
+  return {
+    media: data.data?.Page?.media ?? [],
+    hasNextPage: Boolean(data.data?.Page?.pageInfo?.hasNextPage),
+  }
 }

@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Global anime search**: Nav now includes an app-wide search bar with quick results, direct detail navigation, and an inline `+` import button. The standalone `/search` page now redirects back to the watchlist.
 - **Anime details pages**: Added `/anime/[provider]/[id]` pages for search results and tracked shows, with poster, metadata, airing info, add-to-watchlist action, and tracked status controls.
-- **Up-to-Date status**: Added `UP_TO_DATE` as a watchlist status plus persisted `upToDateEpisodeNum` / `upToDateStale` fields. Airing refreshes now flag Up-to-Date shows when TMDB reports a newer aired episode.
+- **Up-to-Date status**: Added `UP_TO_DATE` as a watchlist status plus persisted `upToDateEpisodeNum`, `upToDateAiredAt`, and `upToDateStale` fields. Airing refreshes now flag Up-to-Date shows when TMDB reports a newer aired episode/date, including new seasons whose episode numbers reset.
 - **Watchlist navigation controls**: Added status filters, a Needs Update filter, and sort options for recent updates, title, rating, and first-air date.
 - **Discover pagination**: Discover now fetches 42 AniList items per page and exposes Previous/Next controls per tab.
 
@@ -19,6 +19,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Watchlist cards**: Tracked poster cards now navigate to their anime detail pages. Rating stars were made more compact and the clear-rating button was moved out of the star row so rated cards fit inside small poster cards.
 - **Nav brand**: Replaced the text title with the configured favicon artwork.
 - **Dashboard/Schedule status labels**: Include the new Up-to-Date status throughout status summaries and badges.
+### Fixed
+
+- Hardened Up-to-Date baselines so shows with no previous airing refresh do not immediately become stale on the first refresh.
+- Fixed status PATCH validation for invalid falsy status values.
+- Discover now uses AniList `pageInfo.hasNextPage` and bounded TMDB mapping concurrency to reduce pagination/rate-limit issues.
+- Prevented watchlist child controls from bubbling keyboard events to the card-level detail navigation.
+- Added abort handling to global search so stale responses cannot overwrite newer queries.
 
 ## [1.1.0] - 2026-07-13
 

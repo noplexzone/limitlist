@@ -1,6 +1,6 @@
 'use client'
 
-import { MouseEvent, useEffect, useMemo, useState } from 'react'
+import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
@@ -69,6 +69,10 @@ function StarRating({
     onRate(value)
   }
 
+  function stopKeyNavigation(e: KeyboardEvent) {
+    e.stopPropagation()
+  }
+
   return (
     <div className="relative w-full px-5" aria-label="Rating">
       <div className="flex items-center justify-center gap-0.5" onMouseLeave={() => setHovered(null)}>
@@ -84,6 +88,7 @@ function StarRating({
                 onMouseEnter={() => setHovered(half)}
                 onFocus={() => setHovered(half)}
                 onClick={(e) => click(e, half)}
+                onKeyDown={stopKeyNavigation}
                 className="absolute left-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-l"
               />
               <button
@@ -92,6 +97,7 @@ function StarRating({
                 onMouseEnter={() => setHovered(star)}
                 onFocus={() => setHovered(star)}
                 onClick={(e) => click(e, star)}
+                onKeyDown={stopKeyNavigation}
                 className="absolute right-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-r"
               />
             </div>
@@ -102,6 +108,7 @@ function StarRating({
         <button
           type="button"
           onClick={(e) => click(e, null)}
+          onKeyDown={stopKeyNavigation}
           aria-label="Clear rating"
           className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-0.5 text-xs font-medium text-gray-200 hover:bg-black/90"
           title="Clear rating"
@@ -249,6 +256,7 @@ export default function WatchlistClient() {
                   id={`status-${show.id}`}
                   value={show.status}
                   onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
                   onChange={(e) => patchShow(show.id, { status: e.target.value as AnimeShow['status'] })}
                   className={`w-full cursor-pointer rounded-full border px-2 py-1.5 text-center text-[11px] font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 sm:px-3 sm:text-xs ${STATUS_SELECT_CLASSES[show.status]}`}
                 >

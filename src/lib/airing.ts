@@ -33,11 +33,19 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
     return { showId, title: show.title, success: false, error: 'TMDB returned no data' }
   }
 
+  const providerLastAiredAt = airingInfo.lastAiredAt?.getTime() ?? null
+  const baselineAiredAt = show.upToDateAiredAt?.getTime() ?? null
+  const hasBaseline = baselineAiredAt !== null || show.upToDateEpisodeNum !== null
   const upToDateBecameStale =
     show.status === 'UP_TO_DATE' &&
     !show.upToDateStale &&
-    typeof airingInfo.lastEpisodeNum === 'number' &&
-    airingInfo.lastEpisodeNum > (show.upToDateEpisodeNum ?? 0)
+    hasBaseline &&
+    ((providerLastAiredAt !== null && baselineAiredAt !== null && providerLastAiredAt > baselineAiredAt) ||
+      (baselineAiredAt === null &&
+        typeof airingInfo.lastEpisodeNum === 'number' &&
+        typeof show.upToDateEpisodeNum === 'number' &&
+        airingInfo.lastEpisodeNum > show.upToDateEpisodeNum))
+  const initializeUpToDateBaseline = show.status === 'UP_TO_DATE' && !hasBaseline
 
   await prisma.animeShow.update({
     where: { id: showId },
@@ -49,6 +57,9 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
       lastAiredAt: airingInfo.lastAiredAt,
       airingRefreshedAt: new Date(),
       ...(upToDateBecameStale ? { upToDateStale: true } : {}),
+      ...(initializeUpToDateBaseline
+        ? { upToDateEpisodeNum: airingInfo.lastEpisodeNum, upToDateAiredAt: airingInfo.lastAiredAt }
+        : {}),
     },
   })
 

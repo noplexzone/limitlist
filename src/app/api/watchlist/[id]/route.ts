@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { isShowStatus } from '@/lib/status'
+import { getTmdbProvider } from '@/lib/tmdb'
 
 export async function GET(
   _req: NextRequest,
@@ -27,7 +28,7 @@ export async function PATCH(
   const body = await req.json()
 
   // Validation
-  if (body.status && !isShowStatus(body.status)) {
+  if ('status' in body && !isShowStatus(body.status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
@@ -65,10 +66,30 @@ export async function PATCH(
         updateData[field] = body[field]
         if (field === 'status') {
           if (body.status === 'UP_TO_DATE') {
-            updateData.upToDateEpisodeNum = current.lastEpisodeNum ?? 0
+            let lastEpisodeNum = current.lastEpisodeNum
+            let lastAiredAt = current.lastAiredAt
+
+            if (current.metadataProvider === 'tmdb' && (lastEpisodeNum == null || lastAiredAt == null)) {
+              const tmdb = getTmdbProvider()
+              const airingInfo = tmdb ? await tmdb.getAiringDetails(current.metadataId) : null
+              if (airingInfo) {
+                lastEpisodeNum = airingInfo.lastEpisodeNum
+                lastAiredAt = airingInfo.lastAiredAt
+                updateData.airingStatus = airingInfo.airingStatus
+                updateData.nextEpisodeNum = airingInfo.nextEpisodeNum
+                updateData.nextAiringAt = airingInfo.nextAiringAt
+                updateData.lastEpisodeNum = airingInfo.lastEpisodeNum
+                updateData.lastAiredAt = airingInfo.lastAiredAt
+                updateData.airingRefreshedAt = new Date()
+              }
+            }
+
+            updateData.upToDateEpisodeNum = lastEpisodeNum
+            updateData.upToDateAiredAt = lastAiredAt
             updateData.upToDateStale = false
           } else {
             updateData.upToDateEpisodeNum = null
+            updateData.upToDateAiredAt = null
             updateData.upToDateStale = false
           }
         }
