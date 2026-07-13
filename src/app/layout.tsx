@@ -7,8 +7,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
     ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
 }
 

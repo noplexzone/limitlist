@@ -12,7 +12,7 @@ _No unreleased changes._
 
 ### Added
 
-- **Favicon / app icon**: Purple play-button SVG at `src/app/icon.svg` plus `/favicon.ico` fallback for browser tab/icon requests. Metadata explicitly advertises both icons, and `themeColor` moved to `Viewport` export per Next.js 15.
+- **Favicon / app icon**: Uses the provided blue anime-eye artwork for `/favicon.ico`, `/favicon.png`, `/icon.png`, and Apple/app icon assets. Metadata explicitly advertises the browser and Apple icons, and `themeColor` moved to `Viewport` export per Next.js 15.
 - **Discover page** (`/discover`): New auth-protected page listing popular and trending anime from TMDB. Tab switcher between "Popular Anime" (`/discover/tv` filtered by Animation + Japanese origin, popularity-sorted) and "Trending This Week" (`/trending/tv/week` filtered for anime). One-click Add to Watchlist with TMDB enrichment. Shows already in the watchlist are marked "In Watchlist". Requires `TMDB_API_KEY`; shows a clear error if not configured.
 - **Global reminder badge**: Nav now self-fetches `/api/reminders/count` on every route change — the Schedule badge is visible from any page, not only when the Schedule page passes a prop. `reminderCount` prop removed from Nav.
 - **Watchlist episode +1 button**: Episode progress counter ("Ep X/Y") and +1 button appear in the hover overlay on every watchlist card. Incrementing auto-caps at `episodesTotal`; reaching the final episode auto-sets status to Completed.
