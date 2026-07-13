@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+_No unreleased changes._
+
+## [1.0.2] - 2026-07-13
+
+### Changed
+
+- Watchlist card redesign: larger poster (120×180), two-column grid on wide screens, bigger title text, more padding.
+- Status is now a styled pill-shaped dropdown on each card; changing it PATCHes immediately without entering edit mode.
+- Star rating is now clickable directly on each card with half-star precision (0.5–5.0); a clear button removes the rating.
+- Notes are editable inline and saved on blur.
+- Removed the Edit button and the save/cancel edit flow entirely.
+- Removed episode-watched, episode-total, and episode-duration controls from the watchlist UI.
+
 ## [1.0.1] - 2026-07-12
 
 ### Added

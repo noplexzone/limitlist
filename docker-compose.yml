@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   anime-tracker:
-    image: anime-tracker:v1.0.1
+    image: anime-tracker:v1.0.2
     build: .
     container_name: anime-tracker
     ports:

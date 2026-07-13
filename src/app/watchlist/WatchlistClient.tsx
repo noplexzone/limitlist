@@ -26,43 +26,82 @@ interface AnimeShow {
   airingRefreshedAt?: string | null
 }
 
-const RATING_OPTIONS: { value: number | null; label: string }[] = [
-  { value: null, label: 'Unrated' },
-  { value: 0.5, label: '0.5' },
-  { value: 1.0, label: '1' },
-  { value: 1.5, label: '1.5' },
-  { value: 2.0, label: '2' },
-  { value: 2.5, label: '2.5' },
-  { value: 3.0, label: '3' },
-  { value: 3.5, label: '3.5' },
-  { value: 4.0, label: '4' },
-  { value: 4.5, label: '4.5' },
-  { value: 5.0, label: '5' },
-]
-
-const STATUS_LABELS: Record<AnimeShow['status'], string> = {
-  WATCHING: 'Watching',
-  COMPLETED: 'Completed',
-  PLAN_TO_WATCH: 'Plan to Watch',
-  DROPPED: 'Dropped',
+const STATUS_SELECT_CLASSES: Record<AnimeShow['status'], string> = {
+  WATCHING: 'bg-blue-700 border-blue-600',
+  COMPLETED: 'bg-green-700 border-green-600',
+  PLAN_TO_WATCH: 'bg-amber-700 border-amber-600',
+  DROPPED: 'bg-red-800 border-red-700',
 }
 
-const STATUS_COLORS: Record<AnimeShow['status'], string> = {
-  WATCHING: 'bg-blue-600',
-  COMPLETED: 'bg-green-600',
-  PLAN_TO_WATCH: 'bg-yellow-600',
-  DROPPED: 'bg-red-600',
+function StarRating({
+  rating,
+  onRate,
+}: {
+  rating: number | null
+  onRate: (v: number | null) => void
+}) {
+  const [hov, setHov] = useState<number | null>(null)
+  const effective = hov ?? rating ?? 0
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex" onMouseLeave={() => setHov(null)}>
+        {Array.from({ length: 5 }, (_, i) => {
+          const full = i + 1
+          const half = i + 0.5
+          const isFull = effective >= full
+          const isHalf = !isFull && effective >= half
+          return (
+            <div key={i} className="relative w-6 h-6">
+              <span className="absolute inset-0 text-gray-600 text-xl leading-none select-none">
+                ★
+              </span>
+              {(isFull || isHalf) && (
+                <span
+                  className="absolute inset-0 text-yellow-400 text-xl leading-none select-none"
+                  style={isHalf ? { clipPath: 'inset(0 50% 0 0)' } : undefined}
+                >
+                  ★
+                </span>
+              )}
+              <div
+                className="absolute left-0 top-0 w-1/2 h-full z-10 cursor-pointer"
+                onMouseEnter={() => setHov(half)}
+                onClick={() => onRate(half)}
+              />
+              <div
+                className="absolute right-0 top-0 w-1/2 h-full z-10 cursor-pointer"
+                onMouseEnter={() => setHov(full)}
+                onClick={() => onRate(full)}
+              />
+            </div>
+          )
+        })}
+      </div>
+      {rating != null ? (
+        <>
+          <span className="text-yellow-400 text-sm font-semibold">{rating}/5</span>
+          <button
+            onClick={() => onRate(null)}
+            className="text-gray-500 hover:text-white text-sm leading-none"
+            title="Clear rating"
+          >
+            ✕
+          </button>
+        </>
+      ) : (
+        <span className="text-gray-500 text-xs italic">Unrated</span>
+      )}
+    </div>
+  )
 }
 
 export default function WatchlistClient() {
   const [shows, setShows] = useState<AnimeShow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [editing, setEditing] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState<Partial<AnimeShow>>({})
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
   const [refreshingId, setRefreshingId] = useState<string | null>(null)
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchWatchlist()
@@ -72,68 +111,42 @@ export default function WatchlistClient() {
     setLoading(true)
     const res = await fetch('/api/watchlist')
     if (res.ok) {
-      const data = await res.json()
+      const data: AnimeShow[] = await res.json()
       setShows(data)
+      setNotesMap(Object.fromEntries(data.map((s) => [s.id, s.notes ?? ''])))
     } else {
       setError('Failed to load watchlist')
     }
     setLoading(false)
   }
 
-  function startEdit(show: AnimeShow) {
-    setEditing(show.id)
-    setEditValues({
-      status: show.status,
-      episodesWatched: show.episodesWatched,
-      episodesTotal: show.episodesTotal,
-      episodeDurationMinutes: show.episodeDurationMinutes,
-      rating: show.rating ?? null,
-      notes: show.notes ?? '',
-    })
-    setSaveError('')
-  }
-
-  function cancelEdit() {
-    setEditing(null)
-    setEditValues({})
-    setSaveError('')
-  }
-
-  async function saveEdit(id: string) {
-    setSaving(true)
-    setSaveError('')
+  async function patchShow(
+    id: string,
+    patch: { status?: AnimeShow['status']; rating?: number | null; notes?: string | null }
+  ) {
+    setShows((prev) => prev.map((s) => (s.id === id ? ({ ...s, ...patch } as AnimeShow) : s)))
     const res = await fetch(`/api/watchlist/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editValues),
+      body: JSON.stringify(patch),
     })
     if (res.ok) {
-      const updated = await res.json()
+      const updated: AnimeShow = await res.json()
       setShows((prev) => prev.map((s) => (s.id === id ? updated : s)))
-      setEditing(null)
-      setEditValues({})
-    } else {
-      const data = await res.json()
-      setSaveError(data.error ?? 'Save failed')
     }
-    setSaving(false)
   }
 
   async function refreshAiring(id: string) {
     setRefreshingId(id)
     const res = await fetch(`/api/watchlist/${id}/refresh-airing`, { method: 'POST' })
-    if (res.ok) {
-      await fetchWatchlist()
-    }
+    if (res.ok) await fetchWatchlist()
     setRefreshingId(null)
   }
 
   async function deleteShow(id: string, title: string) {
     if (!confirm(`Remove "${title}" from your watchlist?`)) return
     const res = await fetch(`/api/watchlist/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      setShows((prev) => prev.filter((s) => s.id !== id))
-    }
+    if (res.ok) setShows((prev) => prev.filter((s) => s.id !== id))
   }
 
   if (loading) return <p className="text-gray-400">Loading watchlist...</p>
@@ -153,218 +166,117 @@ export default function WatchlistClient() {
     )
 
   return (
-    <div className="grid gap-4">
-      {shows.map((show) => (
-        <div
-          key={show.id}
-          className="bg-gray-900 rounded-xl p-4 flex gap-4 border border-gray-800"
-        >
-          {show.posterUrl && (
-            <div className="flex-shrink-0">
-              <Image
-                src={show.posterUrl}
-                alt={`${show.title} poster`}
-                width={80}
-                height={120}
-                className="rounded-lg object-cover"
-              />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 flex-wrap">
-              <div>
-                <h2 className="font-bold text-lg text-white leading-tight">{show.title}</h2>
-                {show.originalTitle && (
-                  <p className="text-gray-400 text-sm">{show.originalTitle}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span
-                  className={`px-2 py-0.5 rounded text-xs font-medium text-white ${STATUS_COLORS[show.status]}`}
-                >
-                  {STATUS_LABELS[show.status]}
-                </span>
-                <span className="text-xs text-gray-600 font-mono">
-                  {show.metadataProvider}:{show.metadataId}
-                </span>
-              </div>
-            </div>
-
-            {show.genres && (
-              <p className="text-xs text-gray-400 mt-1">{show.genres}</p>
-            )}
-            {show.studios && (
-              <p className="text-xs text-gray-500 mt-0.5">{show.studios}</p>
-            )}
-
-            <div className="flex items-center gap-4 mt-2 text-sm text-gray-300">
-              <span>
-                Ep: {show.episodesWatched}
-                {show.episodesTotal != null ? `/${show.episodesTotal}` : '/?'}
-              </span>
-              <span>{show.episodeDurationMinutes}min/ep</span>
-              {show.rating != null && (
-                <span className="text-yellow-400 font-medium">{show.rating}/5</span>
-              )}
-            </div>
-            {show.notes && (
-              <p className="text-gray-400 text-sm mt-1 italic">{show.notes}</p>
-            )}
-
-            {show.nextAiringAt && (
-              <p className="text-xs text-purple-300 mt-1">
-                Next ep{show.nextEpisodeNum != null ? ` ${show.nextEpisodeNum}` : ''}:{' '}
-                {new Date(show.nextAiringAt).toLocaleDateString(undefined, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </p>
-            )}
-
-            {editing === show.id ? (
-              <div className="mt-3 space-y-2">
-                {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
-                <div className="flex flex-wrap gap-3">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-gray-400">Status</span>
-                    <select
-                      value={editValues.status ?? show.status}
-                      onChange={(e) =>
-                        setEditValues((v) => ({
-                          ...v,
-                          status: e.target.value as AnimeShow['status'],
-                        }))
-                      }
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm"
-                    >
-                      <option value="PLAN_TO_WATCH">Plan to Watch</option>
-                      <option value="WATCHING">Watching</option>
-                      <option value="COMPLETED">Completed</option>
-                      <option value="DROPPED">Dropped</option>
-                    </select>
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-gray-400">Eps Watched</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={editValues.episodesWatched ?? show.episodesWatched}
-                      onChange={(e) =>
-                        setEditValues((v) => ({
-                          ...v,
-                          episodesWatched: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm w-20"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-gray-400">Eps Total</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={editValues.episodesTotal ?? show.episodesTotal ?? ''}
-                      onChange={(e) =>
-                        setEditValues((v) => ({
-                          ...v,
-                          episodesTotal: e.target.value ? parseInt(e.target.value) : null,
-                        }))
-                      }
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm w-20"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-gray-400">Min/Episode</span>
-                    <input
-                      type="number"
-                      min={1}
-                      value={editValues.episodeDurationMinutes ?? show.episodeDurationMinutes}
-                      onChange={(e) =>
-                        setEditValues((v) => ({
-                          ...v,
-                          episodeDurationMinutes: parseInt(e.target.value) || 24,
-                        }))
-                      }
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm w-20"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-gray-400">Rating</span>
-                    <select
-                      value={editValues.rating ?? ''}
-                      onChange={(e) =>
-                        setEditValues((v) => ({
-                          ...v,
-                          rating: e.target.value === '' ? null : parseFloat(e.target.value),
-                        }))
-                      }
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm"
-                    >
-                      {RATING_OPTIONS.map((opt) => (
-                        <option key={opt.label} value={opt.value ?? ''}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="text-gray-400">Notes</span>
-                  <textarea
-                    value={editValues.notes ?? ''}
-                    onChange={(e) =>
-                      setEditValues((v) => ({ ...v, notes: e.target.value }))
-                    }
-                    rows={2}
-                    placeholder="Optional notes..."
-                    className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm w-full resize-y"
-                  />
-                </label>
-                <div className="flex gap-2 mt-1">
-                  <button
-                    onClick={() => saveEdit(show.id)}
-                    disabled={saving}
-                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded text-sm font-medium"
-                  >
-                    {saving ? 'Saving...' : 'Save'}
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium"
-                  >
-                    Cancel
-                  </button>
-                </div>
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {shows.map((show) => {
+        const year = show.firstAiredAt
+          ? new Date(show.firstAiredAt).getFullYear()
+          : null
+        return (
+          <div
+            key={show.id}
+            className="bg-gray-900 rounded-2xl p-5 flex gap-5 border border-gray-800 hover:border-gray-700 transition-colors"
+          >
+            {show.posterUrl ? (
+              <div className="flex-shrink-0">
+                <Image
+                  src={show.posterUrl}
+                  alt={`${show.title} poster`}
+                  width={120}
+                  height={180}
+                  className="rounded-xl object-cover"
+                />
               </div>
             ) : (
-              <div className="flex gap-2 mt-3 flex-wrap">
-                <button
-                  onClick={() => startEdit(show)}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium"
-                >
-                  Edit
-                </button>
+              <div className="flex-shrink-0 w-[120px] h-[180px] rounded-xl bg-gray-800 flex items-center justify-center">
+                <span className="text-gray-600 text-3xl">?</span>
+              </div>
+            )}
+
+            <div className="flex-1 min-w-0 flex flex-col gap-3">
+              {/* Title block */}
+              <div>
+                <h2 className="font-bold text-xl text-white leading-tight">{show.title}</h2>
+                {show.originalTitle && show.originalTitle !== show.title && (
+                  <p className="text-gray-400 text-sm mt-0.5">{show.originalTitle}</p>
+                )}
+                {(year || show.genres || show.studios) && (
+                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                    {[year, show.genres, show.studios].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+              </div>
+
+              {/* Status tag dropdown */}
+              <select
+                value={show.status}
+                onChange={(e) =>
+                  patchShow(show.id, { status: e.target.value as AnimeShow['status'] })
+                }
+                className={`self-start rounded-full px-4 py-1 text-xs font-semibold text-white border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors ${STATUS_SELECT_CLASSES[show.status]}`}
+              >
+                <option value="PLAN_TO_WATCH">Plan to Watch</option>
+                <option value="WATCHING">Watching</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="DROPPED">Dropped</option>
+              </select>
+
+              {/* Star rating */}
+              <StarRating
+                rating={show.rating ?? null}
+                onRate={(v) => patchShow(show.id, { rating: v })}
+              />
+
+              {/* Notes */}
+              <textarea
+                value={notesMap[show.id] ?? ''}
+                onChange={(e) =>
+                  setNotesMap((m) => ({ ...m, [show.id]: e.target.value }))
+                }
+                onBlur={() => {
+                  const v = notesMap[show.id] ?? ''
+                  if (v !== (show.notes ?? '')) {
+                    patchShow(show.id, { notes: v || null })
+                  }
+                }}
+                rows={2}
+                placeholder="Add notes…"
+                className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 resize-none w-full focus:outline-none focus:border-gray-500 transition-colors"
+              />
+
+              {/* Next airing */}
+              {show.nextAiringAt && (
+                <p className="text-xs text-purple-300">
+                  Next ep{show.nextEpisodeNum != null ? ` ${show.nextEpisodeNum}` : ''}:{' '}
+                  {new Date(show.nextAiringAt).toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 flex-wrap mt-auto pt-1">
                 {show.metadataProvider === 'tmdb' && (
                   <button
                     onClick={() => refreshAiring(show.id)}
                     disabled={refreshingId === show.id}
-                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded text-sm font-medium"
+                    className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
                   >
-                    {refreshingId === show.id ? 'Refreshing...' : 'Refresh Schedule'}
+                    {refreshingId === show.id ? 'Refreshing…' : 'Refresh Schedule'}
                   </button>
                 )}
                 <button
                   onClick={() => deleteShow(show.id, show.title)}
-                  className="px-3 py-1 bg-red-800 hover:bg-red-700 rounded text-sm font-medium"
+                  className="px-3 py-1.5 bg-red-900 hover:bg-red-800 rounded-lg text-sm font-medium transition-colors"
                 >
                   Remove
                 </button>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
