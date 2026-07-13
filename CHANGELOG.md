@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 _No unreleased changes._
 
+## [1.1.0] - 2026-07-13
+
+### Added
+
+- **Favicon / app icon**: Purple play-button SVG at `src/app/icon.svg` plus `/favicon.ico` fallback for browser tab/icon requests. Metadata explicitly advertises both icons, and `themeColor` moved to `Viewport` export per Next.js 15.
+- **Discover page** (`/discover`): New auth-protected page listing popular and trending anime from TMDB. Tab switcher between "Popular Anime" (`/discover/tv` filtered by Animation + Japanese origin, popularity-sorted) and "Trending This Week" (`/trending/tv/week` filtered for anime). One-click Add to Watchlist with TMDB enrichment. Shows already in the watchlist are marked "In Watchlist". Requires `TMDB_API_KEY`; shows a clear error if not configured.
+- **Global reminder badge**: Nav now self-fetches `/api/reminders/count` on every route change — the Schedule badge is visible from any page, not only when the Schedule page passes a prop. `reminderCount` prop removed from Nav.
+- **Watchlist episode +1 button**: Episode progress counter ("Ep X/Y") and +1 button appear in the hover overlay on every watchlist card. Incrementing auto-caps at `episodesTotal`; reaching the final episode auto-sets status to Completed.
+- **Watchlist title overlay**: Always-visible title strip at the bottom of each poster card so posters are no longer anonymous.
+- **Poster image error fallback**: Broken remote poster URLs now show a title placeholder via the new `PosterImage` client component (`src/components/PosterImage.tsx`) used across Watchlist, Search, and Discover.
+- **Dashboard shelves**: "Continue Watching" and "Highest Rated" horizontal poster strips at the top of the Dashboard, derived from existing watchlist data. Shelves are hidden when empty.
+- **Discover link** added to the Nav bar.
+
+### Changed
+
+- **Nav mobile responsiveness**: Links use smaller padding/text on mobile (`px-2 text-xs`), the link strip is horizontally scrollable, Dashboard link is hidden below the `md` breakpoint, and the brand abbreviates to "AT" below `sm`.
+- **Search results** restyled from a vertical list into a responsive poster-grid (2–6 columns) consistent with Watchlist and Discover. "Anime-focused" checkbox label shortened.
+
 ## [1.0.3] - 2026-07-13
 
 ### Changed

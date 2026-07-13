@@ -49,10 +49,10 @@ There is no default username or password; you set them during setup.
 
 ## Unraid deployment
 
-v1.0.1 runs as a single self-hosted Unraid app container:
+v1.1.0 runs as a single self-hosted Unraid app container:
 
 - Container name: `anime-tracker`
-- Image/tag: `anime-tracker:v1.0.1`
+- Image/tag: `anime-tracker:v1.1.0`
 - Host port: `3020` -> container port `3000`
 - Persistent data: `/mnt/user/appdata/anime-tracker:/data`
 - SQLite database: `/data/anime-tracker.db`
@@ -169,9 +169,31 @@ Empty state is handled gracefully — the dashboard displays a link to search/im
 
 Stats are computed server-side in `src/lib/stats.ts` (`computeStats(shows)`).
 
+## Discover
+
+The `/discover` route shows popular and trending anime from TMDB (auth-protected):
+
+- **Popular Anime** tab — uses the TMDB `/discover/tv` endpoint filtered to Animation genre and Japanese-origin shows, sorted by popularity.
+- **Trending This Week** tab — uses `/trending/tv/week` filtered for anime.
+- One-click **Add to Watchlist** triggers the same TMDB enrichment as Search import.
+- Shows already in your watchlist are marked "In Watchlist".
+- Requires `TMDB_API_KEY`; displays a clear error if the key is not configured.
+- Results are cached for 1 hour.
+
+## Watchlist episode tracking
+
+Each watchlist card shows:
+- **Ep X/Y** counter in the hover overlay (or "Ep X" when total episodes are unknown).
+- **+1 button** to increment episodes watched without entering edit mode.  Capped at `episodesTotal`; automatically sets status to **Completed** when the final episode is reached.
+
+## Global reminder badge
+
+The **Schedule** link in the nav bar shows a red badge with the undismissed reminder count regardless of which page you are on. The count refreshes on every route change.
+
 ## Phases
 
 - **Phase 1** (complete): Core CRUD, auth, TMDB search, Docker
 - **Phase 2** (complete): Ratings/notes, anime-focused search, Docker non-root runtime
 - **Phase 3** (complete): Stats dashboard (`/dashboard`) with status counts, completion rate, episodes/hours watched, top genres/studios
 - **Phase 4** (complete): Airing schedule tracking + in-app reminders
+- **v1.1.0** (complete): Favicon/app icon, /discover page, global nav reminder badge, mobile nav, watchlist title overlay + image fallback + episode +1, poster-grid search, dashboard shelves
