@@ -34,6 +34,14 @@ interface TvdbSearchResult {
 }
 interface TvdbGenre { name?: string }
 interface TvdbCompany { name?: string }
+interface TvdbCompanyGroups {
+  studio?: TvdbCompany[]
+  production?: TvdbCompany[]
+  network?: TvdbCompany[]
+  distributor?: TvdbCompany[]
+  special_effects?: TvdbCompany[]
+}
+
 interface TvdbSeriesExtended {
   id: number
   name?: string
@@ -45,7 +53,7 @@ interface TvdbSeriesExtended {
   genres?: TvdbGenre[]
   originalCountry?: string
   originalLanguage?: string
-  companies?: { studio?: TvdbCompany[]; production?: TvdbCompany[] }
+  companies?: TvdbCompanyGroups | TvdbCompany[]
   nextAired?: string
   lastAired?: string
   artworks?: Array<{ image?: string; url?: string }>
@@ -240,7 +248,18 @@ export class TvdbProvider implements MetadataProvider {
     const now = Date.now()
     const last = dated.filter((e) => e.date.getTime() <= now).sort((a, b) => b.date.getTime() - a.date.getTime())[0]
     const next = dated.filter((e) => e.date.getTime() > now).sort((a, b) => a.date.getTime() - b.date.getTime())[0]
-    const studios = [...(series.companies?.studio ?? []), ...(series.companies?.production ?? [])].map((c) => c.name).filter(Boolean) as string[]
+    const companyGroups = Array.isArray(series.companies)
+      ? { production: series.companies }
+      : series.companies
+    const studios = [
+      ...(companyGroups?.studio ?? []),
+      ...(companyGroups?.production ?? []),
+      ...(companyGroups?.network ?? []),
+      ...(companyGroups?.distributor ?? []),
+      ...(companyGroups?.special_effects ?? []),
+    ]
+      .map((c) => c.name?.trim())
+      .filter((name, index, all): name is string => Boolean(name) && all.indexOf(name) === index)
     return {
       providerId: String(series.id),
       providerName: 'tvdb',

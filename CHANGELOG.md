@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-Release target: initial official `v1.0.0`.
+Current build: `v0.14.1`. Release target: official `v1.0.0`.
 
 ### Added
 
-- **Dashboard What's New sidebar**: The dashboard changelog panel now lives in a left sidebar, the page uses more horizontal width, and all currently tracked prior updates are visible in the in-app changelog.
+- **Dashboard What's New sidebar**: The dashboard changelog panel now lives in a left sidebar, uses a unified expandable card for every update with the newest entry open by default, and the whole card scrolls through the full pre-1.0 history.
 
 - First-run setup now offers optional TVDB API key, PIN, and season-type fields so new installs can search/import immediately.
 - **AniList detail metadata**: Anime detail pages now use AniList for similar recommendations, official related movies/specials, season grouping, and Japanese voice-cast fallback.
@@ -32,7 +32,7 @@ Release target: initial official `v1.0.0`.
 
 ### Changed
 
-- **Versioning reset**: LimitList is prepared as the initial official `v1.0.0` release line; release-candidate tags are avoided for this project unless explicitly reintroduced later.
+- **Versioning reset**: LimitList pre-1.0 builds are tracked as `v0.x.0` iterations, with this polish pass as `v0.14.1`, leading into the official `v1.0.0` release.
 
 - TVDB Settings and first-run setup now use hidden key/PIN inputs with show/hide controls and a labeled season-order dropdown aligned to Plex ordering.
 - **Anime detail provider priority**: TMDB remains the monitoring source for tracked shows, but detail-page related metadata now prefers AniList so titles like Jujutsu Kaisen do not collapse into one aggregate season or include stage/fan-made movie results.
@@ -59,6 +59,8 @@ Release target: initial official `v1.0.0`.
 
 ### Fixed
 
+- Dashboard studio stats now backfill missing TVDB studio/company metadata for existing tracked shows when possible.
+- User-facing update notes no longer include internal documentation/process-only notes.
 - **Pre-release polish**: Status/rating changes on detail pages no longer clobber English sanitized descriptions; Tailwind now scans shared status classes; movies/specials, voice-cast cards, season ordering, and dashboard release notes were polished for initial release readiness.
 - Settings keeps the TVDB season-order dropdown and editable PIN controls visible when the API key is locked by environment.
 - Discover imports now surface watchlist API errors on the affected card, clear stuck loading states, and log AniList-to-TVDB import matching in development.
@@ -77,7 +79,7 @@ Release target: initial official `v1.0.0`.
 - Prevented watchlist child controls from bubbling keyboard events to the card-level detail navigation.
 - Added abort handling to global search so stale responses cannot overwrite newer queries.
 
-## Pre-release update — 2026-07-13
+## [0.4.0] - 2026-07-13
 
 ### Added
 
@@ -99,13 +101,13 @@ Release target: initial official `v1.0.0`.
 - **Nav mobile responsiveness**: Links use smaller padding/text on mobile (`px-2 text-xs`), the link strip is horizontally scrollable, Dashboard link is hidden below the `md` breakpoint, and the brand abbreviates to "AT" below `sm`.
 - **Search results** restyled from a vertical list into a responsive poster-grid (2–6 columns) consistent with Watchlist and Discover.
 
-## Pre-release watchlist polish — 2026-07-13
+## [0.3.0] - 2026-07-13
 
 ### Changed
 
 - Watchlist cards are now poster-only tiles. The status dropdown overlays the top of each poster, and the star rating overlay appears at the bottom only while hovering/focusing the poster.
 
-## Pre-release watchlist redesign — 2026-07-13
+## [0.2.1] - 2026-07-13
 
 ### Changed
 
@@ -116,7 +118,7 @@ Release target: initial official `v1.0.0`.
 - Removed the Edit button and the save/cancel edit flow entirely.
 - Removed episode-watched, episode-total, and episode-duration controls from the watchlist UI.
 
-## Pre-release setup update — 2026-07-12
+## [0.2.0] - 2026-07-12
 
 ### Added
 
@@ -136,7 +138,7 @@ Release target: initial official `v1.0.0`.
 - `.env.example`: `AUTH_USERNAME` and `AUTH_PASSWORD` removed; comment explains they have been replaced by the setup flow.
 - `package.json`: app package version was advanced for the internal setup build.
 
-## Pre-release foundation — 2026-07-12
+## [0.1.0] - 2026-07-12
 
 ### Added — Phase 4
 

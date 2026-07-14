@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
+import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { changelogEntries } from '@/lib/changelog'
 import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
@@ -22,31 +23,28 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 
 function WhatsNewPanel() {
-  const [latest, ...previous] = changelogEntries
   return (
     <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-purple-300">What&apos;s New</p>
-        <h2 className="mt-1 text-lg font-semibold text-gray-100">LimitList {latest.version}</h2>
-        <p className="text-sm text-gray-500">{latest.date}</p>
+        <h2 className="mt-1 text-lg font-semibold text-gray-100">LimitList updates</h2>
       </div>
-      <ul className="space-y-2 text-sm leading-6 text-gray-300">
-        {latest.bullets.map((bullet) => (
-          <li key={bullet} className="flex gap-2">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
-            <span>{bullet}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-5 max-h-[32rem] space-y-2 overflow-y-auto border-t border-gray-800 pt-4 pr-1 [scrollbar-width:thin]">
-        {previous.map((entry) => (
-          <details key={entry.version} className="rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2">
+      <div className="max-h-[38rem] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
+        {changelogEntries.map((entry, index) => (
+          <details key={entry.version} open={index === 0} className="rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2">
             <summary className="cursor-pointer text-sm font-medium text-gray-200">
               {entry.version} <span className="text-xs font-normal text-gray-500">· {entry.date}</span>
             </summary>
-            <ul className="mt-2 space-y-1 text-xs leading-5 text-gray-400">
-              {entry.bullets.map((bullet) => <li key={bullet}>• {bullet}</li>)}
-            </ul>
+            <div className="mt-3 space-y-3 text-xs leading-5 text-gray-400">
+              {entry.sections.map((section) => (
+                <div key={section.title}>
+                  <p className="mb-1 font-semibold uppercase tracking-wide text-purple-300">{section.title}</p>
+                  <ul className="space-y-1">
+                    {section.bullets.map((bullet) => <li key={bullet}>• {bullet}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </details>
         ))}
       </div>
@@ -122,7 +120,7 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const now = new Date()
-  const shows = await prisma.animeShow.findMany({
+  let shows = await prisma.animeShow.findMany({
     orderBy: { updatedAt: 'desc' },
     include: {
       reminders: {
@@ -132,7 +130,25 @@ export default async function DashboardPage() {
       },
     },
   })
-  const stats = computeStats(shows)
+  let stats = computeStats(shows)
+  if (stats.topStudios.length === 0 && shows.some((show) => show.metadataProvider === 'tvdb' && !show.studios)) {
+    const tvdb = await getConfiguredTvdbProvider()
+    if (tvdb?.getDetails) {
+      const candidates = shows.filter((show) => show.metadataProvider === 'tvdb' && !show.studios).slice(0, 12)
+      const enriched = await Promise.all(candidates.map(async (show) => {
+        const details = await tvdb.getDetails!(show.metadataId)
+        const studios = details?.studios?.join(', ')
+        if (!studios) return null
+        await prisma.animeShow.update({ where: { id: show.id }, data: { studios } })
+        return { id: show.id, studios }
+      }))
+      const studioUpdates = new Map(enriched.filter(Boolean).map((update) => [update!.id, update!.studios]))
+      if (studioUpdates.size > 0) {
+        shows = shows.map((show) => studioUpdates.has(show.id) ? { ...show, studios: studioUpdates.get(show.id)! } : show)
+        stats = computeStats(shows)
+      }
+    }
+  }
   const isEmpty = stats.totalShows === 0
 
   const continueWatching: ShelfShow[] = shows
