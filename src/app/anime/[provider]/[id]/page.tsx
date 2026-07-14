@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
-import type { MetadataSeasonSummary, MetadataVoiceCastGroup } from '@/lib/providers'
+import type { MetadataVoiceCastGroup } from '@/lib/providers'
 import { fetchJikanVoiceCast } from '@/lib/jikan'
 import {
   buildAniListRecommendations,
@@ -17,30 +17,6 @@ import {
 } from '@/lib/anilist'
 import Nav from '@/components/Nav'
 import AnimeDetailsClient, { type AnimeDetailsData } from './AnimeDetailsClient'
-
-async function enrichSeasonEpisodes(
-  metadataProvider: { getSeasonEpisodes?: (id: string, seasonNumber: number) => Promise<Array<{ episodeNumber: number; name: string; airDate?: string | null; voteAverage?: number | null; stillUrl?: string | null }> | null> } | null,
-  id: string,
-  seasons?: MetadataSeasonSummary[]
-): Promise<MetadataSeasonSummary[] | undefined> {
-  if (!metadataProvider || !seasons?.length) return seasons
-  const nonSpecials = seasons.filter((season) => season.seasonNumber > 0)
-  const prioritized = nonSpecials
-    .slice()
-    .sort((a, b) => b.seasonNumber - a.seasonNumber)
-    .slice(0, 2)
-  const episodeMaps = await Promise.all(
-    prioritized.map(async (season) => ({
-      seasonNumber: season.seasonNumber,
-      episodes: metadataProvider.getSeasonEpisodes ? await metadataProvider.getSeasonEpisodes(id, season.seasonNumber).catch(() => null) : null,
-    }))
-  )
-  const bySeason = new Map(episodeMaps.map((item) => [item.seasonNumber, item.episodes]))
-  return seasons.map((season) => ({
-    ...season,
-    episodes: bySeason.get(season.seasonNumber) ?? undefined,
-  }))
-}
 
 function mergeVoiceCastPreferJikan(jikan?: MetadataVoiceCastGroup | null, anilist?: MetadataVoiceCastGroup | null): MetadataVoiceCastGroup | undefined {
   return mergeVoiceCast(jikan, anilist)
@@ -81,12 +57,9 @@ export default async function AnimeDetailsPage({
   let data: AnimeDetailsData | null = null
   if (tracked) {
     let enrichedDetails = null
-    const metadata = tracked.metadataProvider === 'tvdb' ? await getConfiguredTvdbProvider() : tracked.metadataProvider === 'tmdb' ? await getConfiguredTmdbProvider() : null
+    const metadata = tracked.metadataProvider === 'tvdb' ? await getConfiguredTvdbProvider() : null
     if (metadata?.getDetails) {
       enrichedDetails = await metadata.getDetails(tracked.metadataId)
-      if (enrichedDetails?.seasons) {
-        enrichedDetails.seasons = await enrichSeasonEpisodes(metadata, tracked.metadataId, enrichedDetails.seasons)
-      }
     }
 
     const anilistDetail = await getAniListDetailForPage({
@@ -164,19 +137,16 @@ export default async function AnimeDetailsPage({
     const details = tvdb ? await tvdb.getDetails(id) : null
     if (tvdb && details) {
       const anilistDetail = await findAniListDetailForAnime([details.title, details.originalTitle], details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null).catch(() => null)
-      const [tvdbSeasons, jikanVoiceCast] = await Promise.all([
-        enrichSeasonEpisodes(tvdb, id, details.seasons),
-        fetchJikanVoiceCast(
-          [details.title, details.originalTitle],
-          details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
-        ),
-      ])
+      const jikanVoiceCast = await fetchJikanVoiceCast(
+        [details.title, details.originalTitle],
+        details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
+      )
       const voiceCast = mergeVoiceCastPreferJikan(jikanVoiceCast, anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined)
       data = {
         tracked: false,
         anime: {
           ...details,
-          seasons: tvdbSeasons,
+          seasons: details.seasons,
           voiceCast,
           recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],
           relatedMovies: anilistDetail ? buildAniListRelatedMovies(anilistDetail) : [],
@@ -189,20 +159,17 @@ export default async function AnimeDetailsPage({
     const details = tmdb ? await tmdb.getDetails(id) : null
     if (tmdb && details) {
       const anilistDetail = await findAniListDetailForAnime([details.title, details.originalTitle], details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null).catch(() => null)
-      const [tmdbSeasons, jikanVoiceCast] = await Promise.all([
-        enrichSeasonEpisodes(tmdb, id, details.seasons),
-        fetchJikanVoiceCast(
-          [details.title, details.originalTitle],
-          details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
-        ),
-      ])
-        const voiceCast = mergeVoiceCastPreferJikan(jikanVoiceCast, anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined)
+      const jikanVoiceCast = await fetchJikanVoiceCast(
+        [details.title, details.originalTitle],
+        details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
+      )
+      const voiceCast = mergeVoiceCastPreferJikan(jikanVoiceCast, anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined)
       data = {
         tracked: false,
         anime: {
           ...details,
           cast: undefined,
-          seasons: tmdbSeasons,
+          seasons: details.seasons,
           voiceCast,
           recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],
           relatedMovies: anilistDetail ? buildAniListRelatedMovies(anilistDetail) : [],

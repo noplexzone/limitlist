@@ -360,7 +360,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
             {anime.seasons.map((season) => (
               <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
                 <summary className="cursor-pointer font-semibold text-gray-100">
-                  {season.name} <span className="text-sm font-normal text-gray-500">· {season.episodeCount ?? season.episodes?.length ?? '?'} episodes in this season{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
+                  {season.name} <span className="text-sm font-normal text-gray-500">{season.episodeCount ?? season.episodes?.length ? ` · ${season.episodeCount ?? season.episodes?.length} episodes in this season` : ''}{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
                 </summary>
                 {season.overview && <p className="mt-2 text-sm text-gray-400">{season.overview}</p>}
                 {season.episodes && season.episodes.length > 0 && (
