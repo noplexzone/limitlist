@@ -39,10 +39,14 @@ export interface AnimeDetailsData {
     episodesTotal?: number | null
     status?: string | null
     rating?: number | null
+    notes?: string | null
     airingStatus?: string | null
     nextAiringAt?: string | null
     nextEpisodeNum?: number | null
     lastEpisodeNum?: number | null
+    lastAiredAt?: string | null
+    upToDateEpisodeNum?: number | null
+    upToDateAiredAt?: string | null
     upToDateStale?: boolean | null
     voteAverage?: number | null
     voteCount?: number | null
@@ -291,7 +295,25 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
     })
     if (res.ok) {
       const updated = await res.json()
-      setData({ tracked: true, anime: { ...anime, ...updated, providerId: updated.metadataId, providerName: updated.metadataProvider } })
+      setData((cur) => ({
+        tracked: true,
+        anime: {
+          ...cur.anime,
+          status: updated.status,
+          rating: updated.rating,
+          notes: updated.notes,
+          airingStatus: updated.airingStatus ?? cur.anime.airingStatus,
+          nextEpisodeNum: updated.nextEpisodeNum ?? cur.anime.nextEpisodeNum,
+          nextEpisodeName: updated.nextEpisodeName ?? cur.anime.nextEpisodeName,
+          nextAiringAt: updated.nextAiringAt ?? cur.anime.nextAiringAt,
+          lastEpisodeNum: updated.lastEpisodeNum ?? cur.anime.lastEpisodeNum,
+          lastEpisodeName: updated.lastEpisodeName ?? cur.anime.lastEpisodeName,
+          lastAiredAt: updated.lastAiredAt ?? cur.anime.lastAiredAt,
+          upToDateEpisodeNum: updated.upToDateEpisodeNum ?? cur.anime.upToDateEpisodeNum,
+          upToDateAiredAt: updated.upToDateAiredAt ?? cur.anime.upToDateAiredAt,
+          upToDateStale: updated.upToDateStale ?? cur.anime.upToDateStale,
+        },
+      }))
       router.refresh()
     }
     setBusy(false)
