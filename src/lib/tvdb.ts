@@ -49,6 +49,9 @@ interface TvdbEpisode {
   aired?: string
   image?: string
 }
+interface TvdbEpisodesPayload {
+  episodes?: TvdbEpisode[]
+}
 
 function normalizeSeasonType(value?: string | null) {
   return value?.trim() || 'default'
@@ -114,7 +117,12 @@ export class TvdbProvider implements MetadataProvider {
         await getToken(this.apiKey, this.pin, true)
         return this.fetchJson<T>(pathOrUrl, revalidate, timeoutMs, true)
       }
-      if (!res.ok) return null
+      if (!res.ok) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[tvdb] request failed', { path: pathOrUrl, status: res.status })
+        }
+        return null
+      }
       return (await res.json()) as TvdbEnvelope<T>
     } catch {
       return null
@@ -128,10 +136,8 @@ export class TvdbProvider implements MetadataProvider {
   }
 
   async search(query: string, options?: SearchOptions): Promise<MetadataResult[]> {
-    const url = new URL(`${TVDB_BASE}/search`)
-    url.searchParams.set('query', query)
-    url.searchParams.set('type', 'series')
-    const envelope = await this.fetchJson<TvdbSearchResult[]>(`${url.pathname}${url.search}`, 60, 4000)
+    const params = new URLSearchParams({ query, type: 'series' })
+    const envelope = await this.fetchJson<TvdbSearchResult[]>(`/search?${params.toString()}`, 60, 4000)
     let items = envelope?.data ?? []
     if (options?.animeOnly !== false) {
       const anime = items.filter(isAnimeLike)
@@ -156,8 +162,10 @@ export class TvdbProvider implements MetadataProvider {
     const episodes: TvdbEpisode[] = []
     const seen = new Set<string>()
     for (let page = 0; page < 25 && path; page += 1) {
-      const envelope = await this.fetchJson<TvdbEpisode[]>(path, 3600, 6000)
-      for (const episode of envelope?.data ?? []) {
+      const envelope = await this.fetchJson<TvdbEpisode[] | TvdbEpisodesPayload>(path, 3600, 6000)
+      const data = envelope?.data
+      const pageEpisodes = Array.isArray(data) ? data : data?.episodes ?? []
+      for (const episode of pageEpisodes) {
         const key = String(episode.id ?? `${episode.seasonNumber}-${episode.number}-${episode.name}`)
         if (!seen.has(key)) {
           seen.add(key)
