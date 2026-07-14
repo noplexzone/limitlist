@@ -52,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - TVDB search now calls `/v4/search` without doubling the `/v4` path segment, handles episode payloads returned under `data.episodes`, and development logs surface non-OK TVDB responses.
+- Dashboard empty-state import action now opens the global nav search instead of navigating to the watchlist.
 - Voice-cast enrichment now fails open so Jikan network/runtime errors cannot 500 anime detail pages.
 - Navigation no longer refetches the potentially-large profile image data URL on every route change; it loads once and refreshes when the Settings page changes the avatar.
 - Hardened AniList Discover imports so they require a valid TMDB match before creating a watchlist row, preventing unrefreshable AniList-only records.

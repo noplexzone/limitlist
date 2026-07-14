@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
 import Nav from '@/components/Nav'
 import ScheduleClient from '@/app/schedule/ScheduleClient'
+import OpenSearchButton from './OpenSearchButton'
 
 const STATUS_LABELS: Record<string, string> = {
   WATCHING: 'Watching',
@@ -145,12 +146,7 @@ export default async function DashboardPage() {
         {isEmpty ? (
           <div className="text-center py-20 text-gray-500">
             <p className="text-lg mb-4">No shows tracked yet.</p>
-            <Link
-              href="/watchlist"
-              className="inline-block px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Use the search button above to import anime
-            </Link>
+            <OpenSearchButton />
           </div>
         ) : (
           <div className="space-y-8">

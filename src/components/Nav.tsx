@@ -41,6 +41,16 @@ export default function Nav() {
     return () => window.removeEventListener('limitlist:profile-image-updated', refreshProfileImage)
   }, [])
 
+
+  useEffect(() => {
+    function openSearch() {
+      setSearchOpen(true)
+      setProfileOpen(false)
+    }
+    window.addEventListener('limitlist:open-search', openSearch)
+    return () => window.removeEventListener('limitlist:open-search', openSearch)
+  }, [])
+
   // Close profile dropdown on outside click
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
