@@ -1,5 +1,6 @@
 import { prisma } from './db'
 import { getConfiguredTmdbProvider } from './tmdb'
+import { getConfiguredTvdbProvider } from './tvdb'
 
 export interface RefreshResult {
   showId: string
@@ -12,13 +13,9 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
   const show = await prisma.animeShow.findUnique({ where: { id: showId } })
   if (!show) return { showId, title: '', success: false, error: 'Show not found' }
 
-  if (show.metadataProvider !== 'tmdb') {
-    return { showId, title: show.title, success: false, error: 'Not a TMDB show' }
-  }
-
-  const provider = await getConfiguredTmdbProvider()
-  if (!provider) {
-    return { showId, title: show.title, success: false, error: 'TMDB_API_KEY not configured' }
+  const provider = show.metadataProvider === 'tvdb' ? await getConfiguredTvdbProvider() : show.metadataProvider === 'tmdb' ? await getConfiguredTmdbProvider() : null
+  if (!provider?.getAiringDetails) {
+    return { showId, title: show.title, success: false, error: `No airing provider configured for ${show.metadataProvider}` }
   }
 
   let airingInfo
@@ -26,11 +23,11 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
     airingInfo = await provider.getAiringDetails(show.metadataId)
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
-    return { showId, title: show.title, success: false, error: `TMDB fetch failed: ${msg}` }
+    return { showId, title: show.title, success: false, error: `${show.metadataProvider.toUpperCase()} fetch failed: ${msg}` }
   }
 
   if (!airingInfo) {
-    return { showId, title: show.title, success: false, error: 'TMDB returned no data' }
+    return { showId, title: show.title, success: false, error: `${show.metadataProvider.toUpperCase()} returned no data` }
   }
 
   const providerLastAiredAt = airingInfo.lastAiredAt?.getTime() ?? null
@@ -88,7 +85,7 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
 
 export async function refreshAllShowsAiring(): Promise<RefreshResult[]> {
   const shows = await prisma.animeShow.findMany({
-    where: { metadataProvider: 'tmdb' },
+    where: { metadataProvider: { in: ['tmdb', 'tvdb'] } },
     select: { id: true },
   })
 

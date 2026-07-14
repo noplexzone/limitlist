@@ -12,6 +12,14 @@ export interface MetadataVoiceCastGroup {
   japanese: MetadataCastMember[]
 }
 
+export interface AiringInfo {
+  airingStatus: string | null
+  nextEpisodeNum: number | null
+  nextAiringAt: Date | null
+  lastEpisodeNum: number | null
+  lastAiredAt: Date | null
+}
+
 export interface MetadataRelatedItem {
   providerId: string
   providerName: string
@@ -33,8 +41,10 @@ export interface MetadataSeasonSummary {
     name: string
     airDate?: string | null
     voteAverage?: number | null
+    stillUrl?: string | null
   }>
 }
+
 
 export interface MetadataResult {
   providerId: string
@@ -73,4 +83,8 @@ export interface SearchOptions {
 export interface MetadataProvider {
   name: string
   search(query: string, options?: SearchOptions): Promise<MetadataResult[]>
+  getDetails?(id: string): Promise<MetadataResult | null>
+  getSeasonEpisodes?(id: string, seasonNumber: number): Promise<Array<{ episodeNumber: number; name: string; airDate?: string | null; voteAverage?: number | null; stillUrl?: string | null }> | null>
+  getAiringDetails?(id: string): Promise<AiringInfo | null>
+  findShowForAnime?(titles: Array<string | null | undefined>, year?: number | null): Promise<MetadataResult | null>
 }

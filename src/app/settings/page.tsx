@@ -1,7 +1,16 @@
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getStoredSetting, isTmdbApiKeyEnvLocked, TMDB_API_KEY_SETTING } from '@/lib/settings'
+import {
+  getConfiguredTvdbSeasonType,
+  getStoredSetting,
+  isTmdbApiKeyEnvLocked,
+  isTvdbApiKeyEnvLocked,
+  isTvdbPinEnvLocked,
+  TMDB_API_KEY_SETTING,
+  TVDB_API_KEY_SETTING,
+  TVDB_PIN_SETTING,
+} from '@/lib/settings'
 import Nav from '@/components/Nav'
 import SettingsClient from './SettingsClient'
 
@@ -17,7 +26,12 @@ export default async function SettingsPage() {
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
   const storedTmdbKey = await getStoredSetting(TMDB_API_KEY_SETTING)
+  const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
+  const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
   const lockedByEnvironment = isTmdbApiKeyEnvLocked()
+  const tvdbKeyLocked = isTvdbApiKeyEnvLocked()
+  const tvdbPinLocked = isTvdbPinEnvLocked()
+  const tvdbSeasonType = await getConfiguredTvdbSeasonType()
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -34,6 +48,17 @@ export default async function SettingsPage() {
               configured: lockedByEnvironment || Boolean(storedTmdbKey),
               masked: lockedByEnvironment ? 'Set in environment' : maskKey(storedTmdbKey),
             },
+            tvdbApiKey: {
+              lockedByEnvironment: tvdbKeyLocked,
+              configured: tvdbKeyLocked || Boolean(storedTvdbKey),
+              masked: tvdbKeyLocked ? 'Set in environment' : maskKey(storedTvdbKey),
+            },
+            tvdbPin: {
+              lockedByEnvironment: tvdbPinLocked,
+              configured: tvdbPinLocked || Boolean(storedTvdbPin),
+              masked: tvdbPinLocked ? 'Set in environment' : maskKey(storedTvdbPin),
+            },
+            tvdbSeasonType,
           }}
         />
       </main>

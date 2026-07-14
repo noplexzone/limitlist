@@ -3,10 +3,17 @@ import { getSession, requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { getTmdbProvider } from '@/lib/tmdb'
+import { getTvdbProvider } from '@/lib/tvdb'
 import {
   TMDB_API_KEY_SETTING,
+  TVDB_API_KEY_SETTING,
+  TVDB_PIN_SETTING,
+  TVDB_SEASON_TYPE_SETTING,
+  getConfiguredTvdbSeasonType,
   getStoredSetting,
   isTmdbApiKeyEnvLocked,
+  isTvdbApiKeyEnvLocked,
+  isTvdbPinEnvLocked,
   upsertStoredSetting,
 } from '@/lib/settings'
 
@@ -38,6 +45,9 @@ export async function GET() {
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
   const storedTmdbKey = await getStoredSetting(TMDB_API_KEY_SETTING)
+  const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
+  const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
+  const tvdbSeasonType = await getConfiguredTvdbSeasonType()
 
   return NextResponse.json({
     username: appUser?.username ?? user.username,
@@ -47,6 +57,17 @@ export async function GET() {
       configured: isTmdbApiKeyEnvLocked() || Boolean(storedTmdbKey),
       masked: isTmdbApiKeyEnvLocked() ? 'Set in environment' : maskKey(storedTmdbKey),
     },
+    tvdbApiKey: {
+      lockedByEnvironment: isTvdbApiKeyEnvLocked(),
+      configured: isTvdbApiKeyEnvLocked() || Boolean(storedTvdbKey),
+      masked: isTvdbApiKeyEnvLocked() ? 'Set in environment' : maskKey(storedTvdbKey),
+    },
+    tvdbPin: {
+      lockedByEnvironment: isTvdbPinEnvLocked(),
+      configured: isTvdbPinEnvLocked() || Boolean(storedTvdbPin),
+      masked: isTvdbPinEnvLocked() ? 'Set in environment' : maskKey(storedTvdbPin),
+    },
+    tvdbSeasonType,
   })
 }
 
@@ -115,6 +136,35 @@ export async function PATCH(req: NextRequest) {
     await upsertStoredSetting(TMDB_API_KEY_SETTING, trimmedTmdbKey)
   }
 
+
+  if (!isTvdbApiKeyEnvLocked() && 'tvdbApiKey' in body) {
+    if (typeof body.tvdbApiKey !== 'string' || body.tvdbApiKey.trim().length === 0) {
+      return NextResponse.json({ error: 'TVDB API key cannot be blank' }, { status: 400 })
+    }
+    const trimmedTvdbKey = body.tvdbApiKey.trim()
+    const trimmedTvdbPin = typeof body.tvdbPin === 'string' ? body.tvdbPin.trim() : await getStoredSetting(TVDB_PIN_SETTING)
+    const candidateTvdb = getTvdbProvider(trimmedTvdbKey, trimmedTvdbPin || undefined)
+    const validTvdbKey = candidateTvdb ? await candidateTvdb.validateApiKey() : false
+    if (!validTvdbKey) {
+      return NextResponse.json({ error: 'TVDB API key could not be validated' }, { status: 400 })
+    }
+    await upsertStoredSetting(TVDB_API_KEY_SETTING, trimmedTvdbKey)
+    if (!isTvdbPinEnvLocked() && typeof body.tvdbPin === 'string') {
+      await upsertStoredSetting(TVDB_PIN_SETTING, body.tvdbPin.trim())
+    }
+  }
+
+  if (!isTvdbPinEnvLocked() && 'tvdbPin' in body && !('tvdbApiKey' in body)) {
+    await upsertStoredSetting(TVDB_PIN_SETTING, typeof body.tvdbPin === 'string' ? body.tvdbPin.trim() : '')
+  }
+
+  if ('tvdbSeasonType' in body) {
+    if (typeof body.tvdbSeasonType !== 'string' || body.tvdbSeasonType.trim().length === 0) {
+      return NextResponse.json({ error: 'TVDB season type cannot be blank' }, { status: 400 })
+    }
+    await upsertStoredSetting(TVDB_SEASON_TYPE_SETTING, body.tvdbSeasonType.trim())
+  }
+
   if (updated.username !== user.username) {
     const session = await getSession()
     session.user = { username: updated.username }
@@ -122,6 +172,9 @@ export async function PATCH(req: NextRequest) {
   }
 
   const storedTmdbKey = await getStoredSetting(TMDB_API_KEY_SETTING)
+  const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
+  const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
+  const tvdbSeasonType = await getConfiguredTvdbSeasonType()
   return NextResponse.json({
     username: updated.username,
     profileImageData: updated.profileImageData ?? null,
@@ -130,5 +183,16 @@ export async function PATCH(req: NextRequest) {
       configured: isTmdbApiKeyEnvLocked() || Boolean(storedTmdbKey),
       masked: isTmdbApiKeyEnvLocked() ? 'Set in environment' : maskKey(storedTmdbKey),
     },
+    tvdbApiKey: {
+      lockedByEnvironment: isTvdbApiKeyEnvLocked(),
+      configured: isTvdbApiKeyEnvLocked() || Boolean(storedTvdbKey),
+      masked: isTvdbApiKeyEnvLocked() ? 'Set in environment' : maskKey(storedTvdbKey),
+    },
+    tvdbPin: {
+      lockedByEnvironment: isTvdbPinEnvLocked(),
+      configured: isTvdbPinEnvLocked() || Boolean(storedTvdbPin),
+      masked: isTvdbPinEnvLocked() ? 'Set in environment' : maskKey(storedTvdbPin),
+    },
+    tvdbSeasonType,
   })
 }

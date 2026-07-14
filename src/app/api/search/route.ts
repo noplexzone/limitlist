@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { getConfiguredTmdbProvider } from '@/lib/tmdb'
+import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 
 export async function GET(req: NextRequest) {
   const user = await requireAuth()
@@ -11,10 +12,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const tmdb = await getConfiguredTmdbProvider()
-  if (!tmdb) {
+  const provider = (await getConfiguredTvdbProvider()) ?? (await getConfiguredTmdbProvider())
+  if (!provider) {
     return NextResponse.json(
-      { error: 'TMDB_API_KEY is not configured. Add it to your environment variables.' },
+      { error: 'TVDB_API_KEY is not configured. Add it in Settings or environment variables.' },
       { status: 503 }
     )
   }
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 20) : 10
 
   try {
-    const results = await tmdb.search(query.trim(), { animeOnly: true, limit })
+    const results = await provider.search(query.trim(), { animeOnly: true, limit })
     return NextResponse.json({ results })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Search failed'

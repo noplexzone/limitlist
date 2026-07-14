@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTmdbProvider } from '@/lib/tmdb'
+import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { fetchAniListMediaById, getAniListTitles, getAniListYear } from '@/lib/anilist'
 
 export async function GET() {
@@ -34,17 +35,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch details from provider to get full metadata. AniList discover cards are
-  // intentionally fast-loading; resolve their canonical TMDB show only when the
+  // intentionally fast-loading; resolve their canonical TVDB show only when the
   // user imports one.
   let enriched = body
   let createProvider = metadataProvider
   let createProviderId = metadataId
+  const tvdb = await getConfiguredTvdbProvider()
   const tmdb = await getConfiguredTmdbProvider()
 
   if (metadataProvider === 'anilist') {
-    if (!tmdb) {
+    if (!tvdb) {
       return NextResponse.json(
-        { error: 'TMDB API key is required before AniList Discover imports can be monitored. Add a valid key in Settings, then import again.' },
+        { error: 'TVDB API key is required before AniList Discover imports can be monitored. Add a valid key in Settings, then import again.' },
         { status: 422 }
       )
     }
@@ -61,35 +63,50 @@ export async function POST(req: NextRequest) {
 
     const media = await fetchAniListMediaById(metadataId)
     const titles = Array.isArray(body.titles) ? body.titles : media ? getAniListTitles(media) : [body.title]
-    const tmdbMatch = await tmdb.findShowForAnime(titles, media ? getAniListYear(media) : null)
-    if (tmdbMatch) {
-      createProvider = tmdbMatch.providerName
-      createProviderId = tmdbMatch.providerId
-      const existingTmdb = await prisma.animeShow.findUnique({
+    const tvdbMatch = await tvdb.findShowForAnime(titles, media ? getAniListYear(media) : null)
+    if (tvdbMatch) {
+      createProvider = tvdbMatch.providerName
+      createProviderId = tvdbMatch.providerId
+      const existingTvdb = await prisma.animeShow.findUnique({
         where: { metadataProvider_metadataId: { metadataProvider: createProvider, metadataId: createProviderId } },
       })
-      if (existingTmdb) {
+      if (existingTvdb) {
         return NextResponse.json(
-          { error: 'This show is already in your watchlist', existing: existingTmdb },
+          { error: 'This show is already in your watchlist', existing: existingTvdb },
           { status: 409 }
         )
       }
       enriched = {
         ...body,
-        title: tmdbMatch.title,
-        originalTitle: body.originalTitle ?? tmdbMatch.originalTitle,
-        overview: body.overview ?? tmdbMatch.overview,
-        posterUrl: body.posterUrl ?? tmdbMatch.posterUrl,
-        firstAiredAt: body.firstAiredAt ?? tmdbMatch.firstAiredAt,
-        genres: tmdbMatch.genres?.join(', ') ?? (Array.isArray(body.genres) ? body.genres.join(', ') : body.genres),
-        studios: tmdbMatch.studios?.join(', '),
-        episodesTotal: tmdbMatch.episodesTotal ?? body.episodesTotal,
+        title: tvdbMatch.title,
+        originalTitle: body.originalTitle ?? tvdbMatch.originalTitle,
+        overview: body.overview ?? tvdbMatch.overview,
+        posterUrl: body.posterUrl ?? tvdbMatch.posterUrl,
+        firstAiredAt: body.firstAiredAt ?? tvdbMatch.firstAiredAt,
+        genres: tvdbMatch.genres?.join(', ') ?? (Array.isArray(body.genres) ? body.genres.join(', ') : body.genres),
+        studios: tvdbMatch.studios?.join(', '),
+        episodesTotal: tvdbMatch.episodesTotal ?? body.episodesTotal,
       }
     } else {
       return NextResponse.json(
-        { error: 'No TMDB show match was found for this AniList result. It was not imported so monitoring does not get stuck on an unrefreshable source record.' },
+        { error: 'No TVDB show match was found for this AniList result. It was not imported so monitoring does not get stuck on an unrefreshable source record.' },
         { status: 422 }
       )
+    }
+  } else if (metadataProvider === 'tvdb' && tvdb) {
+    const details = await tvdb.getDetails(metadataId)
+    if (details) {
+      enriched = {
+        ...body,
+        title: details.title,
+        originalTitle: details.originalTitle,
+        overview: details.overview,
+        posterUrl: details.posterUrl,
+        firstAiredAt: details.firstAiredAt,
+        genres: details.genres?.join(', '),
+        studios: details.studios?.join(', '),
+        episodesTotal: details.episodesTotal,
+      }
     }
   } else if (metadataProvider === 'tmdb' && tmdb) {
     const details = await tmdb.getDetails(metadataId)

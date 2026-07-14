@@ -73,13 +73,13 @@ export async function GET(req: NextRequest) {
         popularity: item.popularity ?? undefined,
         inWatchlist,
         importable: true,
-        mappingStatus: 'TMDB link resolved on import',
+        mappingStatus: 'TVDB link resolved on import',
       }
     })
 
     return NextResponse.json({
       provider: 'anilist',
-      linkedProvider: 'tmdb-on-import',
+      linkedProvider: 'tvdb-on-import',
       page,
       pageSize,
       hasNextPage: discoverPage.hasNextPage,

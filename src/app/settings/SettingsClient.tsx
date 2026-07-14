@@ -10,6 +10,17 @@ interface SettingsState {
     configured: boolean
     masked: string | null
   }
+  tvdbApiKey: {
+    lockedByEnvironment: boolean
+    configured: boolean
+    masked: string | null
+  }
+  tvdbPin: {
+    lockedByEnvironment: boolean
+    configured: boolean
+    masked: string | null
+  }
+  tvdbSeasonType: string
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -27,6 +38,9 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [tmdbApiKey, setTmdbApiKey] = useState('')
+  const [tvdbApiKey, setTvdbApiKey] = useState('')
+  const [tvdbPin, setTvdbPin] = useState('')
+  const [tvdbSeasonType, setTvdbSeasonType] = useState(initialSettings.tvdbSeasonType || 'default')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -77,9 +91,14 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
 
   async function submitApiKeys(e: FormEvent) {
     e.preventDefault()
-    if (settings.tmdbApiKey.lockedByEnvironment) return
-    await savePatch({ tmdbApiKey }, 'TMDB API key saved.')
+    const body: Record<string, unknown> = { tvdbSeasonType }
+    if (!settings.tmdbApiKey.lockedByEnvironment && tmdbApiKey.trim()) body.tmdbApiKey = tmdbApiKey
+    if (!settings.tvdbApiKey.lockedByEnvironment && tvdbApiKey.trim()) body.tvdbApiKey = tvdbApiKey
+    if (!settings.tvdbPin.lockedByEnvironment && (tvdbPin.trim() || tvdbApiKey.trim())) body.tvdbPin = tvdbPin
+    await savePatch(body, 'Metadata settings saved.')
     setTmdbApiKey('')
+    setTvdbApiKey('')
+    setTvdbPin('')
   }
 
   return (
@@ -159,23 +178,53 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
 
       <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-200 mb-1">API keys</h2>
-        <p className="mb-4 text-sm text-gray-400">TMDB is used for search, imported-show enrichment, airing schedules, cast, seasons, and ratings.</p>
-        {settings.tmdbApiKey.lockedByEnvironment ? (
+        <p className="mb-4 text-sm text-gray-400">TheTVDB is used for new search/import metadata and season ordering. TMDB remains supported for existing legacy rows.</p>
+        {settings.tmdbApiKey.lockedByEnvironment && settings.tvdbApiKey.lockedByEnvironment ? (
           <div className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300">
-            TMDB API key is set by environment variable and cannot be changed from the UI.
+            Metadata API keys are set by environment variables and cannot be changed from the UI.
           </div>
         ) : (
           <form onSubmit={submitApiKeys} className="space-y-3">
-            <p className="text-xs text-gray-500">Current: {settings.tmdbApiKey.configured ? settings.tmdbApiKey.masked : 'Not configured'}</p>
+            <p className="text-xs text-gray-500">TVDB key: {settings.tvdbApiKey.configured ? settings.tvdbApiKey.masked : 'Not configured'}</p>
+            <p className="text-xs text-gray-500">TVDB PIN: {settings.tvdbPin.configured ? settings.tvdbPin.masked : 'Not configured / not required'}</p>
+            <p className="text-xs text-gray-500">TMDB legacy key: {settings.tmdbApiKey.configured ? settings.tmdbApiKey.masked : 'Not configured'}</p>
+            {!settings.tvdbApiKey.lockedByEnvironment && (
+              <input
+                value={tvdbApiKey}
+                onChange={(e) => setTvdbApiKey(e.target.value)}
+                placeholder="Paste TVDB API key"
+                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+              />
+            )}
+            {!settings.tvdbPin.lockedByEnvironment && (
+              <input
+                value={tvdbPin}
+                onChange={(e) => setTvdbPin(e.target.value)}
+                placeholder="Optional TVDB PIN"
+                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+              />
+            )}
+            <label className="block">
+              <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
+              <input
+                value={tvdbSeasonType}
+                onChange={(e) => setTvdbSeasonType(e.target.value)}
+                placeholder="default"
+                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+              />
+            </label>
+            {!settings.tmdbApiKey.lockedByEnvironment && (
             <input
               value={tmdbApiKey}
               onChange={(e) => setTmdbApiKey(e.target.value)}
               placeholder="Paste TMDB API key"
               className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
             />
-            <button disabled={saving || !tmdbApiKey.trim()} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
-              Save TMDB key
+            )}
+            <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+              Save metadata settings
             </button>
+            <p className="text-xs text-gray-500">Metadata provided by TheTVDB.</p>
           </form>
         )}
       </section>
