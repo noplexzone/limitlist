@@ -129,7 +129,7 @@ const DETAIL_QUERY = `
           }
         }
       }
-      recommendations(page: 1, perPage: 12, sort: RATING_DESC) {
+      recommendations(page: 1, perPage: 15, sort: RATING_DESC) {
         nodes {
           mediaRecommendation {
             ${MEDIA_FIELDS}
@@ -325,7 +325,7 @@ export function buildAniListRelatedMovies(media: AniListDetailMedia, limit = 8):
     .map(({ node }) => asRelatedItem(node))
 }
 
-export function buildAniListRecommendations(media: AniListDetailMedia, limit = 12): MetadataRelatedItem[] {
+export function buildAniListRecommendations(media: AniListDetailMedia, limit = 15): MetadataRelatedItem[] {
   const seen = new Set<string>()
   const items: MetadataRelatedItem[] = []
   for (const node of media.recommendations?.nodes ?? []) {

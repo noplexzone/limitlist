@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react'
+import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
 import type { MetadataCastMember, MetadataRelatedItem, MetadataSeasonSummary, MetadataVoiceCastGroup } from '@/lib/providers'
@@ -178,6 +178,28 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   const [voiceLanguageTouched, setVoiceLanguageTouched] = useState(false)
   const voiceCast = anime.voiceCast?.[voiceLanguage] ?? []
   const childRatingMap = useMemo(() => new Map(childRatings.map((rating) => [`${rating.kind}:${rating.key}`, rating])), [childRatings])
+  const recommendationsRef = useRef<HTMLDivElement | null>(null)
+  const [recommendationsCanScrollLeft, setRecommendationsCanScrollLeft] = useState(false)
+  const [recommendationsCanScrollRight, setRecommendationsCanScrollRight] = useState(false)
+
+  const updateRecommendationScrollState = useCallback(() => {
+    const el = recommendationsRef.current
+    if (!el) {
+      setRecommendationsCanScrollLeft(false)
+      setRecommendationsCanScrollRight(false)
+      return
+    }
+    const maxScrollLeft = el.scrollWidth - el.clientWidth
+    setRecommendationsCanScrollLeft(el.scrollLeft > 4)
+    setRecommendationsCanScrollRight(el.scrollLeft < maxScrollLeft - 4)
+  }, [])
+
+  function scrollRecommendations(direction: -1 | 1) {
+    const el = recommendationsRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * el.clientWidth, behavior: 'smooth' })
+    window.setTimeout(updateRecommendationScrollState, 350)
+  }
 
   useEffect(() => {
     if (!voiceLanguageTouched && defaultCastLanguage === 'english' && englishCount > 0) setVoiceLanguage('english')
@@ -185,6 +207,12 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
     else if (voiceLanguage === 'english' && englishCount === 0 && japaneseCount > 0) setVoiceLanguage('japanese')
     else if (voiceLanguage === 'japanese' && japaneseCount === 0 && englishCount > 0) setVoiceLanguage('english')
   }, [defaultCastLanguage, englishCount, japaneseCount, voiceLanguage, voiceLanguageTouched])
+
+  useEffect(() => {
+    updateRecommendationScrollState()
+    window.addEventListener('resize', updateRecommendationScrollState)
+    return () => window.removeEventListener('resize', updateRecommendationScrollState)
+  }, [anime.recommendations?.length, updateRecommendationScrollState])
 
   useEffect(() => {
     let cancelled = false
@@ -529,19 +557,46 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
         {enrichmentLoading ? (
           <p className="text-sm text-gray-500">Loading recommendations…</p>
         ) : anime.recommendations && anime.recommendations.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {anime.recommendations.map((item) => (
-              <Link key={`${item.providerName}-${item.providerId}`} href={`/anime/${encodeURIComponent(item.providerName)}/${encodeURIComponent(item.providerId)}`} className="group overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition-colors hover:border-purple-500">
-                <div className="relative aspect-[2/3] bg-gray-800">
-                  {item.posterUrl ? <PosterImage src={item.posterUrl} alt={`${item.title} poster`} title={item.title} /> : <div className="flex h-full items-center justify-center p-3 text-center text-xs text-gray-500">{item.title}</div>}
-                </div>
-                <div className="p-2">
-                  <p className="line-clamp-2 text-sm font-medium text-gray-100 group-hover:text-purple-200">{item.title}</p>
-                  {item.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(item.firstAiredAt)}</p>}
-                  {stripHtml(item.overview) && <p className="mt-2 line-clamp-3 text-xs leading-5 text-gray-400">{stripHtml(item.overview)}</p>}
-                </div>
-              </Link>
-            ))}
+          <div className="relative">
+            <div
+              ref={recommendationsRef}
+              onScroll={updateRecommendationScrollState}
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:thin]"
+            >
+              {anime.recommendations.map((item) => (
+                <Link
+                  key={`${item.providerName}-${item.providerId}`}
+                  href={`/anime/${encodeURIComponent(item.providerName)}/${encodeURIComponent(item.providerId)}`}
+                  className="group min-w-[70%] basis-[70%] snap-start overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition-colors hover:border-purple-500 sm:min-w-[36%] sm:basis-[36%] md:min-w-[27%] md:basis-[27%] lg:min-w-[calc((100%_-_4rem)/5)] lg:basis-[calc((100%_-_4rem)/5)]"
+                >
+                  <div className="relative aspect-[2/3] bg-gray-800">
+                    {item.posterUrl ? <PosterImage src={item.posterUrl} alt={`${item.title} poster`} title={item.title} /> : <div className="flex h-full items-center justify-center p-3 text-center text-xs text-gray-500">{item.title}</div>}
+                  </div>
+                  <div className="p-2">
+                    <p className="line-clamp-2 text-sm font-medium text-gray-100 group-hover:text-purple-200">{item.title}</p>
+                    {item.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(item.firstAiredAt)}</p>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <button
+              type="button"
+              aria-label="Scroll recommendations left"
+              onClick={() => scrollRecommendations(-1)}
+              disabled={!recommendationsCanScrollLeft}
+              className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full border border-gray-700 bg-black/80 px-3 py-2 text-lg font-bold text-white shadow-lg transition hover:border-purple-400 hover:bg-purple-900/90 disabled:cursor-not-allowed disabled:opacity-30 sm:block"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              aria-label="Scroll recommendations right"
+              onClick={() => scrollRecommendations(1)}
+              disabled={!recommendationsCanScrollRight}
+              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full border border-gray-700 bg-black/80 px-3 py-2 text-lg font-bold text-white shadow-lg transition hover:border-purple-400 hover:bg-purple-900/90 disabled:cursor-not-allowed disabled:opacity-30 sm:block"
+            >
+              →
+            </button>
           </div>
         ) : (
           <p className="text-sm text-gray-500">No recommendations found.</p>
