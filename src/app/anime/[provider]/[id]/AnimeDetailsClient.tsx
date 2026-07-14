@@ -162,6 +162,8 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [busy, setBusy] = useState(false)
+  const [enrichmentLoading, setEnrichmentLoading] = useState(false)
+  const [enrichmentLoaded, setEnrichmentLoaded] = useState(Boolean(initialData.anime.voiceCast || initialData.anime.recommendations?.length || initialData.anime.relatedMovies?.length))
   const [childRatings, setChildRatings] = useState<ChildRating[]>(initialData.anime.childRatings ?? [])
   const anime = data.anime
   const englishCount = anime.voiceCast?.english.length ?? 0
@@ -174,6 +176,33 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
     if (voiceLanguage === 'english' && englishCount === 0 && japaneseCount > 0) setVoiceLanguage('japanese')
     if (voiceLanguage === 'japanese' && japaneseCount === 0 && englishCount > 0) setVoiceLanguage('english')
   }, [englishCount, japaneseCount, voiceLanguage])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadEnrichment() {
+      setEnrichmentLoading(true)
+      try {
+        const res = await fetch(`/api/anime/${encodeURIComponent(anime.providerName)}/${encodeURIComponent(anime.providerId)}/enrichment`)
+        if (!res.ok) return
+        const enrichment: Pick<AnimeDetailsData['anime'], 'voiceCast' | 'recommendations' | 'relatedMovies'> = await res.json()
+        if (cancelled) return
+        setData((current) => ({
+          ...current,
+          anime: {
+            ...current.anime,
+            voiceCast: enrichment.voiceCast,
+            recommendations: enrichment.recommendations ?? [],
+            relatedMovies: enrichment.relatedMovies ?? [],
+          },
+        }))
+        setEnrichmentLoaded(true)
+      } finally {
+        if (!cancelled) setEnrichmentLoading(false)
+      }
+    }
+    if (!enrichmentLoaded) void loadEnrichment()
+    return () => { cancelled = true }
+  }, [anime.providerName, anime.providerId, enrichmentLoaded])
 
   async function addToWatchlist() {
     setBusy(true)
@@ -319,13 +348,14 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
         </section>
       </div>
 
-      {anime.voiceCast && (anime.voiceCast.english.length > 0 || anime.voiceCast.japanese.length > 0) && (
-        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-200">Voice cast</h2>
-              <p className="text-sm text-gray-500">Choose the dub/sub cast list.</p>
-            </div>
+
+      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-200">Voice cast</h2>
+            <p className="text-sm text-gray-500">Choose the dub/sub cast list.</p>
+          </div>
+          {(anime.voiceCast?.english.length || anime.voiceCast?.japanese.length) ? (
             <div className="rounded-full border border-gray-700 bg-gray-950 p-1">
               {(['english', 'japanese'] as const).map((language) => (
                 <button
@@ -341,16 +371,18 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                 </button>
               ))}
             </div>
+          ) : null}
+        </div>
+        {enrichmentLoading ? (
+          <p className="text-sm text-gray-500">Loading voice cast…</p>
+        ) : voiceCast.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {voiceCast.map((actor) => <CastCard key={`${voiceLanguage}-${actor.name}-${actor.character ?? ''}`} member={actor} />)}
           </div>
-          {voiceCast.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {voiceCast.map((actor) => <CastCard key={`${voiceLanguage}-${actor.name}-${actor.character ?? ''}`} member={actor} />)}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">No {voiceLanguage === 'english' ? 'English' : 'Japanese'} voice cast found.</p>
-          )}
-        </section>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500">No voice cast found.</p>
+        )}
+      </section>
 
       {anime.seasons && anime.seasons.length > 0 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
@@ -391,10 +423,13 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
         </section>
       )}
 
-      {anime.relatedMovies && anime.relatedMovies.length > 0 && (
-        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-          <h2 className="mb-1 text-lg font-semibold text-gray-200">Movies and specials</h2>
-          <p className="mb-4 text-sm text-gray-500">Rated under {anime.title}, not added as separate watchlist shows.</p>
+
+      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+        <h2 className="mb-1 text-lg font-semibold text-gray-200">Movies and specials</h2>
+        <p className="mb-4 text-sm text-gray-500">Rated under {anime.title}, not added as separate watchlist shows.</p>
+        {enrichmentLoading ? (
+          <p className="text-sm text-gray-500">Loading movies and specials…</p>
+        ) : anime.relatedMovies && anime.relatedMovies.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {anime.relatedMovies.map((movie) => {
               const key = childRatingKey('MOVIE', { providerName: movie.providerName, providerId: movie.providerId })
@@ -421,12 +456,17 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
               )
             })}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500">No related movies or specials found.</p>
+        )}
+      </section>
 
-      {anime.recommendations && anime.recommendations.length > 0 && (
-        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-          <h2 className="mb-4 text-lg font-semibold text-gray-200">Recommended similar anime</h2>
+
+      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+        <h2 className="mb-4 text-lg font-semibold text-gray-200">Recommended similar anime</h2>
+        {enrichmentLoading ? (
+          <p className="text-sm text-gray-500">Loading recommendations…</p>
+        ) : anime.recommendations && anime.recommendations.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {anime.recommendations.map((item) => (
               <Link key={`${item.providerName}-${item.providerId}`} href={`/anime/${encodeURIComponent(item.providerName)}/${encodeURIComponent(item.providerId)}`} className="group overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition-colors hover:border-purple-500">
@@ -440,8 +480,10 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
               </Link>
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500">No recommendations found.</p>
+        )}
+      </section>
 
     </div>
   )

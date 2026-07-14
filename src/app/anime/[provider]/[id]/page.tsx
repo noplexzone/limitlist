@@ -2,37 +2,10 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
-import type { MetadataVoiceCastGroup } from '@/lib/providers'
-import { fetchJikanVoiceCast } from '@/lib/jikan'
-import {
-  buildAniListRecommendations,
-  buildAniListRelatedMovies,
-  buildAniListVoiceCast,
-  fetchAniListDetailById,
-  findAniListDetailForAnime,
-  mapAniListDetailToMetadata,
-  mergeVoiceCast,
-  type AniListDetailMedia,
-} from '@/lib/anilist'
+import { fetchAniListDetailById, mapAniListDetailToMetadata } from '@/lib/anilist'
 import Nav from '@/components/Nav'
 import AnimeDetailsClient, { type AnimeDetailsData } from './AnimeDetailsClient'
 
-function mergeVoiceCastPreferJikan(jikan?: MetadataVoiceCastGroup | null, anilist?: MetadataVoiceCastGroup | null): MetadataVoiceCastGroup | undefined {
-  return mergeVoiceCast(jikan, anilist)
-}
-
-async function getAniListDetailForPage(options: {
-  provider: string
-  id: string
-  sourceProvider?: string | null
-  sourceId?: string | null
-  titles: Array<string | null | undefined>
-  year?: number | null
-}): Promise<AniListDetailMedia | null> {
-  if (options.provider === 'anilist') return fetchAniListDetailById(options.id)
-  if (options.sourceProvider === 'anilist' && options.sourceId) return fetchAniListDetailById(options.sourceId)
-  return findAniListDetailForAnime(options.titles, options.year)
-}
 
 export default async function AnimeDetailsPage({
   params,
@@ -61,25 +34,6 @@ export default async function AnimeDetailsPage({
       enrichedDetails = await metadata.getDetails(tracked.metadataId)
     }
 
-    const anilistDetail = await getAniListDetailForPage({
-      provider,
-      id,
-      sourceProvider: tracked.sourceProvider,
-      sourceId: tracked.sourceId,
-      titles: [tracked.title, tracked.originalTitle, enrichedDetails?.title, enrichedDetails?.originalTitle],
-      year: tracked.firstAiredAt?.getFullYear(),
-    }).catch(() => null)
-
-    const [jikanVoiceCast] = await Promise.all([
-      fetchJikanVoiceCast(
-        [tracked.title, tracked.originalTitle, enrichedDetails?.title, enrichedDetails?.originalTitle],
-        tracked.firstAiredAt?.getFullYear()
-      ),
-    ])
-    const anilistVoiceCast = anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined
-    const voiceCast = mergeVoiceCastPreferJikan(jikanVoiceCast, anilistVoiceCast)
-    const recommendations = anilistDetail ? buildAniListRecommendations(anilistDetail) : []
-    const relatedMovies = anilistDetail ? buildAniListRelatedMovies(anilistDetail) : []
 
     data = {
       tracked: true,
@@ -94,19 +48,19 @@ export default async function AnimeDetailsPage({
         overview: tracked.overview,
         posterUrl: tracked.posterUrl,
         firstAiredAt: tracked.firstAiredAt?.toISOString(),
-        genres: anilistDetail?.genres ?? enrichedDetails?.genres ?? tracked.genres,
+        genres: enrichedDetails?.genres ?? tracked.genres,
         studios: enrichedDetails?.studios ?? tracked.studios,
         episodesTotal: enrichedDetails?.episodesTotal ?? tracked.episodesTotal,
-        voteAverage: enrichedDetails?.voteAverage ?? (anilistDetail?.averageScore ? anilistDetail.averageScore / 10 : undefined),
+        voteAverage: enrichedDetails?.voteAverage,
         voteCount: enrichedDetails?.voteCount,
-        popularity: enrichedDetails?.popularity ?? anilistDetail?.popularity ?? undefined,
+        popularity: enrichedDetails?.popularity,
         originalLanguage: enrichedDetails?.originalLanguage,
         originCountries: enrichedDetails?.originCountries,
         contentRating: enrichedDetails?.contentRating,
-        voiceCast,
+        voiceCast: undefined,
         seasons: enrichedDetails?.seasons,
-        recommendations,
-        relatedMovies,
+        recommendations: [],
+        relatedMovies: [],
         childRatings: tracked.childRatings.map((rating) => ({
           id: rating.id,
           kind: rating.kind,
@@ -135,20 +89,14 @@ export default async function AnimeDetailsPage({
     const tvdb = await getConfiguredTvdbProvider()
     const details = tvdb ? await tvdb.getDetails(id) : null
     if (tvdb && details) {
-      const anilistDetail = await findAniListDetailForAnime([details.title, details.originalTitle], details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null).catch(() => null)
-      const jikanVoiceCast = await fetchJikanVoiceCast(
-        [details.title, details.originalTitle],
-        details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
-      )
-      const voiceCast = mergeVoiceCastPreferJikan(jikanVoiceCast, anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined)
       data = {
         tracked: false,
         anime: {
           ...details,
           seasons: details.seasons,
-          voiceCast,
-          recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],
-          relatedMovies: anilistDetail ? buildAniListRelatedMovies(anilistDetail) : [],
+          voiceCast: undefined,
+          recommendations: [],
+          relatedMovies: [],
           childRatings: [],
         },
       }
