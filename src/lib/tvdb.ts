@@ -233,6 +233,7 @@ export class TvdbProvider implements MetadataProvider {
         })),
       }
     })
+    const episodesTotal = seasons.reduce((sum, season) => sum + (season.episodeCount ?? season.episodes?.length ?? 0), 0)
     const dated = episodes.map((e) => ({ ...e, date: parseDate(e.aired) })).filter((e) => e.date) as Array<TvdbEpisode & { date: Date }>
     const now = Date.now()
     const last = dated.filter((e) => e.date.getTime() <= now).sort((a, b) => b.date.getTime() - a.date.getTime())[0]
@@ -248,7 +249,7 @@ export class TvdbProvider implements MetadataProvider {
       firstAiredAt: series.firstAired || (series.year ? `${series.year}-01-01` : undefined),
       genres: series.genres?.map((g) => g.name).filter(Boolean) as string[] | undefined,
       studios: studios.length ? studios : undefined,
-      episodesTotal: episodes.length || undefined,
+      episodesTotal: episodesTotal || undefined,
       originalLanguage: series.originalLanguage,
       originCountries: series.originalCountry ? [series.originalCountry] : undefined,
       airingStatus: typeof series.status === 'string' ? series.status : series.status?.name,
