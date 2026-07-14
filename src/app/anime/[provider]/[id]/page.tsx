@@ -45,7 +45,7 @@ export default async function AnimeDetailsPage({
         sourceId: tracked.sourceId ?? undefined,
         title: tracked.title,
         originalTitle: tracked.originalTitle,
-        overview: tracked.overview,
+        overview: enrichedDetails?.overview ?? tracked.overview,
         posterUrl: tracked.posterUrl,
         firstAiredAt: tracked.firstAiredAt?.toISOString(),
         genres: enrichedDetails?.genres ?? tracked.genres,

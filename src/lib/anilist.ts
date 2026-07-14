@@ -1,5 +1,5 @@
 import type { MetadataCastMember, MetadataRelatedItem, MetadataResult, MetadataSeasonSummary, MetadataVoiceCastGroup } from './providers'
-import { getAnimeRootTitle, normalizeAnimeTitle } from './anime-title'
+import { getAnimeRootTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
 
 const ANILIST_GRAPHQL = 'https://graphql.anilist.co'
 
@@ -154,6 +154,19 @@ const DISCOVER_QUERY = `
     }
   }
 `
+
+export function stripAniListHtml(value?: string | null): string | undefined {
+  if (!value) return undefined
+  return value
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim() || undefined
+}
 
 async function postAniList<T>(query: string, variables: Record<string, unknown>, timeoutMs = 3500): Promise<T | null> {
   const controller = new AbortController()
@@ -383,7 +396,9 @@ function scoreAniListSearchMatch(media: AniListMedia, candidates: string[], year
   const titles = getAniListTitles(media)
   const normalizedTitles = titles.map(normalizeAnimeTitle).filter(Boolean)
   const rootTitles = titles.map(getAnimeRootTitle).map(normalizeAnimeTitle).filter(Boolean)
+  const rawCandidates = new Set(candidates.map((title) => title.trim().toLowerCase()).filter(Boolean))
   let score = 0
+  for (const title of titles) if (rawCandidates.has(title.trim().toLowerCase())) score += 10
   for (const title of normalizedTitles) if (normalizedCandidates.includes(title)) score += 10
   for (const title of rootTitles) if (rootCandidates.includes(title)) score += 6
   if (SERIES_FORMATS.has(String(media.format))) score += 3
@@ -400,13 +415,13 @@ function scoreAniListSearchMatch(media: AniListMedia, candidates: string[], year
 }
 
 export async function findAniListDetailForAnime(titles: Array<string | null | undefined>, year?: number | null): Promise<AniListDetailMedia | null> {
-  const candidates = titles.filter((title): title is string => Boolean(title && title.trim()))
+  const candidates = titleCandidates(...titles)
   if (!candidates.length) return null
   let best: { media: AniListMedia; score: number } | null = null
-  for (const query of candidates.slice(0, 3)) {
+  for (const query of candidates.slice(0, 6)) {
     const data = await postAniList<{ data?: { Page?: { media?: AniListMedia[] | null } | null }; errors?: Array<{ message: string }> }>(
       SEARCH_DETAIL_QUERY,
-      { search: query, page: 1, perPage: 6 },
+      { search: query, page: 1, perPage: 8 },
       3500
     )
     for (const media of data?.data?.Page?.media ?? []) {
@@ -415,6 +430,18 @@ export async function findAniListDetailForAnime(titles: Array<string | null | un
     }
     if (best && best.score >= 13) break
   }
-  if (!best || best.score < 6) return null
+  const matched = Boolean(best && best.score >= 5)
+  if (process.env.NODE_ENV !== 'production') {
+    console.info('[anilist] detail match', {
+      titles: titles.filter(Boolean),
+      candidates,
+      year,
+      matched,
+      bestScore: best?.score ?? null,
+      bestId: best?.media.id ?? null,
+      bestTitles: best ? getAniListTitles(best.media) : [],
+    })
+  }
+  if (!best || best.score < 5) return null
   return fetchAniListDetailById(best.media.id)
 }

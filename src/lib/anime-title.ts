@@ -76,6 +76,10 @@ export function titleCandidates(...titles: Array<string | null | undefined>): st
       seen.add(normalizedRaw)
       rawTitles.push(raw)
     }
+    if (!normalizedRaw && !seen.has(raw)) {
+      seen.add(raw)
+      rawTitles.push(raw)
+    }
   }
 
   // Root titles first: Discover should link AniList season entries to TVDB's

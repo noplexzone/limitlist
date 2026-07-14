@@ -9,6 +9,16 @@ type TvdbEnvelope<T> = { data?: T; links?: { next?: string | null }; token?: str
 type TokenCache = { token: string; issuedAt: number; key: string; pin?: string | null }
 let tokenCache: TokenCache | null = null
 
+interface TvdbTranslationValue {
+  name?: string
+  overview?: string
+}
+
+interface TvdbSeriesTranslation {
+  name?: string
+  overview?: string
+}
+
 interface TvdbSearchResult {
   tvdb_id?: string | number
   id?: string | number
@@ -39,6 +49,7 @@ interface TvdbSeriesExtended {
   nextAired?: string
   lastAired?: string
   artworks?: Array<{ image?: string; url?: string }>
+  translations?: { eng?: string | TvdbTranslationValue; jpn?: string | TvdbTranslationValue }
 }
 interface TvdbEpisode {
   id?: number
@@ -65,6 +76,15 @@ function imageUrl(value?: string | null) {
   if (!value) return undefined
   if (value.startsWith('http')) return value
   return `https://artworks.thetvdb.com${value.startsWith('/') ? '' : '/'}${value}`
+}
+
+function translationName(value?: string | TvdbTranslationValue | null) {
+  if (!value) return undefined
+  return typeof value === 'string' ? value : value.name
+}
+function translationOverview(value?: string | TvdbTranslationValue | null) {
+  if (!value || typeof value === 'string') return undefined
+  return value.overview
 }
 function isAnimeLike(item: TvdbSearchResult | TvdbSeriesExtended) {
   const genreText = Array.isArray(item.genres)
@@ -185,6 +205,12 @@ export class TvdbProvider implements MetadataProvider {
     ])
     const series = extended?.data
     if (!series) return null
+    const englishTranslation = translationOverview(series.translations?.eng)
+      ? null
+      : await this.fetchJson<TvdbSeriesTranslation>(`/series/${encodeURIComponent(tvdbId)}/translations/eng`, 3600, 4000)
+    const englishName = translationName(series.translations?.eng) ?? englishTranslation?.data?.name
+    const japaneseName = translationName(series.translations?.jpn)
+    const englishOverview = translationOverview(series.translations?.eng) ?? englishTranslation?.data?.overview
     const grouped = new Map<number, TvdbEpisode[]>()
     for (const episode of episodes) {
       const seasonNumber = episode.seasonNumber ?? 0
@@ -215,8 +241,9 @@ export class TvdbProvider implements MetadataProvider {
     return {
       providerId: String(series.id),
       providerName: 'tvdb',
-      title: series.name || `TVDB #${series.id}`,
-      overview: series.overview || undefined,
+      title: englishName || series.name || `TVDB #${series.id}`,
+      originalTitle: japaneseName && japaneseName !== (englishName || series.name) ? japaneseName : undefined,
+      overview: englishOverview || series.overview || undefined,
       posterUrl: imageUrl(series.image) ?? imageUrl(series.artworks?.[0]?.image ?? series.artworks?.[0]?.url),
       firstAiredAt: series.firstAired || (series.year ? `${series.year}-01-01` : undefined),
       genres: series.genres?.map((g) => g.name).filter(Boolean) as string[] | undefined,
@@ -265,7 +292,7 @@ export class TvdbProvider implements MetadataProvider {
   async findShowForAnime(titles: Array<string | null | undefined>, year?: number | null): Promise<MetadataResult | null> {
     const candidates = titleCandidates(...titles)
     let best: { item: MetadataResult; score: number } | null = null
-    for (const query of candidates.slice(0, 4)) {
+    for (const query of candidates.slice(0, 6)) {
       const results = await this.search(query, { animeOnly: true, limit: 10 })
       for (const item of results) {
         const score = scoreTvdbMatch(item, candidates, year)
@@ -273,7 +300,18 @@ export class TvdbProvider implements MetadataProvider {
       }
       if (best && best.score >= 10) break
     }
-    if (!best || best.score < 4) return null
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[tvdb] AniList import match', {
+        titles: titles.filter(Boolean),
+        candidates,
+        year,
+        matched: Boolean(best && best.score >= 3.5),
+        bestScore: best?.score ?? null,
+        bestTitle: best?.item.title ?? null,
+        bestId: best?.item.providerId ?? null,
+      })
+    }
+    if (!best || best.score < 3.5) return null
     return this.getDetails(best.item.providerId)
   }
 }
@@ -284,8 +322,10 @@ function scoreTvdbMatch(item: MetadataRelatedItem | MetadataResult, candidates: 
   const titles = [item.title, item.originalTitle].filter(Boolean) as string[]
   const normalizedTitles = titles.map(normalizeAnimeTitle)
   const rootTitles = titles.map(getAnimeRootTitle)
+  const rawCandidates = new Set(candidates.map((title) => title.trim().toLowerCase()).filter(Boolean))
   const seasonSpecificTitle = titles.some(isLikelySeasonSpecificTitle)
   let score = 0
+  for (const title of titles) if (rawCandidates.has(title.trim().toLowerCase())) score += 8
   for (const title of rootTitles) if (rootCandidates.includes(title)) score += 8
   for (const title of normalizedTitles) if (!seasonSpecificTitle && normalizedCandidates.includes(title)) score += 3
   if (seasonSpecificTitle) score -= 4

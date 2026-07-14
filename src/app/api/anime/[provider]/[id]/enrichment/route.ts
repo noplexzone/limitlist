@@ -9,6 +9,7 @@ import {
   fetchAniListDetailById,
   findAniListDetailForAnime,
   mergeVoiceCast,
+  stripAniListHtml,
 } from '@/lib/anilist'
 import type { MetadataVoiceCastGroup } from '@/lib/providers'
 
@@ -24,7 +25,7 @@ export async function GET(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { provider, id } = await params
-  const empty = { voiceCast: undefined, recommendations: [], relatedMovies: [] }
+  const empty = { voiceCast: undefined, recommendations: [], relatedMovies: [], overview: undefined }
 
   try {
     const tracked = provider === 'anilist'
@@ -37,24 +38,35 @@ export async function GET(
 
     const titles = tracked ? [tracked.title, tracked.originalTitle] : []
     const year = tracked?.firstAiredAt?.getFullYear() ?? null
-    const anilistDetail = tracked?.sourceProvider === 'anilist' && tracked.sourceId
-      ? await fetchAniListDetailById(tracked.sourceId)
-      : provider === 'anilist'
-        ? await fetchAniListDetailById(id)
-        : await findAniListDetailForAnime(titles, year)
+    const anilistDetail = await (async () => {
+      try {
+        return tracked?.sourceProvider === 'anilist' && tracked.sourceId
+          ? await fetchAniListDetailById(tracked.sourceId)
+          : provider === 'anilist'
+            ? await fetchAniListDetailById(id)
+            : await findAniListDetailForAnime(titles, year)
+      } catch (error) {
+        if (process.env.NODE_ENV !== 'production') console.warn('[enrichment] AniList lookup failed', error)
+        return null
+      }
+    })()
 
     if (!tracked && !anilistDetail) return NextResponse.json(empty)
 
-    const jikanVoiceCast = await fetchJikanVoiceCast(
-      titles.length ? titles : [anilistDetail?.title.english, anilistDetail?.title.romaji, anilistDetail?.title.native],
-      year
-    ).catch(() => undefined)
+    const lookupTitles = titles.length ? titles : [anilistDetail?.title.english, anilistDetail?.title.romaji, anilistDetail?.title.native]
+    const jikanVoiceCast = await fetchJikanVoiceCast(lookupTitles, year).catch((error) => {
+      if (process.env.NODE_ENV !== 'production') console.warn('[enrichment] Jikan voice cast failed', error)
+      return undefined
+    })
     const anilistVoiceCast = anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined
+    const recommendations = await Promise.resolve(anilistDetail ? buildAniListRecommendations(anilistDetail) : []).catch(() => [])
+    const relatedMovies = await Promise.resolve(anilistDetail ? buildAniListRelatedMovies(anilistDetail) : []).catch(() => [])
 
     return NextResponse.json({
       voiceCast: mergeVoiceCastPreferJikan(jikanVoiceCast, anilistVoiceCast),
-      recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],
-      relatedMovies: anilistDetail ? buildAniListRelatedMovies(anilistDetail) : [],
+      recommendations,
+      relatedMovies,
+      overview: stripAniListHtml(anilistDetail?.description),
     })
   } catch {
     return NextResponse.json(empty)

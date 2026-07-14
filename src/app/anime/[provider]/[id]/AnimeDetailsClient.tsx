@@ -186,13 +186,14 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
       try {
         const res = await fetch(`/api/anime/${encodeURIComponent(anime.providerName)}/${encodeURIComponent(anime.providerId)}/enrichment`)
         if (!res.ok) return
-        const enrichment: Pick<AnimeDetailsData['anime'], 'voiceCast' | 'recommendations' | 'relatedMovies'> = await res.json()
+        const enrichment: Pick<AnimeDetailsData['anime'], 'voiceCast' | 'recommendations' | 'relatedMovies' | 'overview'> = await res.json()
         if (cancelled) return
         setData((current) => ({
           ...current,
           anime: {
             ...current.anime,
             voiceCast: enrichment.voiceCast,
+            overview: enrichment.overview && enrichment.overview !== current.anime.overview ? enrichment.overview : current.anime.overview,
             recommendations: enrichment.recommendations ?? [],
             relatedMovies: enrichment.relatedMovies ?? [],
           },
