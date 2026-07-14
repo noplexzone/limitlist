@@ -104,4 +104,4 @@ Legacy builder required: `DOCKER_BUILDKIT=0 docker build ...` (buildx TCP upgrad
 - Phase 2 (complete): Ratings/notes + anime-focused search + Docker non-root runtime
 - Phase 3 (complete): Stats dashboard at /dashboard
 - Phase 4 (complete): Airing schedule tracking + in-app reminders at /schedule
-- v1.0.1 hotfix (complete): First-run setup flow; credentials stored in DB, AUTH_USERNAME/AUTH_PASSWORD removed
+- Pre-release setup update (complete): First-run setup flow; credentials stored in DB, AUTH_USERNAME/AUTH_PASSWORD removed

@@ -8,7 +8,7 @@ on:
 
 jobs:
   docker:
-    name: Build and push develop/rc image to Docker Hub
+    name: Build and push develop and release image to Docker Hub
     runs-on: ubuntu-latest
     permissions:
       contents: read

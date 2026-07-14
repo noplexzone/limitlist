@@ -77,7 +77,7 @@ Release target: initial official `v1.0.0`.
 - Prevented watchlist child controls from bubbling keyboard events to the card-level detail navigation.
 - Added abort handling to global search so stale responses cannot overwrite newer queries.
 
-## [1.1.0] - 2026-07-13
+## Pre-release update — 2026-07-13
 
 ### Added
 
@@ -99,13 +99,13 @@ Release target: initial official `v1.0.0`.
 - **Nav mobile responsiveness**: Links use smaller padding/text on mobile (`px-2 text-xs`), the link strip is horizontally scrollable, Dashboard link is hidden below the `md` breakpoint, and the brand abbreviates to "AT" below `sm`.
 - **Search results** restyled from a vertical list into a responsive poster-grid (2–6 columns) consistent with Watchlist and Discover.
 
-## [1.0.3] - 2026-07-13
+## Pre-release watchlist polish — 2026-07-13
 
 ### Changed
 
 - Watchlist cards are now poster-only tiles. The status dropdown overlays the top of each poster, and the star rating overlay appears at the bottom only while hovering/focusing the poster.
 
-## [1.0.2] - 2026-07-13
+## Pre-release watchlist redesign — 2026-07-13
 
 ### Changed
 
@@ -116,7 +116,7 @@ Release target: initial official `v1.0.0`.
 - Removed the Edit button and the save/cancel edit flow entirely.
 - Removed episode-watched, episode-total, and episode-duration controls from the watchlist UI.
 
-## [1.0.1] - 2026-07-12
+## Pre-release setup update — 2026-07-12
 
 ### Added
 
@@ -134,9 +134,9 @@ Release target: initial official `v1.0.0`.
 - `AUTH_USERNAME` and `AUTH_PASSWORD` environment variables are no longer required or used for authentication. Only `AUTH_SECRET` remains required.
 - `docker-compose.yml`: removed `AUTH_USERNAME` and `AUTH_PASSWORD` entries.
 - `.env.example`: `AUTH_USERNAME` and `AUTH_PASSWORD` removed; comment explains they have been replaced by the setup flow.
-- `package.json`: version bumped to `1.0.1`.
+- `package.json`: app package version was advanced for the internal setup build.
 
-## [1.0.0] - 2026-07-12
+## Pre-release foundation — 2026-07-12
 
 ### Added — Phase 4
 
