@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
+import { changelogEntries } from '@/lib/changelog'
 import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
 import ScheduleClient from '@/app/schedule/ScheduleClient'
@@ -16,6 +17,40 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-gray-400 mb-1">{label}</p>
       <p className="text-2xl font-bold text-white">{value}</p>
     </div>
+  )
+}
+
+
+function WhatsNewPanel() {
+  const [latest, ...previous] = changelogEntries
+  return (
+    <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+      <div className="mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-purple-300">What&apos;s New</p>
+        <h2 className="mt-1 text-lg font-semibold text-gray-100">LimitList {latest.version}</h2>
+        <p className="text-sm text-gray-500">{latest.date}</p>
+      </div>
+      <ul className="space-y-2 text-sm leading-6 text-gray-300">
+        {latest.bullets.map((bullet) => (
+          <li key={bullet} className="flex gap-2">
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
+            <span>{bullet}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 space-y-2 border-t border-gray-800 pt-4">
+        {previous.slice(0, 2).map((entry) => (
+          <details key={entry.version} className="rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2">
+            <summary className="cursor-pointer text-sm font-medium text-gray-200">
+              {entry.version} <span className="text-xs font-normal text-gray-500">· {entry.date}</span>
+            </summary>
+            <ul className="mt-2 space-y-1 text-xs leading-5 text-gray-400">
+              {entry.bullets.map((bullet) => <li key={bullet}>• {bullet}</li>)}
+            </ul>
+          </details>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -202,12 +237,15 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <aside className="xl:sticky xl:top-[5rem]">
-                <div className="mb-3">
-                  <h2 className="text-lg font-semibold text-gray-200">Airing Calendar</h2>
-                  <p className="text-sm text-gray-500">Upcoming watchlist episodes and reminders.</p>
+              <aside className="space-y-6 xl:sticky xl:top-[5rem]">
+                <div>
+                  <div className="mb-3">
+                    <h2 className="text-lg font-semibold text-gray-200">Airing Calendar</h2>
+                    <p className="text-sm text-gray-500">Upcoming watchlist episodes and reminders.</p>
+                  </div>
+                  <ScheduleClient initialEntries={scheduleEntries} compact />
                 </div>
-                <ScheduleClient initialEntries={scheduleEntries} compact />
+                <WhatsNewPanel />
               </aside>
             </div>
           </div>
