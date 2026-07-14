@@ -59,6 +59,7 @@ interface TvdbEpisode {
   name?: string
   aired?: string
   image?: string
+  overview?: string
 }
 interface TvdbEpisodesPayload {
   episodes?: TvdbEpisode[]
@@ -230,6 +231,7 @@ export class TvdbProvider implements MetadataProvider {
           airDate: episode.aired ?? null,
           voteAverage: null,
           stillUrl: imageUrl(episode.image) ?? null,
+          overview: episode.overview ?? null,
         })),
       }
     })
@@ -267,6 +269,7 @@ export class TvdbProvider implements MetadataProvider {
       airDate: episode.aired ?? null,
       voteAverage: null,
       stillUrl: imageUrl(episode.image) ?? null,
+      overview: episode.overview ?? null,
     }))
   }
 

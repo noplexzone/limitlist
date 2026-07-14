@@ -419,7 +419,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
       {anime.seasons && anime.seasons.length > 0 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="mb-4 text-lg font-semibold text-gray-200">Seasons & episodes</h2>
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="space-y-4">
             {anime.seasons.map((season) => (
               <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
                 <summary className="cursor-pointer font-semibold text-gray-100">
@@ -427,23 +427,35 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                 </summary>
                 {season.overview && <p className="mt-2 text-sm text-gray-400">{season.overview}</p>}
                 {season.episodes && season.episodes.length > 0 && (
-                  <ol className="mt-3 max-h-96 space-y-2 overflow-y-auto pr-1">
+                  <ol className="mt-4 max-h-[36rem] space-y-3 overflow-y-auto pr-1">
                     {season.episodes.map((episode) => {
                       const key = childRatingKey('EPISODE', { seasonNumber: season.seasonNumber, episodeNumber: episode.episodeNumber })
                       const child = childRatingMap.get(`EPISODE:${key}`)
                       return (
-                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className="flex items-start justify-between gap-3 rounded-lg bg-gray-900 px-3 py-2 text-sm">
-                          <div className="min-w-0">
-                            <span className="text-gray-200">{episode.episodeNumber}. {episode.name}</span>
-                            <p className="text-xs text-gray-500">{episode.airDate ? formatDate(episode.airDate) : ''}</p>
+                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className="flex flex-col gap-3 rounded-xl border border-gray-800 bg-gray-900 p-3 text-sm sm:flex-row">
+                          <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-40">
+                            {episode.stillUrl ? (
+                              <PosterImage src={episode.stillUrl} alt={`${episode.name} still`} title={episode.name} sizes="(min-width: 640px) 160px, 100vw" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs text-gray-500">No still image</div>
+                            )}
                           </div>
-                          {data.tracked && (
-                            <StarRating
-                              compact
-                              rating={child?.rating ?? null}
-                              onRate={(value) => patchChildRating({ kind: 'EPISODE', seasonNumber: season.seasonNumber, episodeNumber: episode.episodeNumber, title: episode.name, airDate: episode.airDate }, value)}
-                            />
-                          )}
+                          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="font-medium leading-snug text-gray-100">{episode.episodeNumber}. {episode.name}</p>
+                              {episode.airDate && <p className="mt-1 text-xs text-gray-500">{formatDate(episode.airDate)}</p>}
+                              {episode.overview && <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{episode.overview}</p>}
+                            </div>
+                            {data.tracked && (
+                              <div className="shrink-0 sm:pt-1">
+                                <StarRating
+                                  compact
+                                  rating={child?.rating ?? null}
+                                  onRate={(value) => patchChildRating({ kind: 'EPISODE', seasonNumber: season.seasonNumber, episodeNumber: episode.episodeNumber, title: episode.name, posterUrl: episode.stillUrl, airDate: episode.airDate }, value)}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </li>
                       )
                     })}
