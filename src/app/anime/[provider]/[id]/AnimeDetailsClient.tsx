@@ -137,31 +137,32 @@ function stripHtml(value?: string | null) {
   return value?.replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() || ''
 }
 
-function CastImage({ member }: { member: MetadataCastMember }) {
-  const imageUrl = member.profileUrl ?? member.characterImageUrl
+function CastImage({ imageUrl, fallback, side }: { imageUrl?: string | null; fallback: string; side: 'actor' | 'character' }) {
   if (!imageUrl) {
+    if (side === 'character') return null
     return (
       <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-800 text-xs text-gray-500">
-        {member.name.slice(0, 2)}
+        {fallback.slice(0, 2)}
       </div>
     )
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={imageUrl} alt="" className="h-16 w-12 shrink-0 rounded-lg object-cover bg-gray-800" loading="lazy" />
+    <img src={imageUrl} alt="" className="h-16 w-12 shrink-0 rounded-lg bg-gray-800 object-cover" loading="lazy" />
   )
 }
 
 function CastCard({ member }: { member: MetadataCastMember }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-gray-800 bg-gray-950 p-3">
-      <CastImage member={member} />
-      <div className="min-w-0">
+    <div className="flex items-center gap-3 rounded-xl border border-gray-800 bg-gray-950 p-3">
+      <CastImage imageUrl={member.profileUrl} fallback={member.name} side="actor" />
+      <div className="min-w-0 flex-1 text-center sm:text-left">
         <p className="truncate font-medium text-white" title={member.name}>{member.name}</p>
         {member.originalName && <p className="truncate text-xs text-gray-500" title={member.originalName}>{member.originalName}</p>}
         {member.character && <p className="mt-1 line-clamp-2 text-sm text-purple-300">{member.character}</p>}
         {member.episodeCount != null && <p className="text-xs text-gray-500">{member.episodeCount} episodes</p>}
       </div>
+      <CastImage imageUrl={member.characterImageUrl} fallback={member.character ?? member.name} side="character" />
     </div>
   )
 }
