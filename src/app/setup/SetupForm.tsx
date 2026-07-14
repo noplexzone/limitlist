@@ -3,19 +3,30 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function SetupForm() {
+interface SetupFormProps {
+  tvdbApiKeyLocked: boolean
+  tvdbPinLocked: boolean
+  defaultTvdbSeasonType: string
+}
+
+export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdbSeasonType }: SetupFormProps) {
   const router = useRouter()
   const [error, setError] = useState('')
+  const [warning, setWarning] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+    setWarning('')
 
     const form = e.currentTarget
     const username = (form.elements.namedItem('username') as HTMLInputElement).value.trim()
     const password = (form.elements.namedItem('password') as HTMLInputElement).value
     const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value
+    const tvdbApiKey = tvdbApiKeyLocked ? '' : ((form.elements.namedItem('tvdbApiKey') as HTMLInputElement | null)?.value.trim() ?? '')
+    const tvdbPin = tvdbPinLocked ? '' : ((form.elements.namedItem('tvdbPin') as HTMLInputElement | null)?.value.trim() ?? '')
+    const tvdbSeasonType = ((form.elements.namedItem('tvdbSeasonType') as HTMLInputElement | null)?.value.trim() || defaultTvdbSeasonType)
 
     if (!username) {
       setError('Username is required')
@@ -34,58 +45,126 @@ export default function SetupForm() {
     const res = await fetch('/api/setup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, confirmPassword }),
+      body: JSON.stringify({ username, password, confirmPassword, tvdbApiKey, tvdbPin, tvdbSeasonType }),
     })
 
+    const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      router.push('/dashboard')
+      if (data.warning) {
+        setWarning(data.warning)
+        window.setTimeout(() => router.push('/dashboard'), 1500)
+      } else {
+        router.push('/dashboard')
+      }
     } else {
-      const data = await res.json()
       setError(data.error ?? 'Setup failed')
     }
     setLoading(false)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium mb-1 text-gray-300">
-          Username
-        </label>
-        <input
-          name="username"
-          type="text"
-          required
-          autoComplete="username"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
-        />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-300">
+            Username
+          </label>
+          <input
+            name="username"
+            type="text"
+            required
+            autoComplete="username"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-300">
+            Password
+          </label>
+          <input
+            name="password"
+            type="password"
+            required
+            autoComplete="new-password"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+          />
+          <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-300">
+            Confirm Password
+          </label>
+          <input
+            name="confirmPassword"
+            type="password"
+            required
+            autoComplete="new-password"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+          />
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium mb-1 text-gray-300">
-          Password
+
+      <fieldset className="space-y-3 rounded-xl border border-gray-800 bg-gray-950/60 p-4">
+        <div>
+          <legend className="text-sm font-semibold text-gray-200">TheTVDB metadata</legend>
+          <p className="mt-1 text-xs text-gray-500">
+            Optional, but needed for search and imports. Get a key from{' '}
+            <a href="https://thetvdb.com/dashboard" target="_blank" rel="noreferrer" className="text-purple-300 hover:text-purple-200 underline">
+              TheTVDB dashboard
+            </a>
+            .
+          </p>
+        </div>
+
+        {tvdbApiKeyLocked ? (
+          <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-300">
+            TVDB API key is configured via environment variables.
+          </div>
+        ) : (
+          <label className="block">
+            <span className="mb-1 block text-sm text-gray-400">TVDB API key <span className="text-gray-600">(optional)</span></span>
+            <input
+              name="tvdbApiKey"
+              type="password"
+              autoComplete="off"
+              placeholder="Paste TVDB API key"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+            />
+          </label>
+        )}
+
+        {!tvdbApiKeyLocked && !tvdbPinLocked && (
+          <label className="block">
+            <span className="mb-1 block text-sm text-gray-400">TVDB PIN <span className="text-gray-600">(optional)</span></span>
+            <input
+              name="tvdbPin"
+              type="password"
+              autoComplete="off"
+              placeholder="Optional subscriber PIN"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+            />
+          </label>
+        )}
+
+        {!tvdbApiKeyLocked && tvdbPinLocked && (
+          <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-300">
+            TVDB PIN is configured via environment variables.
+          </div>
+        )}
+
+        <label className="block">
+          <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
+          <input
+            name="tvdbSeasonType"
+            defaultValue={defaultTvdbSeasonType}
+            placeholder="default"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+          />
         </label>
-        <input
-          name="password"
-          type="password"
-          required
-          autoComplete="new-password"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
-        />
-        <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1 text-gray-300">
-          Confirm Password
-        </label>
-        <input
-          name="confirmPassword"
-          type="password"
-          required
-          autoComplete="new-password"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
-        />
-      </div>
+      </fieldset>
+
       {error && <p className="text-red-400 text-sm">{error}</p>}
+      {warning && <p className="text-amber-300 text-sm">{warning}</p>}
       <button
         type="submit"
         disabled={loading}

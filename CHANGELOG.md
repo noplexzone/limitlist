@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- First-run setup now offers optional TVDB API key, PIN, and season-type fields so new installs can search/import immediately.
 - **AniList detail metadata**: Anime detail pages now use AniList for similar recommendations, official related movies/specials, season grouping, and Japanese voice-cast fallback.
 
 - **Anime detail recommendations**: Detail pages now show recommended similar anime and related movie/special cards at the bottom.
