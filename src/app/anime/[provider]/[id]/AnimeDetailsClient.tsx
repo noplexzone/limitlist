@@ -535,7 +535,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
         {enrichmentLoading ? (
           <p className="text-sm text-gray-500">Loading movies and specials…</p>
         ) : anime.relatedMovies && anime.relatedMovies.length > 0 ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4">
             {anime.relatedMovies.map((movie) => {
               const key = childRatingKey('MOVIE', { providerName: movie.providerName, providerId: movie.providerId })
               const child = childRatingMap.get(`MOVIE:${key}`)
@@ -544,8 +544,8 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                 <div key={key} className="rounded-xl border border-gray-800 bg-gray-950 p-4">
                   <div className="flex flex-col gap-4 sm:flex-row">
                     {movie.posterUrl && (
-                      <div className="relative aspect-[2/3] w-full shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-32 lg:w-36">
-                        <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} sizes="(min-width: 1024px) 144px, (min-width: 640px) 128px, 100vw" />
+                      <div className="relative aspect-[2/3] w-28 shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-32">
+                        <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} sizes="(min-width: 640px) 128px, 112px" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
