@@ -77,7 +77,7 @@ function StarRating({
   }
 
   return (
-    <div className="relative w-full px-5" aria-label="Rating">
+    <div className="w-full px-5" aria-label="Rating">
       <div className="flex items-center justify-center gap-0.5" onMouseLeave={() => setHovered(null)}>
         {[1, 2, 3, 4, 5].map((star) => {
           const half = star - 0.5
@@ -113,10 +113,10 @@ function StarRating({
           onClick={(e) => click(e, null)}
           onKeyDown={stopKeyNavigation}
           aria-label="Clear rating"
-          className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-0.5 text-xs font-medium text-gray-200 hover:bg-black/90"
+          className="mx-auto mt-1 block rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-200 hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-purple-300"
           title="Clear rating"
         >
-          ×
+          Clear
         </button>
       )}
     </div>
@@ -311,7 +311,7 @@ export default function WatchlistClient() {
                 </div>
               )}
 
-              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/45 to-transparent p-2 pt-10">
+              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/85 via-black/45 to-transparent p-2 pr-11">
                 <label className="sr-only" htmlFor={`status-${show.id}`}>Status for {show.title}</label>
                 <select
                   id={`status-${show.id}`}
