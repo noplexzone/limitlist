@@ -50,6 +50,8 @@ function TokenBar({ name, count, max }: { name: string; count: number; max: numb
 
 interface ShelfShow {
   id: string
+  metadataProvider: string
+  metadataId: string
   title: string
   posterUrl: string | null
   rating: number | null
@@ -67,7 +69,7 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-700">
         {shows.map((show) => (
-          <Link key={show.id} href="/watchlist" className="shrink-0 w-24 group">
+          <Link key={show.id} href={`/anime/${show.metadataProvider}/${show.metadataId}`} className="shrink-0 w-24 group">
             <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-gray-800 bg-gray-900 group-hover:border-purple-500/70 transition-colors">
               {show.posterUrl ? (
                 <Image
