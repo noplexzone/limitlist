@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **rc.9 polish**: Status/rating changes on detail pages no longer clobber English sanitized descriptions; Tailwind now scans shared status classes; movies/specials, voice-cast cards, season ordering, and dashboard release notes were polished for 1.2.0 readiness.
 - Settings keeps the TVDB season-order dropdown and editable PIN controls visible when the API key is locked by environment.
 - Discover imports now surface watchlist API errors on the affected card, clear stuck loading states, and log AniList-to-TVDB import matching in development.
 - TVDB detail metadata now prefers English TVDB translations and AniList enrichment returns a sanitized English overview while logging match misses in development.
