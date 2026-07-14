@@ -132,7 +132,6 @@ export default async function AnimeDetailsPage({
         originalLanguage: enrichedDetails?.originalLanguage,
         originCountries: enrichedDetails?.originCountries,
         contentRating: enrichedDetails?.contentRating,
-        cast: enrichedDetails?.cast,
         voiceCast,
         seasons: anilistSeasons?.length ? anilistSeasons : enrichedDetails?.seasons,
         recommendations,
@@ -179,6 +178,7 @@ export default async function AnimeDetailsPage({
         tracked: false,
         anime: {
           ...details,
+          cast: undefined,
           seasons: anilistSeasons?.length ? anilistSeasons : tmdbSeasons,
           voiceCast,
           recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],

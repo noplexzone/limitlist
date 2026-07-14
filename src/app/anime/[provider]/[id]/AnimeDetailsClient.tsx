@@ -353,15 +353,6 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
         </section>
       )}
 
-      {anime.cast && anime.cast.length > 0 && (
-        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-          <h2 className="mb-4 text-lg font-semibold text-gray-200">TMDB cast</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {anime.cast.map((actor) => <CastCard key={`${actor.name}-${actor.character ?? ''}`} member={actor} />)}
-          </div>
-        </section>
-      )}
-
       {anime.seasons && anime.seasons.length > 0 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="mb-4 text-lg font-semibold text-gray-200">Seasons & episodes</h2>
