@@ -482,7 +482,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="mb-4 text-lg font-semibold text-gray-200">Seasons & episodes</h2>
           <div className="space-y-4">
-            {anime.seasons.map((season) => (
+            {[...anime.seasons].sort((a, b) => b.seasonNumber - a.seasonNumber).map((season) => (
               <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
                 <summary className="cursor-pointer font-semibold text-gray-100">
                   {season.name} <span className="text-sm font-normal text-gray-500">{season.episodeCount ?? season.episodes?.length ? ` · ${season.episodeCount ?? season.episodes?.length} episodes in this season` : ''}{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
