@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 
@@ -168,12 +169,25 @@ export default function DiscoverClient() {
               const isImporting = importing === result.providerId
               const importError = result.providerId ? importErrors.get(result.providerId) : undefined
               const canImport = result.importable !== false && !!result.providerId
+              const detailHref = result.providerId
+                ? `/anime/${encodeURIComponent(result.providerName)}/${encodeURIComponent(result.providerId)}`
+                : null
               return (
                 <article
                   key={cardKey}
                   className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70"
                 >
-                  {result.posterUrl ? (
+                  {detailHref ? (
+                    <Link href={detailHref} aria-label={`View details for ${result.title}`} className="absolute inset-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-300">
+                      {result.posterUrl ? (
+                        <PosterImage src={result.posterUrl} alt={`${result.title} poster`} title={result.title} />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+                          {result.title}
+                        </div>
+                      )}
+                    </Link>
+                  ) : result.posterUrl ? (
                     <PosterImage src={result.posterUrl} alt={`${result.title} poster`} title={result.title} />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
@@ -188,7 +202,13 @@ export default function DiscoverClient() {
                   )}
 
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-2 pt-12">
-                    <p className="text-[11px] font-semibold text-white leading-tight line-clamp-2 mb-1">{result.title}</p>
+                    {detailHref ? (
+                      <Link href={detailHref} className="relative z-10 mb-1 block text-[11px] font-semibold leading-tight text-white line-clamp-2 hover:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-300" aria-label={`View details for ${result.title}`}>
+                        {result.title}
+                      </Link>
+                    ) : (
+                      <p className="mb-1 text-[11px] font-semibold leading-tight text-white line-clamp-2">{result.title}</p>
+                    )}
                     {result.averageScore != null && (
                       <p className="mb-1 line-clamp-1 text-[10px] text-blue-300">AniList {result.averageScore}/100{result.episodesTotal ? ` · ${result.episodesTotal} eps` : ''}</p>
                     )}
@@ -196,7 +216,7 @@ export default function DiscoverClient() {
                       <p className="text-center text-xs text-green-400 font-medium">Added ✓</p>
                     ) : canImport ? (
                       <button
-                        onClick={() => handleImport(result)}
+                        onClick={(event) => { event.stopPropagation(); void handleImport(result) }}
                         disabled={isImporting}
                         className="w-full rounded-full bg-purple-600/90 py-1 text-xs font-semibold text-white hover:bg-purple-500 disabled:opacity-50 transition-colors"
                       >
