@@ -130,6 +130,8 @@ export default function WatchlistClient() {
   const [shows, setShows] = useState<AnimeShow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
+  const [removingId, setRemovingId] = useState<string | null>(null)
 
   const rawStatus = searchParams.get('status') ?? ''
   const statusFilter: StatusFilter = VALID_STATUS_FILTERS.includes(rawStatus) ? (rawStatus as StatusFilter) : 'ALL'
@@ -160,6 +162,25 @@ export default function WatchlistClient() {
       setError('Failed to load watchlist')
     }
     setLoading(false)
+  }
+
+  async function removeShow(id: string) {
+    const previous = shows
+    setRemovingId(id)
+    setRemoveConfirmId(null)
+    setError('')
+    setShows((prev) => prev.filter((show) => show.id !== id))
+    const res = await fetch(`/api/watchlist/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      setShows(previous)
+      const body = await res.json().catch(() => ({}))
+      setError(body.error ?? 'Failed to remove show')
+    }
+    setRemovingId(null)
+  }
+
+  function stopCardActivation(e: MouseEvent | KeyboardEvent) {
+    e.stopPropagation()
   }
 
   async function patchShow(id: string, patch: PatchPayload) {
@@ -266,6 +287,27 @@ export default function WatchlistClient() {
                   <span className="block rounded-full bg-orange-600/95 px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white shadow-lg">
                     New episodes
                   </span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                aria-label={`Remove ${show.title} from watchlist`}
+                onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(show.id) }}
+                onKeyDown={stopCardActivation}
+                disabled={removingId === show.id}
+                className="absolute right-2 top-12 z-20 rounded-full border border-red-400/50 bg-black/80 px-2 py-1 text-xs font-bold text-red-100 opacity-0 shadow-lg transition-opacity hover:bg-red-700 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-300 group-hover:opacity-100 group-focus-within:opacity-100"
+              >
+                ×
+              </button>
+
+              {removeConfirmId === show.id && (
+                <div className="absolute inset-x-2 top-20 z-30 rounded-xl border border-red-400/50 bg-gray-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
+                  <p className="mb-2 text-xs font-medium text-gray-100">Remove?</p>
+                  <div className="flex justify-center gap-2">
+                    <button type="button" className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700" onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(null) }}>Cancel</button>
+                    <button type="button" className="rounded bg-red-700 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600" onClick={(e) => { e.stopPropagation(); void removeShow(show.id) }}>Remove</button>
+                  </div>
                 </div>
               )}
 

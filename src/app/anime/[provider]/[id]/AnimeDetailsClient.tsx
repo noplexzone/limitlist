@@ -165,6 +165,8 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
   const [enrichmentLoading, setEnrichmentLoading] = useState(false)
   const [enrichmentLoaded, setEnrichmentLoaded] = useState(Boolean(initialData.anime.voiceCast || initialData.anime.recommendations?.length || initialData.anime.relatedMovies?.length))
   const [childRatings, setChildRatings] = useState<ChildRating[]>(initialData.anime.childRatings ?? [])
+  const [removeConfirm, setRemoveConfirm] = useState(false)
+  const [removeError, setRemoveError] = useState('')
   const anime = data.anime
   const englishCount = anime.voiceCast?.english.length ?? 0
   const japaneseCount = anime.voiceCast?.japanese.length ?? 0
@@ -226,6 +228,21 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
     } else if (res.status === 409 && body.existing) {
       setData({ tracked: true, anime: { ...anime, ...body.existing, providerId: body.existing.metadataId, providerName: body.existing.metadataProvider } })
     }
+    setBusy(false)
+  }
+
+  async function removeFromWatchlist() {
+    if (!anime.id) return
+    setBusy(true)
+    setRemoveError('')
+    const res = await fetch(`/api/watchlist/${anime.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      router.push('/watchlist')
+      router.refresh()
+      return
+    }
+    const body = await res.json().catch(() => ({}))
+    setRemoveError(body.error ?? 'Failed to remove show')
     setBusy(false)
   }
 
@@ -291,6 +308,20 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                   <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-300">Rating</p>
                   <StarRating rating={anime.rating ?? null} onRate={(value) => patchTracked({ rating: value })} />
                 </div>
+                {removeConfirm ? (
+                  <div className="rounded-xl border border-red-400/40 bg-gray-950/95 p-3 text-center">
+                    <p className="mb-2 text-sm font-medium text-gray-100">Remove from watchlist?</p>
+                    <div className="flex justify-center gap-2">
+                      <button type="button" disabled={busy} onClick={() => setRemoveConfirm(false)} className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm text-gray-200 hover:bg-gray-700 disabled:opacity-50">Cancel</button>
+                      <button type="button" disabled={busy} onClick={removeFromWatchlist} className="rounded-lg bg-red-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50">Remove</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" disabled={busy} onClick={() => setRemoveConfirm(true)} className="w-full rounded-xl border border-red-500/60 bg-red-950/80 px-4 py-2 text-sm font-semibold text-red-100 transition-colors hover:bg-red-900 disabled:opacity-50">
+                    Remove from watchlist
+                  </button>
+                )}
+                {removeError && <p className="text-center text-xs text-red-300">{removeError}</p>}
               </div>
             ) : (
               <button
