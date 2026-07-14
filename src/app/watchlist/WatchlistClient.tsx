@@ -283,7 +283,7 @@ export default function WatchlistClient() {
               )}
 
               {show.upToDateStale && (
-                <div className="absolute inset-x-0 top-12 z-10 px-2 pointer-events-none">
+                <div className="absolute left-2 top-2 z-10 max-w-[calc(100%-3.25rem)] pointer-events-none">
                   <span className="block rounded-full bg-orange-600/95 px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white shadow-lg">
                     New episodes
                   </span>
@@ -296,13 +296,13 @@ export default function WatchlistClient() {
                 onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(show.id) }}
                 onKeyDown={stopCardActivation}
                 disabled={removingId === show.id}
-                className="absolute right-2 top-12 z-20 rounded-full border border-red-400/50 bg-black/80 px-2 py-1 text-xs font-bold text-red-100 opacity-0 shadow-lg transition-opacity hover:bg-red-700 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-300 group-hover:opacity-100 group-focus-within:opacity-100"
+                className="absolute right-2 top-2 z-30 rounded-full border border-red-400/50 bg-black/80 px-2 py-1 text-xs font-bold text-red-100 opacity-0 shadow-lg transition-opacity hover:bg-red-700 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-300 group-hover:opacity-100 group-focus-within:opacity-100"
               >
                 ×
               </button>
 
               {removeConfirmId === show.id && (
-                <div className="absolute inset-x-2 top-20 z-30 rounded-xl border border-red-400/50 bg-gray-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
+                <div className="absolute inset-x-2 top-12 z-40 rounded-xl border border-red-400/50 bg-gray-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
                   <p className="mb-2 text-xs font-medium text-gray-100">Remove?</p>
                   <div className="flex justify-center gap-2">
                     <button type="button" className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700" onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(null) }}>Cancel</button>
@@ -311,7 +311,7 @@ export default function WatchlistClient() {
                 </div>
               )}
 
-              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/45 to-transparent p-2">
+              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/45 to-transparent p-2 pt-10">
                 <label className="sr-only" htmlFor={`status-${show.id}`}>Status for {show.title}</label>
                 <select
                   id={`status-${show.id}`}
@@ -327,12 +327,13 @@ export default function WatchlistClient() {
                 </select>
               </div>
 
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-2 pb-2 pt-8 pointer-events-none">
-                <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">{show.title}</p>
-              </div>
-
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-3 pt-16 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-                <StarRating rating={show.rating ?? null} onRate={(value) => patchShow(show.id, { rating: value })} />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-2 pb-3 pt-12 pointer-events-none">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-medium leading-tight text-white line-clamp-2">{show.title}</p>
+                  <div className="hidden pointer-events-auto group-hover:block group-focus-within:block">
+                    <StarRating rating={show.rating ?? null} onRate={(value) => patchShow(show.id, { rating: value })} />
+                  </div>
+                </div>
               </div>
             </article>
           ))}
