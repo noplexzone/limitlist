@@ -2,14 +2,21 @@ import type { MetadataVoiceCastGroup } from './providers'
 
 const JIKAN_BASE = 'https://api.jikan.moe/v4'
 
-async function fetchJikanJson<T>(url: string, timeoutMs = 2500): Promise<T | null> {
+async function fetchJikanJson<T>(url: string, timeoutMs = 4000): Promise<T | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const res = await fetch(url, { next: { revalidate: 86400 }, signal: controller.signal })
     if (!res.ok) return null
     return (await res.json()) as T
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.warn('[jikan] timeout fetching:', url)
+      } else {
+        console.warn('[jikan] fetch error:', url, err)
+      }
+    }
     return null
   } finally {
     clearTimeout(timeout)
@@ -49,6 +56,8 @@ function scoreAnimeMatch(item: NonNullable<JikanAnimeSearchResponse['data']>[num
   return score
 }
 
+const SCORE_THRESHOLD = 4
+
 export async function fetchJikanVoiceCast(
   titles: Array<string | null | undefined>,
   year?: number | null
@@ -56,44 +65,61 @@ export async function fetchJikanVoiceCast(
   const usableTitles = titles.filter((title): title is string => Boolean(title && title.trim()))
   if (usableTitles.length === 0) return undefined
 
-  const search = new URL(`${JIKAN_BASE}/anime`)
-  search.searchParams.set('q', usableTitles[0])
-  search.searchParams.set('sfw', 'true')
-  search.searchParams.set('limit', '5')
+  type BestCandidate = { item: NonNullable<JikanAnimeSearchResponse['data']>[number]; score: number }
+  let best: BestCandidate | undefined
 
-  try {
+  // Try up to 2 candidate titles, stopping early when a confident match is found
+  for (const candidateTitle of usableTitles.slice(0, 2)) {
+    const search = new URL(`${JIKAN_BASE}/anime`)
+    search.searchParams.set('q', candidateTitle)
+    search.searchParams.set('sfw', 'true')
+    search.searchParams.set('limit', '5')
+
     const searchData = await fetchJikanJson<JikanAnimeSearchResponse>(search.toString())
-    if (!searchData) return undefined
-    const best = (searchData.data ?? [])
+    if (!searchData) continue
+
+    const candidate = (searchData.data ?? [])
       .map((item) => ({ item, score: scoreAnimeMatch(item, usableTitles, year) }))
       .sort((a, b) => b.score - a.score)[0]
-    if (!best || best.score < 4) return undefined
 
-    const charactersData = await fetchJikanJson<JikanCharactersResponse>(`${JIKAN_BASE}/anime/${best.item.mal_id}/characters`)
-    if (!charactersData) return undefined
-    const groups: MetadataVoiceCastGroup = { english: [], japanese: [] }
-
-    for (const row of charactersData.data ?? []) {
-      const character = row.character?.name
-      if (!character) continue
-      const characterImageUrl = row.character?.images?.jpg?.image_url ?? undefined
-      for (const actor of row.voice_actors ?? []) {
-        const language = actor.language?.toLowerCase()
-        const target = language === 'english' ? groups.english : language === 'japanese' ? groups.japanese : null
-        if (!target || !actor.person?.name) continue
-        target.push({
-          name: actor.person.name,
-          character,
-          profileUrl: actor.person.images?.jpg?.image_url ?? characterImageUrl,
-          characterImageUrl,
-        })
-      }
+    if (candidate && (!best || candidate.score > best.score)) {
+      best = candidate
     }
 
-    groups.english = groups.english.slice(0, 24)
-    groups.japanese = groups.japanese.slice(0, 24)
-    return groups.english.length || groups.japanese.length ? groups : undefined
-  } catch {
-    return undefined
+    if (best && best.score >= SCORE_THRESHOLD) break
   }
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[jikan] title="${usableTitles[0]}" best score=${best?.score ?? 0}`)
+    if (!best || best.score < SCORE_THRESHOLD) {
+      console.warn(`[jikan] low/no match for: ${usableTitles.join(' | ')}`)
+    }
+  }
+
+  if (!best || best.score < SCORE_THRESHOLD) return undefined
+
+  const charactersData = await fetchJikanJson<JikanCharactersResponse>(`${JIKAN_BASE}/anime/${best.item.mal_id}/characters`, 4000)
+  if (!charactersData) return undefined
+  const groups: MetadataVoiceCastGroup = { english: [], japanese: [] }
+
+  for (const row of charactersData.data ?? []) {
+    const character = row.character?.name
+    if (!character) continue
+    const characterImageUrl = row.character?.images?.jpg?.image_url ?? undefined
+    for (const actor of row.voice_actors ?? []) {
+      const language = actor.language?.toLowerCase()
+      const target = language === 'english' ? groups.english : language === 'japanese' ? groups.japanese : null
+      if (!target || !actor.person?.name) continue
+      target.push({
+        name: actor.person.name,
+        character,
+        profileUrl: actor.person.images?.jpg?.image_url ?? characterImageUrl,
+        characterImageUrl,
+      })
+    }
+  }
+
+  groups.english = groups.english.slice(0, 24)
+  groups.japanese = groups.japanese.slice(0, 24)
+  return groups.english.length || groups.japanese.length ? groups : undefined
 }

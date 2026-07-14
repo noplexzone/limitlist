@@ -127,7 +127,7 @@ const DETAIL_QUERY = `
       characters(page: 1, perPage: 24, sort: [ROLE, RELEVANCE, ID]) {
         edges {
           node { name { full } image { large medium } }
-          voiceActors(language: JAPANESE) { name { full native } image { large medium } languageV2 }
+          voiceActors { name { full native } image { large medium } languageV2 }
         }
       }
     }
@@ -293,6 +293,7 @@ export function buildAniListRecommendations(media: AniListDetailMedia, limit = 1
 }
 
 export function buildAniListVoiceCast(media: AniListDetailMedia): MetadataVoiceCastGroup {
+  const english: MetadataCastMember[] = []
   const japanese: MetadataCastMember[] = []
   const seen = new Set<string>()
   for (const edge of media.characters?.edges ?? []) {
@@ -301,10 +302,13 @@ export function buildAniListVoiceCast(media: AniListDetailMedia): MetadataVoiceC
     for (const actor of edge.voiceActors ?? []) {
       const name = actor.name?.full
       if (!name) continue
-      const key = `${name}:${character ?? ''}`
+      const lang = actor.languageV2?.toLowerCase()
+      const target = lang === 'english' ? english : lang === 'japanese' ? japanese : null
+      if (!target) continue
+      const key = `${lang}:${name}:${character ?? ''}`
       if (seen.has(key)) continue
       seen.add(key)
-      japanese.push({
+      target.push({
         name,
         originalName: actor.name?.native ?? undefined,
         character: character ?? undefined,
@@ -313,7 +317,7 @@ export function buildAniListVoiceCast(media: AniListDetailMedia): MetadataVoiceC
       })
     }
   }
-  return { english: [], japanese: japanese.slice(0, 24) }
+  return { english: english.slice(0, 24), japanese: japanese.slice(0, 24) }
 }
 
 export function mergeVoiceCast(primary?: MetadataVoiceCastGroup | null, fallback?: MetadataVoiceCastGroup | null): MetadataVoiceCastGroup | undefined {

@@ -348,7 +348,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
               {voiceCast.map((actor) => <CastCard key={`${voiceLanguage}-${actor.name}-${actor.character ?? ''}`} member={actor} />)}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No {voiceLanguage} voice cast found.</p>
+            <p className="text-sm text-gray-500">No {voiceLanguage === 'english' ? 'English' : 'Japanese'} voice cast found.</p>
           )}
         </section>
       )}
