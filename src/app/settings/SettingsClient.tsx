@@ -35,6 +35,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [tvdbApiKey, setTvdbApiKey] = useState('')
   const [tvdbPin, setTvdbPin] = useState('')
   const [tvdbSeasonType, setTvdbSeasonType] = useState(initialSettings.tvdbSeasonType || 'default')
+  const [showTvdbApiKey, setShowTvdbApiKey] = useState(false)
+  const [showTvdbPin, setShowTvdbPin] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -176,33 +178,58 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
             Metadata API keys are set by environment variables and cannot be changed from the UI.
           </div>
         ) : (
-          <form onSubmit={submitApiKeys} className="space-y-3">
-            <p className="text-xs text-gray-500">TVDB key: {settings.tvdbApiKey.configured ? settings.tvdbApiKey.masked : 'Not configured'}</p>
-            <p className="text-xs text-gray-500">TVDB PIN: {settings.tvdbPin.configured ? settings.tvdbPin.masked : 'Not configured / not required'}</p>
+          <form onSubmit={submitApiKeys} className="space-y-4">
             {!settings.tvdbApiKey.lockedByEnvironment && (
-              <input
-                value={tvdbApiKey}
-                onChange={(e) => setTvdbApiKey(e.target.value)}
-                placeholder="Paste TVDB API key"
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
-              />
+              <label className="block">
+                <span className="mb-1 block text-sm text-gray-400">TVDB API key</span>
+                <div className="flex rounded-lg border border-gray-700 bg-gray-950 focus-within:border-purple-500">
+                  <input
+                    type={showTvdbApiKey ? 'text' : 'password'}
+                    value={tvdbApiKey}
+                    onChange={(e) => setTvdbApiKey(e.target.value)}
+                    autoComplete="off"
+                    placeholder={settings.tvdbApiKey.configured ? 'Enter new key to replace' : 'Paste TVDB API key'}
+                    className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
+                  />
+                  <button type="button" onClick={() => setShowTvdbApiKey((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+                    {showTvdbApiKey ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">{settings.tvdbApiKey.configured ? `Currently configured${settings.tvdbApiKey.masked ? ` (${settings.tvdbApiKey.masked})` : ''}; leave blank to keep it.` : 'Not configured.'}</p>
+              </label>
             )}
             {!settings.tvdbPin.lockedByEnvironment && (
-              <input
-                value={tvdbPin}
-                onChange={(e) => setTvdbPin(e.target.value)}
-                placeholder="Optional TVDB PIN"
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
-              />
+              <label className="block">
+                <span className="mb-1 block text-sm text-gray-400">TVDB PIN <span className="text-gray-600">(optional)</span></span>
+                <div className="flex rounded-lg border border-gray-700 bg-gray-950 focus-within:border-purple-500">
+                  <input
+                    type={showTvdbPin ? 'text' : 'password'}
+                    value={tvdbPin}
+                    onChange={(e) => setTvdbPin(e.target.value)}
+                    autoComplete="off"
+                    placeholder={settings.tvdbPin.configured ? 'Enter new PIN to replace' : 'Optional subscriber PIN'}
+                    className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
+                  />
+                  <button type="button" onClick={() => setShowTvdbPin((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+                    {showTvdbPin ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">{settings.tvdbPin.configured ? `Currently configured${settings.tvdbPin.masked ? ` (${settings.tvdbPin.masked})` : ''}; leave blank to keep it.` : 'Not configured; usually not required.'}</p>
+              </label>
             )}
             <label className="block">
               <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
-              <input
+              <select
                 value={tvdbSeasonType}
                 onChange={(e) => setTvdbSeasonType(e.target.value)}
-                placeholder="default"
                 className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
-              />
+              >
+                <option value="default">Aired order (recommended)</option>
+                <option value="official">Official order</option>
+                <option value="dvd">DVD order</option>
+                <option value="absolute">Absolute order (one continuous episode count)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
             </label>
             <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
               Save metadata settings

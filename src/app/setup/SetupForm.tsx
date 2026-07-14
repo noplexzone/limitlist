@@ -14,6 +14,8 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
   const [error, setError] = useState('')
   const [warning, setWarning] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showTvdbApiKey, setShowTvdbApiKey] = useState(false)
+  const [showTvdbPin, setShowTvdbPin] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -26,7 +28,7 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
     const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value
     const tvdbApiKey = tvdbApiKeyLocked ? '' : ((form.elements.namedItem('tvdbApiKey') as HTMLInputElement | null)?.value.trim() ?? '')
     const tvdbPin = tvdbPinLocked ? '' : ((form.elements.namedItem('tvdbPin') as HTMLInputElement | null)?.value.trim() ?? '')
-    const tvdbSeasonType = ((form.elements.namedItem('tvdbSeasonType') as HTMLInputElement | null)?.value.trim() || defaultTvdbSeasonType)
+    const tvdbSeasonType = ((form.elements.namedItem('tvdbSeasonType') as HTMLSelectElement | null)?.value.trim() || defaultTvdbSeasonType)
 
     if (!username) {
       setError('Username is required')
@@ -123,26 +125,36 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
         ) : (
           <label className="block">
             <span className="mb-1 block text-sm text-gray-400">TVDB API key <span className="text-gray-600">(optional)</span></span>
-            <input
-              name="tvdbApiKey"
-              type="password"
-              autoComplete="off"
-              placeholder="Paste TVDB API key"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
-            />
+            <div className="flex rounded-lg border border-gray-700 bg-gray-800 focus-within:border-purple-500">
+              <input
+                name="tvdbApiKey"
+                type={showTvdbApiKey ? 'text' : 'password'}
+                autoComplete="off"
+                placeholder="Paste TVDB API key"
+                className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 focus:outline-none"
+              />
+              <button type="button" onClick={() => setShowTvdbApiKey((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+                {showTvdbApiKey ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </label>
         )}
 
         {!tvdbApiKeyLocked && !tvdbPinLocked && (
           <label className="block">
             <span className="mb-1 block text-sm text-gray-400">TVDB PIN <span className="text-gray-600">(optional)</span></span>
-            <input
-              name="tvdbPin"
-              type="password"
-              autoComplete="off"
-              placeholder="Optional subscriber PIN"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
-            />
+            <div className="flex rounded-lg border border-gray-700 bg-gray-800 focus-within:border-purple-500">
+              <input
+                name="tvdbPin"
+                type={showTvdbPin ? 'text' : 'password'}
+                autoComplete="off"
+                placeholder="Optional subscriber PIN"
+                className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 focus:outline-none"
+              />
+              <button type="button" onClick={() => setShowTvdbPin((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+                {showTvdbPin ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </label>
         )}
 
@@ -154,12 +166,17 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
 
         <label className="block">
           <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
-          <input
+          <select
             name="tvdbSeasonType"
-            defaultValue={defaultTvdbSeasonType}
-            placeholder="default"
+            defaultValue={defaultTvdbSeasonType || 'default'}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
-          />
+          >
+            <option value="default">Aired order (recommended)</option>
+            <option value="official">Official order</option>
+            <option value="dvd">DVD order</option>
+            <option value="absolute">Absolute order (one continuous episode count)</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
         </label>
       </fieldset>
 

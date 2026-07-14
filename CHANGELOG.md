@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- TVDB Settings and first-run setup now use hidden key/PIN inputs with show/hide controls and a labeled season-order dropdown aligned to Plex ordering.
 - **Anime detail provider priority**: TMDB remains the monitoring source for tracked shows, but detail-page related metadata now prefers AniList so titles like Jujutsu Kaisen do not collapse into one aggregate season or include stage/fan-made movie results.
 
 - **Anime detail ratings**: Detail-page poster overlays now use the same clickable half-star rating control as watchlist poster cards.
