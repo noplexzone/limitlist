@@ -9,7 +9,6 @@ import {
   fetchAniListDetailById,
   findAniListDetailForAnime,
   mergeVoiceCast,
-  stripAniListHtml,
 } from '@/lib/anilist'
 import type { MetadataVoiceCastGroup } from '@/lib/providers'
 
@@ -25,7 +24,7 @@ export async function GET(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { provider, id } = await params
-  const empty = { voiceCast: undefined, recommendations: [], relatedMovies: [], overview: undefined }
+  const empty = { voiceCast: undefined, recommendations: [], relatedMovies: [] }
 
   try {
     const tracked = provider === 'anilist'
@@ -66,7 +65,6 @@ export async function GET(
       voiceCast: mergeVoiceCastPreferJikan(jikanVoiceCast, anilistVoiceCast),
       recommendations,
       relatedMovies,
-      overview: stripAniListHtml(anilistDetail?.description),
     })
   } catch {
     return NextResponse.json(empty)

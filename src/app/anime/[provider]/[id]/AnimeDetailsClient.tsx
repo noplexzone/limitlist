@@ -129,12 +129,6 @@ function formatDate(value?: string | null) {
   return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function shouldUseEnrichmentOverview(current?: string | null, enrichment?: string | null) {
-  if (!enrichment) return false
-  if (!current) return true
-  return enrichment.length > current.length * 1.2
-}
-
 function stripHtml(value?: string | null) {
   return value?.replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() || ''
 }
@@ -199,14 +193,13 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
       try {
         const res = await fetch(`/api/anime/${encodeURIComponent(anime.providerName)}/${encodeURIComponent(anime.providerId)}/enrichment`)
         if (!res.ok) return
-        const enrichment: Pick<AnimeDetailsData['anime'], 'voiceCast' | 'recommendations' | 'relatedMovies' | 'overview'> = await res.json()
+        const enrichment: Pick<AnimeDetailsData['anime'], 'voiceCast' | 'recommendations' | 'relatedMovies'> = await res.json()
         if (cancelled) return
         setData((current) => ({
           ...current,
           anime: {
             ...current.anime,
             voiceCast: enrichment.voiceCast,
-            overview: shouldUseEnrichmentOverview(current.anime.overview, enrichment.overview) ? enrichment.overview : current.anime.overview,
             recommendations: enrichment.recommendations ?? [],
             relatedMovies: enrichment.relatedMovies ?? [],
           },
