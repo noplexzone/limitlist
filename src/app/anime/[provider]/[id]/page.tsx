@@ -2,10 +2,28 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
-import { fetchAniListDetailById, mapAniListDetailToMetadata } from '@/lib/anilist'
+import { fetchAniListDetailById, findAniListDetailForAnime, mapAniListDetailToMetadata, stripAniListHtml } from '@/lib/anilist'
 import { getDefaultCastLanguage } from '@/lib/settings'
 import Nav from '@/components/Nav'
 import AnimeDetailsClient, { type AnimeDetailsData } from './AnimeDetailsClient'
+
+function pickRicherOverview(a: string | null | undefined, b: string | null | undefined): string | null | undefined {
+  const sa = (a ?? '').trim()
+  const sb = (b ?? '').trim()
+  if (!sb) return sa || a
+  if (!sa) return sb
+  return sb.length > sa.length ? sb : sa
+}
+
+async function resolveAniListOverview(titles: (string | null | undefined)[], year: number | null): Promise<string | undefined> {
+  try {
+    const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
+    const detail = await Promise.race([findAniListDetailForAnime(titles, year), timer])
+    return detail ? (stripAniListHtml(detail.description) || undefined) : undefined
+  } catch {
+    return undefined
+  }
+}
 
 
 export default async function AnimeDetailsPage({
@@ -37,6 +55,12 @@ export default async function AnimeDetailsPage({
     }
 
 
+    const tvdbOverview = enrichedDetails?.overview ?? tracked.overview
+    const anilistOverview = tracked.metadataProvider === 'tvdb'
+      ? await resolveAniListOverview([tracked.title, tracked.originalTitle], tracked.firstAiredAt?.getFullYear() ?? null)
+      : undefined
+    const resolvedOverview = pickRicherOverview(tvdbOverview, anilistOverview) ?? tvdbOverview
+
     data = {
       tracked: true,
       anime: {
@@ -47,7 +71,7 @@ export default async function AnimeDetailsPage({
         sourceId: tracked.sourceId ?? undefined,
         title: tracked.title,
         originalTitle: tracked.originalTitle,
-        overview: enrichedDetails?.overview ?? tracked.overview,
+        overview: resolvedOverview,
         posterUrl: tracked.posterUrl,
         firstAiredAt: tracked.firstAiredAt?.toISOString(),
         genres: enrichedDetails?.genres ?? tracked.genres,
@@ -91,10 +115,14 @@ export default async function AnimeDetailsPage({
     const tvdb = await getConfiguredTvdbProvider()
     const details = tvdb ? await tvdb.getDetails(id) : null
     if (tvdb && details) {
+      const year = details.firstAiredAt ? new Date(details.firstAiredAt).getFullYear() : null
+      const anilistOverview = await resolveAniListOverview([details.title, details.originalTitle], year)
+      const overview = pickRicherOverview(details.overview, anilistOverview) ?? details.overview
       data = {
         tracked: false,
         anime: {
           ...details,
+          overview,
           seasons: details.seasons,
           voiceCast: undefined,
           recommendations: [],
