@@ -61,7 +61,19 @@ export async function POST(req: NextRequest) {
 
     const media = await fetchAniListMediaById(metadataId)
     const titles = Array.isArray(body.titles) ? body.titles : media ? getAniListTitles(media) : [body.title]
-    const tvdbMatch = await tvdb.findShowForAnime(titles, media ? getAniListYear(media) : null)
+    const year = media ? getAniListYear(media) : null
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[watchlist] AniList import TVDB match attempt', { anilistId: metadataId, titles, year })
+    }
+    const tvdbMatch = await tvdb.findShowForAnime(titles, year)
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[watchlist] AniList import TVDB match result', {
+        anilistId: metadataId,
+        matched: Boolean(tvdbMatch),
+        tvdbId: tvdbMatch?.providerId ?? null,
+        tvdbTitle: tvdbMatch?.title ?? null,
+      })
+    }
     if (tvdbMatch) {
       createProvider = tvdbMatch.providerName
       createProviderId = tvdbMatch.providerId

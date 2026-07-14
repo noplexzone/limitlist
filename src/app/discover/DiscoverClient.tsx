@@ -35,6 +35,7 @@ export default function DiscoverClient() {
   const [fetchError, setFetchError] = useState('')
   const [importing, setImporting] = useState<string | null>(null)
   const [importedIds, setImportedIds] = useState<Set<string>>(new Set())
+  const [importErrors, setImportErrors] = useState<Map<string, string>>(new Map())
   const [hasNextPage, setHasNextPage] = useState(false)
 
   const fetchDiscover = useCallback(async (type: FeedType, pageNum: number) => {
@@ -67,26 +68,39 @@ export default function DiscoverClient() {
     if (!result.importable || !result.providerId) return
 
     setImporting(result.providerId)
-    const res = await fetch('/api/watchlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        metadataProvider: result.providerName,
-        metadataId: result.providerId,
-        title: result.linkedTitle ?? result.title,
-        titles: result.titles,
-        originalTitle: result.originalTitle,
-        overview: result.overview,
-        posterUrl: result.posterUrl,
-        firstAiredAt: result.firstAiredAt,
-        genres: result.genres,
-        episodesTotal: result.episodesTotal,
-      }),
+    setImportErrors((prev) => {
+      const next = new Map(prev)
+      next.delete(result.providerId)
+      return next
     })
-    if (res.ok || res.status === 409) {
-      setImportedIds((prev) => new Set(prev).add(result.providerId))
+    try {
+      const res = await fetch('/api/watchlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadataProvider: result.providerName,
+          metadataId: result.providerId,
+          title: result.linkedTitle ?? result.title,
+          titles: result.titles,
+          originalTitle: result.originalTitle,
+          overview: result.overview,
+          posterUrl: result.posterUrl,
+          firstAiredAt: result.firstAiredAt,
+          genres: result.genres,
+          episodesTotal: result.episodesTotal,
+        }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok || res.status === 409) {
+        setImportedIds((prev) => new Set(prev).add(result.providerId))
+      } else {
+        setImportErrors((prev) => new Map(prev).set(result.providerId, body.error ?? 'Import failed'))
+      }
+    } catch {
+      setImportErrors((prev) => new Map(prev).set(result.providerId, 'Network error while importing'))
+    } finally {
+      setImporting(null)
     }
-    setImporting(null)
   }
 
   const pager = (
@@ -152,6 +166,7 @@ export default function DiscoverClient() {
               const cardKey = `${result.sourceProvider ?? result.providerName}:${result.sourceId ?? result.providerId}`
               const isAdded = result.inWatchlist || (!!result.providerId && importedIds.has(result.providerId))
               const isImporting = importing === result.providerId
+              const importError = result.providerId ? importErrors.get(result.providerId) : undefined
               const canImport = result.importable !== false && !!result.providerId
               return (
                 <article
@@ -190,6 +205,7 @@ export default function DiscoverClient() {
                     ) : (
                       <p className="text-center text-[10px] text-yellow-300">{result.mappingStatus ?? 'No TVDB match'}</p>
                     )}
+                    {importError && <p className="mt-1 line-clamp-3 text-center text-[10px] font-medium text-red-300">{importError}</p>}
                   </div>
                 </article>
               )

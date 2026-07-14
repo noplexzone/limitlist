@@ -52,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Discover imports now surface watchlist API errors on the affected card, clear stuck loading states, and log AniList-to-TVDB import matching in development.
 - TVDB detail metadata now prefers English TVDB translations and AniList enrichment returns a sanitized English overview while logging match misses in development.
 - TVDB artwork host is now whitelisted for optimized images so tracked posters render across details, watchlist, and dashboard after rebuild/restart.
 - TVDB search now calls `/v4/search` without doubling the `/v4` path segment, handles episode payloads returned under `data.episodes`, and development logs surface non-OK TVDB responses.
