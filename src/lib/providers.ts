@@ -28,6 +28,7 @@ export interface MetadataRelatedItem {
   overview?: string
   posterUrl?: string
   firstAiredAt?: string
+  cast?: string[]
 }
 
 export interface MetadataSeasonSummary {

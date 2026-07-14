@@ -42,6 +42,12 @@ export interface AniListMedia {
   genres?: string[] | null
   averageScore?: number | null
   popularity?: number | null
+  characters?: {
+    edges?: Array<{
+      node?: { name?: { full?: string | null } | null } | null
+      voiceActors?: Array<{ name?: { full?: string | null; native?: string | null } | null; languageV2?: string | null }> | null
+    }> | null
+  } | null
 }
 
 export interface AniListDetailMedia extends AniListMedia {
@@ -114,6 +120,12 @@ const DETAIL_QUERY = `
           node {
             type
             ${MEDIA_FIELDS}
+            characters(page: 1, perPage: 4, sort: [ROLE, RELEVANCE, ID]) {
+              edges {
+                node { name { full } }
+                voiceActors { name { full native } languageV2 }
+              }
+            }
           }
         }
       }
@@ -226,6 +238,27 @@ function mediaDateNumber(media: AniListMedia): number {
   return y * 10000 + m * 100 + d
 }
 
+function buildRelatedCast(media: AniListMedia): string[] | undefined {
+  const cast: string[] = []
+  const seen = new Set<string>()
+
+  for (const edge of media.characters?.edges ?? []) {
+    const character = edge.node?.name?.full
+    const actor =
+      edge.voiceActors?.find((voiceActor) => voiceActor.languageV2?.toLowerCase() === 'japanese') ??
+      edge.voiceActors?.find((voiceActor) => voiceActor.languageV2?.toLowerCase() === 'english') ??
+      edge.voiceActors?.[0]
+    const actorName = actor?.name?.full
+    const label = actorName && character ? `${actorName} as ${character}` : actorName ?? character
+    if (!label || seen.has(label)) continue
+    seen.add(label)
+    cast.push(label)
+    if (cast.length >= 4) break
+  }
+
+  return cast.length ? cast : undefined
+}
+
 function asRelatedItem(media: AniListMedia): MetadataRelatedItem {
   return {
     providerId: String(media.id),
@@ -235,6 +268,7 @@ function asRelatedItem(media: AniListMedia): MetadataRelatedItem {
     overview: media.description ?? undefined,
     posterUrl: media.coverImage?.extraLarge ?? media.coverImage?.large ?? undefined,
     firstAiredAt: getAniListStartDate(media),
+    cast: buildRelatedCast(media),
   }
 }
 

@@ -485,24 +485,30 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
         {enrichmentLoading ? (
           <p className="text-sm text-gray-500">Loading movies and specials…</p>
         ) : anime.relatedMovies && anime.relatedMovies.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 xl:grid-cols-2">
             {anime.relatedMovies.map((movie) => {
               const key = childRatingKey('MOVIE', { providerName: movie.providerName, providerId: movie.providerId })
               const child = childRatingMap.get(`MOVIE:${key}`)
+              const overview = stripHtml(movie.overview)
               return (
-                <div key={key} className="rounded-xl border border-gray-800 bg-gray-950 p-3">
-                  <div className="flex gap-3">
+                <div key={key} className="rounded-xl border border-gray-800 bg-gray-950 p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row">
                     {movie.posterUrl && (
-                      <div className="relative h-32 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-800">
-                        <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} />
+                      <div className="relative aspect-[2/3] w-full shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-32 lg:w-36">
+                        <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} sizes="(min-width: 1024px) 144px, (min-width: 640px) 128px, 100vw" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 font-medium text-gray-100">{movie.title}</p>
-                      {movie.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(movie.firstAiredAt)}</p>}
-                      {stripHtml(movie.overview) && <p className="mt-2 line-clamp-3 text-sm leading-5 text-gray-400">{stripHtml(movie.overview)}</p>}
+                      <p className="font-medium leading-snug text-gray-100">{movie.title}</p>
+                      {movie.firstAiredAt && <p className="mt-1 text-xs text-gray-500">{formatDate(movie.firstAiredAt)}</p>}
+                      {overview && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-400">{overview}</p>}
+                      {movie.cast && movie.cast.length > 0 && (
+                        <p className="mt-3 text-sm leading-6 text-purple-200">
+                          <span className="font-semibold text-purple-100">Cast:</span> {movie.cast.join(', ')}
+                        </p>
+                      )}
                       {data.tracked && (
-                        <div className="mt-3">
+                        <div className="mt-4">
                           <StarRating compact rating={child?.rating ?? null} onRate={(value) => patchChildRating({ kind: 'MOVIE', providerName: movie.providerName, providerId: movie.providerId, title: movie.title, posterUrl: movie.posterUrl, airDate: movie.firstAiredAt }, value)} />
                         </div>
                       )}
