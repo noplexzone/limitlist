@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { fetchAniListDetailById, mapAniListDetailToMetadata } from '@/lib/anilist'
+import { getDefaultCastLanguage } from '@/lib/settings'
 import Nav from '@/components/Nav'
 import AnimeDetailsClient, { type AnimeDetailsData } from './AnimeDetailsClient'
 
@@ -16,6 +17,7 @@ export default async function AnimeDetailsPage({
   if (!user) redirect('/login')
 
   const { provider, id } = await params
+  const defaultCastLanguage = await getDefaultCastLanguage()
   const tracked = provider === 'anilist'
     ? await prisma.animeShow.findFirst({
         where: { OR: [{ metadataProvider: 'anilist', metadataId: id }, { sourceProvider: 'anilist', sourceId: id }] },
@@ -115,7 +117,7 @@ export default async function AnimeDetailsPage({
       <Nav />
       <main className="mx-auto max-w-7xl px-4 py-8">
         {data ? (
-          <AnimeDetailsClient initialData={data} />
+          <AnimeDetailsClient initialData={data} defaultCastLanguage={defaultCastLanguage} />
         ) : (
           <div className="rounded-2xl border border-gray-800 bg-gray-900 p-8 text-center text-gray-400">
             Anime not found or provider unavailable.

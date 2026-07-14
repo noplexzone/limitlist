@@ -16,6 +16,7 @@ interface SettingsState {
     masked: string | null
   }
   tvdbSeasonType: string
+  defaultCastLanguage: 'english' | 'japanese'
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -35,6 +36,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [tvdbApiKey, setTvdbApiKey] = useState('')
   const [tvdbPin, setTvdbPin] = useState('')
   const [tvdbSeasonType, setTvdbSeasonType] = useState(initialSettings.tvdbSeasonType || 'default')
+  const [defaultCastLanguage, setDefaultCastLanguage] = useState<'english' | 'japanese'>(initialSettings.defaultCastLanguage || 'japanese')
   const [showTvdbApiKey, setShowTvdbApiKey] = useState(false)
   const [showTvdbPin, setShowTvdbPin] = useState(false)
   const [message, setMessage] = useState('')
@@ -87,7 +89,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
 
   async function submitApiKeys(e: FormEvent) {
     e.preventDefault()
-    const body: Record<string, unknown> = { tvdbSeasonType }
+    const body: Record<string, unknown> = { tvdbSeasonType, defaultCastLanguage }
     if (!settings.tvdbApiKey.lockedByEnvironment && tvdbApiKey.trim()) body.tvdbApiKey = tvdbApiKey
     if (!settings.tvdbPin.lockedByEnvironment && (tvdbPin.trim() || tvdbApiKey.trim())) body.tvdbPin = tvdbPin
     await savePatch(body, 'Metadata settings saved.')
@@ -230,6 +232,18 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
               <option value="absolute">Absolute order (one continuous episode count)</option>
             </select>
             <p className="mt-1 text-xs text-gray-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm text-gray-400">Default cast language on detail pages</span>
+            <select
+              value={defaultCastLanguage}
+              onChange={(e) => setDefaultCastLanguage(e.target.value as 'english' | 'japanese')}
+              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+            >
+              <option value="japanese">Japanese</option>
+              <option value="english">English</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Falls back to whichever is available if your choice has no cast.</p>
           </label>
           <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
             Save metadata settings

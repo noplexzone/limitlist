@@ -4,6 +4,8 @@ export const TVDB_API_KEY_SETTING = 'tvdbApiKey'
 export const TVDB_PIN_SETTING = 'tvdbPin'
 export const TVDB_SEASON_TYPE_SETTING = 'tvdbSeasonType'
 export const DEFAULT_TVDB_SEASON_TYPE = 'default'
+export const DEFAULT_CAST_LANGUAGE_SETTING = 'defaultCastLanguage'
+export const DEFAULT_CAST_LANGUAGE = 'japanese'
 
 
 export function isTvdbApiKeyEnvLocked() {
@@ -38,4 +40,12 @@ export async function getEffectiveTvdbPin(): Promise<string | null> {
 
 export async function getConfiguredTvdbSeasonType(): Promise<string> {
   return process.env.TVDB_SEASON_TYPE || (await getStoredSetting(TVDB_SEASON_TYPE_SETTING)) || DEFAULT_TVDB_SEASON_TYPE
+}
+
+export function normalizeCastLanguage(value?: string | null): 'english' | 'japanese' {
+  return value === 'english' || value === 'japanese' ? value : DEFAULT_CAST_LANGUAGE
+}
+
+export async function getDefaultCastLanguage(): Promise<'english' | 'japanese'> {
+  return normalizeCastLanguage(await getStoredSetting(DEFAULT_CAST_LANGUAGE_SETTING))
 }

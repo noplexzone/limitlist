@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import {
   getConfiguredTvdbSeasonType,
+  getDefaultCastLanguage,
   getStoredSetting,
   isTvdbApiKeyEnvLocked,
   isTvdbPinEnvLocked,
@@ -28,6 +29,7 @@ export default async function SettingsPage() {
   const tvdbKeyLocked = isTvdbApiKeyEnvLocked()
   const tvdbPinLocked = isTvdbPinEnvLocked()
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
+  const defaultCastLanguage = await getDefaultCastLanguage()
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -50,6 +52,7 @@ export default async function SettingsPage() {
               masked: tvdbPinLocked ? 'Set in environment' : maskKey(storedTvdbPin),
             },
             tvdbSeasonType,
+            defaultCastLanguage,
           }}
         />
       </main>

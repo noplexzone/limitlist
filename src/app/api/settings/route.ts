@@ -7,8 +7,11 @@ import {
   TVDB_API_KEY_SETTING,
   TVDB_PIN_SETTING,
   TVDB_SEASON_TYPE_SETTING,
+  DEFAULT_CAST_LANGUAGE_SETTING,
   getConfiguredTvdbSeasonType,
+  getDefaultCastLanguage,
   getStoredSetting,
+  normalizeCastLanguage,
   isTvdbApiKeyEnvLocked,
   isTvdbPinEnvLocked,
   upsertStoredSetting,
@@ -44,6 +47,7 @@ export async function GET() {
   const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
   const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
+  const defaultCastLanguage = await getDefaultCastLanguage()
 
   return NextResponse.json({
     username: appUser?.username ?? user.username,
@@ -59,6 +63,7 @@ export async function GET() {
       masked: isTvdbPinEnvLocked() ? 'Set in environment' : maskKey(storedTvdbPin),
     },
     tvdbSeasonType,
+    defaultCastLanguage,
   })
 }
 
@@ -143,6 +148,13 @@ export async function PATCH(req: NextRequest) {
     await upsertStoredSetting(TVDB_SEASON_TYPE_SETTING, body.tvdbSeasonType.trim())
   }
 
+  if ('defaultCastLanguage' in body) {
+    if (body.defaultCastLanguage !== 'english' && body.defaultCastLanguage !== 'japanese') {
+      return NextResponse.json({ error: 'Default cast language must be English or Japanese' }, { status: 400 })
+    }
+    await upsertStoredSetting(DEFAULT_CAST_LANGUAGE_SETTING, normalizeCastLanguage(body.defaultCastLanguage))
+  }
+
   if (updated.username !== user.username) {
     const session = await getSession()
     session.user = { username: updated.username }
@@ -152,6 +164,7 @@ export async function PATCH(req: NextRequest) {
   const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
   const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
+  const defaultCastLanguage = await getDefaultCastLanguage()
   return NextResponse.json({
     username: updated.username,
     profileImageData: updated.profileImageData ?? null,
@@ -166,5 +179,6 @@ export async function PATCH(req: NextRequest) {
       masked: isTvdbPinEnvLocked() ? 'Set in environment' : maskKey(storedTvdbPin),
     },
     tvdbSeasonType,
+    defaultCastLanguage,
   })
 }

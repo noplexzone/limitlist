@@ -164,7 +164,7 @@ function CastCard({ member }: { member: MetadataCastMember }) {
   )
 }
 
-export default function AnimeDetailsClient({ initialData }: { initialData: AnimeDetailsData }) {
+export default function AnimeDetailsClient({ initialData, defaultCastLanguage }: { initialData: AnimeDetailsData; defaultCastLanguage: 'english' | 'japanese' }) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [busy, setBusy] = useState(false)
@@ -176,14 +176,17 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
   const anime = data.anime
   const englishCount = anime.voiceCast?.english.length ?? 0
   const japaneseCount = anime.voiceCast?.japanese.length ?? 0
-  const [voiceLanguage, setVoiceLanguage] = useState<'english' | 'japanese'>(englishCount > 0 ? 'english' : 'japanese')
+  const [voiceLanguage, setVoiceLanguage] = useState<'english' | 'japanese'>(defaultCastLanguage === 'english' && englishCount > 0 ? 'english' : 'japanese')
+  const [voiceLanguageTouched, setVoiceLanguageTouched] = useState(false)
   const voiceCast = anime.voiceCast?.[voiceLanguage] ?? []
   const childRatingMap = useMemo(() => new Map(childRatings.map((rating) => [`${rating.kind}:${rating.key}`, rating])), [childRatings])
 
   useEffect(() => {
-    if (voiceLanguage === 'english' && englishCount === 0 && japaneseCount > 0) setVoiceLanguage('japanese')
-    if (voiceLanguage === 'japanese' && japaneseCount === 0 && englishCount > 0) setVoiceLanguage('english')
-  }, [englishCount, japaneseCount, voiceLanguage])
+    if (!voiceLanguageTouched && defaultCastLanguage === 'english' && englishCount > 0) setVoiceLanguage('english')
+    else if (!voiceLanguageTouched && defaultCastLanguage === 'japanese' && japaneseCount > 0) setVoiceLanguage('japanese')
+    else if (voiceLanguage === 'english' && englishCount === 0 && japaneseCount > 0) setVoiceLanguage('japanese')
+    else if (voiceLanguage === 'japanese' && japaneseCount === 0 && englishCount > 0) setVoiceLanguage('english')
+  }, [defaultCastLanguage, englishCount, japaneseCount, voiceLanguage, voiceLanguageTouched])
 
   useEffect(() => {
     let cancelled = false
@@ -399,7 +402,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                 <button
                   key={language}
                   type="button"
-                  onClick={() => setVoiceLanguage(language)}
+                  onClick={() => { setVoiceLanguageTouched(true); setVoiceLanguage(language) }}
                   disabled={(anime.voiceCast?.[language].length ?? 0) === 0}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
                     voiceLanguage === language ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white disabled:cursor-not-allowed disabled:text-gray-700'
