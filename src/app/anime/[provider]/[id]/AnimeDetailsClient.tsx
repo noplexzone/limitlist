@@ -129,6 +129,12 @@ function formatDate(value?: string | null) {
   return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function shouldUseEnrichmentOverview(current?: string | null, enrichment?: string | null) {
+  if (!enrichment) return false
+  if (!current) return true
+  return enrichment.length > current.length * 1.2
+}
+
 function CastImage({ member }: { member: MetadataCastMember }) {
   const imageUrl = member.profileUrl ?? member.characterImageUrl
   if (!imageUrl) {
@@ -193,7 +199,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
           anime: {
             ...current.anime,
             voiceCast: enrichment.voiceCast,
-            overview: enrichment.overview && enrichment.overview !== current.anime.overview ? enrichment.overview : current.anime.overview,
+            overview: shouldUseEnrichmentOverview(current.anime.overview, enrichment.overview) ? enrichment.overview : current.anime.overview,
             recommendations: enrichment.recommendations ?? [],
             relatedMovies: enrichment.relatedMovies ?? [],
           },
