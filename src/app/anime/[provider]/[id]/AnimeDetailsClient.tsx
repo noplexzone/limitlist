@@ -291,9 +291,8 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
           <div className="flex flex-wrap gap-3 text-sm text-gray-300">
             {anime.firstAiredAt && <span className="rounded-full bg-gray-900 px-3 py-1">First aired {formatDate(anime.firstAiredAt)}</span>}
             {anime.episodesTotal != null && <span className="rounded-full bg-gray-900 px-3 py-1">{anime.episodesTotal} episodes</span>}
-            {anime.airingStatus && <span className="rounded-full bg-gray-900 px-3 py-1">TMDB: {anime.airingStatus}</span>}
+            {anime.airingStatus && <span className="rounded-full bg-gray-900 px-3 py-1">Status: {anime.airingStatus}</span>}
             {anime.nextAiringAt && <span className="rounded-full bg-purple-900/70 px-3 py-1">Next: Ep {anime.nextEpisodeNum ?? '?'}{anime.nextEpisodeName ? ` — ${anime.nextEpisodeName}` : ''} · {formatDate(anime.nextAiringAt)}</span>}
-            {anime.voteAverage != null && <span className="rounded-full bg-yellow-900/60 px-3 py-1">TMDB {anime.voteAverage.toFixed(1)}/10{anime.voteCount ? ` · ${anime.voteCount.toLocaleString()} votes` : ''}</span>}
             {anime.contentRating && <span className="rounded-full bg-gray-900 px-3 py-1">Rated {anime.contentRating}</span>}
             {anime.originalLanguage && <span className="rounded-full bg-gray-900 px-3 py-1">Language {anime.originalLanguage.toUpperCase()}</span>}
             {data.tracked && anime.rating != null && <span className="rounded-full bg-purple-900/70 px-3 py-1">Your rating {anime.rating.toFixed(1)}/5</span>}
@@ -372,7 +371,7 @@ export default function AnimeDetailsClient({ initialData }: { initialData: Anime
                         <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className="flex items-start justify-between gap-3 rounded-lg bg-gray-900 px-3 py-2 text-sm">
                           <div className="min-w-0">
                             <span className="text-gray-200">{episode.episodeNumber}. {episode.name}</span>
-                            <p className="text-xs text-gray-500">{episode.voteAverage ? `TMDB ${episode.voteAverage.toFixed(1)}/10` : episode.airDate ? formatDate(episode.airDate) : ''}</p>
+                            <p className="text-xs text-gray-500">{episode.airDate ? formatDate(episode.airDate) : ''}</p>
                           </div>
                           {data.tracked && (
                             <StarRating
