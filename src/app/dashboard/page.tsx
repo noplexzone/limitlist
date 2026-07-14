@@ -38,8 +38,8 @@ function WhatsNewPanel() {
           </li>
         ))}
       </ul>
-      <div className="mt-5 space-y-2 border-t border-gray-800 pt-4">
-        {previous.slice(0, 2).map((entry) => (
+      <div className="mt-5 max-h-[32rem] space-y-2 overflow-y-auto border-t border-gray-800 pt-4 pr-1 [scrollbar-width:thin]">
+        {previous.map((entry) => (
           <details key={entry.version} className="rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2">
             <summary className="cursor-pointer text-sm font-medium text-gray-200">
               {entry.version} <span className="text-xs font-normal text-gray-500">· {entry.date}</span>
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <Nav />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-[112rem] px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold mb-8 text-purple-400">Dashboard</h1>
 
         {isEmpty ? (
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 gap-8 xl:grid-cols-[320px_1fr_360px] xl:items-start">
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-[280px_minmax(0,1fr)_320px] 2xl:grid-cols-[300px_minmax(0,1fr)_340px] xl:items-start">
               <aside className="xl:sticky xl:top-[5rem]">
                 <WhatsNewPanel />
               </aside>

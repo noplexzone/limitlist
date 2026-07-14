@@ -49,10 +49,10 @@ There is no default username or password; you set them during setup.
 
 ## Unraid deployment
 
-The current 1.2.0 release candidate runs as a single self-hosted Unraid app container:
+The initial official release runs as a single self-hosted Unraid app container:
 
 - Container name: `limitlist`
-- Image/tag: `noplexzone/limitlist:v1.2.0-rc.1`
+- Image/tag: `noplexzone/limitlist:v1.0.0`
 - Host port: `3020` -> container port `3000`
 - Persistent data: `/mnt/user/appdata/limitlist:/data`
 - SQLite database: `/data/limitlist.db`
@@ -65,11 +65,9 @@ Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/li
 
 
 
-## Versioning and release candidates
+## Versioning
 
-During active iteration, use normal semver patch tags (`v1.1.1`, `v1.1.2`, etc.) for builds that add or change meaningful behavior. Reserve `-rc.N` tags for the final candidate phase when the major feature scope is complete and the remaining work should be regression fixes, release polish, and operator validation before the final `vX.Y.Z` tag.
-
-The Docker workflow publishes `develop` plus `v<package.json version>`, so `package.json` is the source of truth for image tags.
+LimitList starts its public release line at `v1.0.0`. Avoid release-candidate tags for this project unless explicitly reintroduced later; use `develop` for moving test builds and reserve semver tags for releases. The Docker workflow publishes `develop` plus `v<package.json version>`, so `package.json` is the source of truth for release image tags.
 
 ## Environment variables
 
@@ -193,4 +191,4 @@ The **Schedule** link in the nav bar shows a red badge with the undismissed remi
 - **Phase 2** (complete): Ratings/notes, anime-focused search, Docker non-root runtime
 - **Phase 3** (complete): Stats dashboard (`/dashboard`) with status counts, completion rate, episodes/hours watched, top genres/studios
 - **Phase 4** (complete): Airing schedule tracking + in-app reminders
-- **v1.1.0** (complete): Favicon/app icon, /discover page, global nav reminder badge, mobile nav, watchlist title overlay + image fallback + episode +1, poster-grid search, dashboard shelves
+- **Pre-release update** (complete): Favicon/app icon, /discover page, global nav reminder badge, mobile nav, watchlist title overlay + image fallback + episode +1, poster-grid search, dashboard shelves
