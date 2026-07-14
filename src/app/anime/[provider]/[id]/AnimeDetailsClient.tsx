@@ -295,22 +295,27 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
             <div className="flex h-full items-center justify-center px-6 text-center text-gray-500">{anime.title}</div>
           )}
 
+          {data.tracked && (
+            <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/90 via-black/60 to-transparent p-4 pb-10">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-300">
+                Status
+                <select
+                  value={(anime.status as ShowStatus) ?? 'PLAN_TO_WATCH'}
+                  disabled={busy}
+                  onChange={(e) => patchTracked({ status: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950/95 px-3 py-2 text-sm normal-case text-gray-100 outline-none focus:border-purple-500"
+                >
+                  {SHOW_STATUSES.map((status) => (
+                    <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 pt-16">
             {data.tracked ? (
               <div className="space-y-3">
-                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-300">
-                  Status
-                  <select
-                    value={(anime.status as ShowStatus) ?? 'PLAN_TO_WATCH'}
-                    disabled={busy}
-                    onChange={(e) => patchTracked({ status: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950/95 px-3 py-2 text-sm normal-case text-gray-100 outline-none focus:border-purple-500"
-                  >
-                    {SHOW_STATUSES.map((status) => (
-                      <option key={status} value={status}>{STATUS_LABELS[status]}</option>
-                    ))}
-                  </select>
-                </label>
                 <div>
                   <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-300">Rating</p>
                   <StarRating rating={anime.rating ?? null} onRate={(value) => patchTracked({ rating: value })} />
