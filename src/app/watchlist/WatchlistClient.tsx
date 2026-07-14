@@ -1,7 +1,7 @@
 'use client'
 
 import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
 
@@ -29,6 +29,9 @@ type PatchPayload = {
 
 type StatusFilter = 'ALL' | ShowStatus | 'NEEDS_UPDATE'
 type SortMode = 'updated-desc' | 'title-asc' | 'rating-desc' | 'first-aired-desc'
+
+const VALID_STATUS_FILTERS: string[] = ['ALL', 'NEEDS_UPDATE', ...SHOW_STATUSES]
+const VALID_SORT_MODES: string[] = ['updated-desc', 'title-asc', 'rating-desc', 'first-aired-desc']
 
 const STATUS_SELECT_CLASSES: Record<ShowStatus, string> = {
   WATCHING: 'bg-blue-700/90 border-blue-500/70',
@@ -122,11 +125,27 @@ function StarRating({
 
 export default function WatchlistClient() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [shows, setShows] = useState<AnimeShow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
-  const [sortMode, setSortMode] = useState<SortMode>('updated-desc')
+
+  const rawStatus = searchParams.get('status') ?? ''
+  const statusFilter: StatusFilter = VALID_STATUS_FILTERS.includes(rawStatus) ? (rawStatus as StatusFilter) : 'ALL'
+
+  const rawSort = searchParams.get('sort') ?? ''
+  const sortMode: SortMode = VALID_SORT_MODES.includes(rawSort) ? (rawSort as SortMode) : 'updated-desc'
+
+  function applyFilter(newStatus: StatusFilter, newSort: SortMode) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (newStatus === 'ALL') params.delete('status')
+    else params.set('status', newStatus)
+    if (newSort === 'updated-desc') params.delete('sort')
+    else params.set('sort', newSort)
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname)
+  }
 
   useEffect(() => {
     fetchWatchlist()
@@ -192,7 +211,7 @@ export default function WatchlistClient() {
           Status{' '}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            onChange={(e) => applyFilter(e.target.value as StatusFilter, sortMode)}
             className="ml-2 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 outline-none focus:border-purple-500"
           >
             <option value="ALL">All</option>
@@ -206,7 +225,7 @@ export default function WatchlistClient() {
           Sort{' '}
           <select
             value={sortMode}
-            onChange={(e) => setSortMode(e.target.value as SortMode)}
+            onChange={(e) => applyFilter(statusFilter, e.target.value as SortMode)}
             className="ml-2 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 outline-none focus:border-purple-500"
           >
             <option value="updated-desc">Recently updated</option>
