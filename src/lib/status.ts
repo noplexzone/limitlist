@@ -1,5 +1,6 @@
 export const SHOW_STATUSES = [
   'WATCHING',
+  'PAUSED',
   'UP_TO_DATE',
   'COMPLETED',
   'PLAN_TO_WATCH',
@@ -10,6 +11,7 @@ export type ShowStatus = (typeof SHOW_STATUSES)[number]
 
 export const STATUS_LABELS: Record<ShowStatus, string> = {
   WATCHING: 'Watching',
+  PAUSED: 'Paused',
   UP_TO_DATE: 'Up-to-Date',
   COMPLETED: 'Completed',
   PLAN_TO_WATCH: 'Plan to Watch',
@@ -18,6 +20,7 @@ export const STATUS_LABELS: Record<ShowStatus, string> = {
 
 const STATUS_STYLE_CLASSES: Record<ShowStatus, { select: string; dot: string; badge: string }> = {
   WATCHING: { select: 'bg-blue-700/90 border-blue-500/70', dot: 'bg-blue-500', badge: 'bg-blue-600' },
+  PAUSED: { select: 'bg-violet-800/90 border-violet-500/70', dot: 'bg-violet-500', badge: 'bg-violet-600' },
   UP_TO_DATE: { select: 'bg-cyan-700/90 border-cyan-500/70', dot: 'bg-cyan-500', badge: 'bg-cyan-600' },
   COMPLETED: { select: 'bg-green-700/90 border-green-500/70', dot: 'bg-green-500', badge: 'bg-green-600' },
   PLAN_TO_WATCH: { select: 'bg-amber-700/90 border-amber-500/70', dot: 'bg-gray-500', badge: 'bg-yellow-600' },
