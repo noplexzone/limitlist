@@ -3,7 +3,7 @@
 import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import PosterImage from '@/components/PosterImage'
-import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
+import { SHOW_STATUSES, STATUS_LABELS, STATUS_SELECT_CLASSES, type ShowStatus } from '@/lib/status'
 
 interface AnimeShow {
   id: string
@@ -33,13 +33,6 @@ type SortMode = 'updated-desc' | 'title-asc' | 'rating-desc' | 'first-aired-desc
 const VALID_STATUS_FILTERS: string[] = ['ALL', 'NEEDS_UPDATE', ...SHOW_STATUSES]
 const VALID_SORT_MODES: string[] = ['updated-desc', 'title-asc', 'rating-desc', 'first-aired-desc']
 
-const STATUS_SELECT_CLASSES: Record<ShowStatus, string> = {
-  WATCHING: 'bg-blue-700/90 border-blue-500/70',
-  UP_TO_DATE: 'bg-cyan-700/90 border-cyan-500/70',
-  COMPLETED: 'bg-green-700/90 border-green-500/70',
-  PLAN_TO_WATCH: 'bg-amber-700/90 border-amber-500/70',
-  DROPPED: 'bg-red-800/90 border-red-600/70',
-}
 
 function StarIcon({ fillPct }: { fillPct: number }) {
   return (

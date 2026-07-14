@@ -4,25 +4,11 @@ import Image from 'next/image'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
+import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
 import ScheduleClient from '@/app/schedule/ScheduleClient'
 import OpenSearchButton from './OpenSearchButton'
 
-const STATUS_LABELS: Record<string, string> = {
-  WATCHING: 'Watching',
-  UP_TO_DATE: 'Up-to-Date',
-  COMPLETED: 'Completed',
-  PLAN_TO_WATCH: 'Plan to Watch',
-  DROPPED: 'Dropped',
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  WATCHING: 'bg-blue-500',
-  UP_TO_DATE: 'bg-cyan-500',
-  COMPLETED: 'bg-green-500',
-  PLAN_TO_WATCH: 'bg-gray-500',
-  DROPPED: 'bg-red-500',
-}
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -171,12 +157,12 @@ export default async function DashboardPage() {
                 <section>
               <h2 className="text-lg font-semibold text-gray-200 mb-3">By Status</h2>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                {(['WATCHING', 'UP_TO_DATE', 'COMPLETED', 'PLAN_TO_WATCH', 'DROPPED'] as const).map((status) => (
+                {SHOW_STATUSES.map((status) => (
                   <div
                     key={status}
                     className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-3"
                   >
-                    <div className={`w-3 h-3 rounded-full shrink-0 ${STATUS_COLORS[status]}`} />
+                    <div className={`w-3 h-3 rounded-full shrink-0 ${STATUS_DOT_CLASSES[status]}`} />
                     <div>
                       <p className="text-xs text-gray-400">{STATUS_LABELS[status]}</p>
                       <p className="text-xl font-bold text-white">{stats.byStatus[status]}</p>

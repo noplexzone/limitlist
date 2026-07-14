@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
-import { SHOW_STATUSES, STATUS_LABELS, type ShowStatus } from '@/lib/status'
+import { SHOW_STATUSES, STATUS_LABELS, STATUS_SELECT_CLASSES, type ShowStatus } from '@/lib/status'
 import type { MetadataCastMember, MetadataRelatedItem, MetadataSeasonSummary, MetadataVoiceCastGroup } from '@/lib/providers'
 
 interface ChildRating {
@@ -331,7 +331,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                   value={(anime.status as ShowStatus) ?? 'PLAN_TO_WATCH'}
                   disabled={busy}
                   onChange={(e) => patchTracked({ status: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950/95 px-3 py-2 text-sm normal-case text-gray-100 outline-none focus:border-purple-500"
+                  className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm normal-case text-white outline-none focus:ring-2 focus:ring-white/50 ${STATUS_SELECT_CLASSES[(anime.status as ShowStatus) ?? 'PLAN_TO_WATCH']}`}
                 >
                   {SHOW_STATUSES.map((status) => (
                     <option key={status} value={status}>{STATUS_LABELS[status]}</option>
