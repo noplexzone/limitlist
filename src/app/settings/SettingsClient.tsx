@@ -173,13 +173,13 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
       <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-200 mb-1">API keys</h2>
         <p className="mb-4 text-sm text-gray-400">TheTVDB is used for search, imports, airing metadata, and season ordering.</p>
-        {settings.tvdbApiKey.lockedByEnvironment ? (
-          <div className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300">
-            Metadata API keys are set by environment variables and cannot be changed from the UI.
-          </div>
-        ) : (
-          <form onSubmit={submitApiKeys} className="space-y-4">
-            {!settings.tvdbApiKey.lockedByEnvironment && (
+        <form onSubmit={submitApiKeys} className="space-y-4">
+          {settings.tvdbApiKey.lockedByEnvironment && (
+            <div className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300">
+              TVDB API key is set by environment variable and cannot be changed from the UI.
+            </div>
+          )}
+          {!settings.tvdbApiKey.lockedByEnvironment && (
               <label className="block">
                 <span className="mb-1 block text-sm text-gray-400">TVDB API key</span>
                 <div className="flex rounded-lg border border-gray-700 bg-gray-950 focus-within:border-purple-500">
@@ -198,7 +198,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                 <p className="mt-1 text-xs text-gray-500">{settings.tvdbApiKey.configured ? `Currently configured${settings.tvdbApiKey.masked ? ` (${settings.tvdbApiKey.masked})` : ''}; leave blank to keep it.` : 'Not configured.'}</p>
               </label>
             )}
-            {!settings.tvdbPin.lockedByEnvironment && (
+          {!settings.tvdbPin.lockedByEnvironment && (
               <label className="block">
                 <span className="mb-1 block text-sm text-gray-400">TVDB PIN <span className="text-gray-600">(optional)</span></span>
                 <div className="flex rounded-lg border border-gray-700 bg-gray-950 focus-within:border-purple-500">
@@ -217,26 +217,25 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                 <p className="mt-1 text-xs text-gray-500">{settings.tvdbPin.configured ? `Currently configured${settings.tvdbPin.masked ? ` (${settings.tvdbPin.masked})` : ''}; leave blank to keep it.` : 'Not configured; usually not required.'}</p>
               </label>
             )}
-            <label className="block">
-              <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
-              <select
-                value={tvdbSeasonType}
-                onChange={(e) => setTvdbSeasonType(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
-              >
-                <option value="default">Aired order (recommended)</option>
-                <option value="official">Official order</option>
-                <option value="dvd">DVD order</option>
-                <option value="absolute">Absolute order (one continuous episode count)</option>
-              </select>
-              <p className="mt-1 text-xs text-gray-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
-            </label>
-            <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
-              Save metadata settings
-            </button>
-            <p className="text-xs text-gray-500">Metadata provided by TheTVDB.</p>
-          </form>
-        )}
+          <label className="block">
+            <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
+            <select
+              value={tvdbSeasonType}
+              onChange={(e) => setTvdbSeasonType(e.target.value)}
+              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+            >
+              <option value="default">Aired order (recommended)</option>
+              <option value="official">Official order</option>
+              <option value="dvd">DVD order</option>
+              <option value="absolute">Absolute order (one continuous episode count)</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
+          </label>
+          <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+            Save metadata settings
+          </button>
+          <p className="text-xs text-gray-500">Metadata provided by TheTVDB.</p>
+        </form>
       </section>
 
       <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">

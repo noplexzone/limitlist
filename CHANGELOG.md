@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Settings keeps the TVDB season-order dropdown and editable PIN controls visible when the API key is locked by environment.
 - Discover imports now surface watchlist API errors on the affected card, clear stuck loading states, and log AniList-to-TVDB import matching in development.
 - TVDB detail metadata now prefers English TVDB translations and AniList enrichment returns a sanitized English overview while logging match misses in development.
 - TVDB artwork host is now whitelisted for optimized images so tracked posters render across details, watchlist, and dashboard after rebuild/restart.
