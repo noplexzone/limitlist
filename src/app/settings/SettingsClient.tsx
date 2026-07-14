@@ -5,11 +5,6 @@ import { FormEvent, useEffect, useState } from 'react'
 interface SettingsState {
   username: string
   profileImageData: string | null
-  tmdbApiKey: {
-    lockedByEnvironment: boolean
-    configured: boolean
-    masked: string | null
-  }
   tvdbApiKey: {
     lockedByEnvironment: boolean
     configured: boolean
@@ -37,7 +32,6 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [username, setUsername] = useState(initialSettings.username)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  const [tmdbApiKey, setTmdbApiKey] = useState('')
   const [tvdbApiKey, setTvdbApiKey] = useState('')
   const [tvdbPin, setTvdbPin] = useState('')
   const [tvdbSeasonType, setTvdbSeasonType] = useState(initialSettings.tvdbSeasonType || 'default')
@@ -92,11 +86,9 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   async function submitApiKeys(e: FormEvent) {
     e.preventDefault()
     const body: Record<string, unknown> = { tvdbSeasonType }
-    if (!settings.tmdbApiKey.lockedByEnvironment && tmdbApiKey.trim()) body.tmdbApiKey = tmdbApiKey
     if (!settings.tvdbApiKey.lockedByEnvironment && tvdbApiKey.trim()) body.tvdbApiKey = tvdbApiKey
     if (!settings.tvdbPin.lockedByEnvironment && (tvdbPin.trim() || tvdbApiKey.trim())) body.tvdbPin = tvdbPin
     await savePatch(body, 'Metadata settings saved.')
-    setTmdbApiKey('')
     setTvdbApiKey('')
     setTvdbPin('')
   }
@@ -178,8 +170,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
 
       <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-200 mb-1">API keys</h2>
-        <p className="mb-4 text-sm text-gray-400">TheTVDB is used for new search/import metadata and season ordering. TMDB remains supported for existing legacy rows.</p>
-        {settings.tmdbApiKey.lockedByEnvironment && settings.tvdbApiKey.lockedByEnvironment ? (
+        <p className="mb-4 text-sm text-gray-400">TheTVDB is used for search, imports, airing metadata, and season ordering.</p>
+        {settings.tvdbApiKey.lockedByEnvironment ? (
           <div className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300">
             Metadata API keys are set by environment variables and cannot be changed from the UI.
           </div>
@@ -187,7 +179,6 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
           <form onSubmit={submitApiKeys} className="space-y-3">
             <p className="text-xs text-gray-500">TVDB key: {settings.tvdbApiKey.configured ? settings.tvdbApiKey.masked : 'Not configured'}</p>
             <p className="text-xs text-gray-500">TVDB PIN: {settings.tvdbPin.configured ? settings.tvdbPin.masked : 'Not configured / not required'}</p>
-            <p className="text-xs text-gray-500">TMDB legacy key: {settings.tmdbApiKey.configured ? settings.tmdbApiKey.masked : 'Not configured'}</p>
             {!settings.tvdbApiKey.lockedByEnvironment && (
               <input
                 value={tvdbApiKey}
@@ -213,14 +204,6 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                 className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
               />
             </label>
-            {!settings.tmdbApiKey.lockedByEnvironment && (
-            <input
-              value={tmdbApiKey}
-              onChange={(e) => setTmdbApiKey(e.target.value)}
-              placeholder="Paste TMDB API key"
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
-            />
-            )}
             <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
               Save metadata settings
             </button>

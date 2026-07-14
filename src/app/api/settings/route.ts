@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession, requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hashPassword, verifyPassword } from '@/lib/password'
-import { getTmdbProvider } from '@/lib/tmdb'
 import { getTvdbProvider } from '@/lib/tvdb'
 import {
-  TMDB_API_KEY_SETTING,
   TVDB_API_KEY_SETTING,
   TVDB_PIN_SETTING,
   TVDB_SEASON_TYPE_SETTING,
   getConfiguredTvdbSeasonType,
   getStoredSetting,
-  isTmdbApiKeyEnvLocked,
   isTvdbApiKeyEnvLocked,
   isTvdbPinEnvLocked,
   upsertStoredSetting,
@@ -44,7 +41,6 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
-  const storedTmdbKey = await getStoredSetting(TMDB_API_KEY_SETTING)
   const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
   const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
@@ -52,11 +48,6 @@ export async function GET() {
   return NextResponse.json({
     username: appUser?.username ?? user.username,
     profileImageData: appUser?.profileImageData ?? null,
-    tmdbApiKey: {
-      lockedByEnvironment: isTmdbApiKeyEnvLocked(),
-      configured: isTmdbApiKeyEnvLocked() || Boolean(storedTmdbKey),
-      masked: isTmdbApiKeyEnvLocked() ? 'Set in environment' : maskKey(storedTmdbKey),
-    },
     tvdbApiKey: {
       lockedByEnvironment: isTvdbApiKeyEnvLocked(),
       configured: isTvdbApiKeyEnvLocked() || Boolean(storedTvdbKey),
@@ -123,19 +114,6 @@ export async function PATCH(req: NextRequest) {
     ? await prisma.appUser.update({ where: { id: appUser.id }, data })
     : appUser
 
-  if (!isTmdbApiKeyEnvLocked() && 'tmdbApiKey' in body) {
-    if (typeof body.tmdbApiKey !== 'string' || body.tmdbApiKey.trim().length === 0) {
-      return NextResponse.json({ error: 'TMDB API key cannot be blank' }, { status: 400 })
-    }
-    const trimmedTmdbKey = body.tmdbApiKey.trim()
-    const candidateTmdb = getTmdbProvider(trimmedTmdbKey)
-    const validTmdbKey = candidateTmdb ? await candidateTmdb.validateApiKey() : false
-    if (!validTmdbKey) {
-      return NextResponse.json({ error: 'TMDB API key could not be validated' }, { status: 400 })
-    }
-    await upsertStoredSetting(TMDB_API_KEY_SETTING, trimmedTmdbKey)
-  }
-
 
   if (!isTvdbApiKeyEnvLocked() && 'tvdbApiKey' in body) {
     if (typeof body.tvdbApiKey !== 'string' || body.tvdbApiKey.trim().length === 0) {
@@ -171,18 +149,12 @@ export async function PATCH(req: NextRequest) {
     await session.save()
   }
 
-  const storedTmdbKey = await getStoredSetting(TMDB_API_KEY_SETTING)
   const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
   const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
   return NextResponse.json({
     username: updated.username,
     profileImageData: updated.profileImageData ?? null,
-    tmdbApiKey: {
-      lockedByEnvironment: isTmdbApiKeyEnvLocked(),
-      configured: isTmdbApiKeyEnvLocked() || Boolean(storedTmdbKey),
-      masked: isTmdbApiKeyEnvLocked() ? 'Set in environment' : maskKey(storedTmdbKey),
-    },
     tvdbApiKey: {
       lockedByEnvironment: isTvdbApiKeyEnvLocked(),
       configured: isTvdbApiKeyEnvLocked() || Boolean(storedTvdbKey),

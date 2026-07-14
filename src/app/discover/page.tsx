@@ -12,7 +12,7 @@ export default async function DiscoverPage() {
       <Nav />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-2 text-purple-400">Discover</h1>
-        <p className="text-gray-400 text-sm mb-8">Popular and trending anime from AniList, linked to TMDB for tracking</p>
+        <p className="text-gray-400 text-sm mb-8">Popular and trending anime from AniList, linked to TVDB for tracking</p>
         <DiscoverClient />
       </main>
     </div>

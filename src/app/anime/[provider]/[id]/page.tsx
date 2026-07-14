@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import type { MetadataVoiceCastGroup } from '@/lib/providers'
 import { fetchJikanVoiceCast } from '@/lib/jikan'
@@ -146,29 +145,6 @@ export default async function AnimeDetailsPage({
         tracked: false,
         anime: {
           ...details,
-          seasons: details.seasons,
-          voiceCast,
-          recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],
-          relatedMovies: anilistDetail ? buildAniListRelatedMovies(anilistDetail) : [],
-          childRatings: [],
-        },
-      }
-    }
-  } else if (provider === 'tmdb') {
-    const tmdb = await getConfiguredTmdbProvider()
-    const details = tmdb ? await tmdb.getDetails(id) : null
-    if (tmdb && details) {
-      const anilistDetail = await findAniListDetailForAnime([details.title, details.originalTitle], details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null).catch(() => null)
-      const jikanVoiceCast = await fetchJikanVoiceCast(
-        [details.title, details.originalTitle],
-        details.firstAiredAt ? Number(details.firstAiredAt.slice(0, 4)) : null
-      )
-      const voiceCast = mergeVoiceCastPreferJikan(jikanVoiceCast, anilistDetail ? buildAniListVoiceCast(anilistDetail) : undefined)
-      data = {
-        tracked: false,
-        anime: {
-          ...details,
-          cast: undefined,
           seasons: details.seasons,
           voiceCast,
           recommendations: anilistDetail ? buildAniListRecommendations(anilistDetail) : [],

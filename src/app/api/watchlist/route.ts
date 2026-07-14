@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { fetchAniListMediaById, getAniListTitles, getAniListYear } from '@/lib/anilist'
 
@@ -23,7 +22,7 @@ export async function POST(req: NextRequest) {
   const { metadataProvider, metadataId } = body
 
   // Prevent duplicates by the requested provider/source id. For AniList imports,
-  // also check sourceProvider/sourceId below after the canonical TMDB mapping path.
+  // also check sourceProvider/sourceId below after the canonical TVDB mapping path.
   const existing = await prisma.animeShow.findUnique({
     where: { metadataProvider_metadataId: { metadataProvider, metadataId } },
   })
@@ -41,7 +40,6 @@ export async function POST(req: NextRequest) {
   let createProvider = metadataProvider
   let createProviderId = metadataId
   const tvdb = await getConfiguredTvdbProvider()
-  const tmdb = await getConfiguredTmdbProvider()
 
   if (metadataProvider === 'anilist') {
     if (!tvdb) {
@@ -95,21 +93,6 @@ export async function POST(req: NextRequest) {
     }
   } else if (metadataProvider === 'tvdb' && tvdb) {
     const details = await tvdb.getDetails(metadataId)
-    if (details) {
-      enriched = {
-        ...body,
-        title: details.title,
-        originalTitle: details.originalTitle,
-        overview: details.overview,
-        posterUrl: details.posterUrl,
-        firstAiredAt: details.firstAiredAt,
-        genres: details.genres?.join(', '),
-        studios: details.studios?.join(', '),
-        episodesTotal: details.episodesTotal,
-      }
-    }
-  } else if (metadataProvider === 'tmdb' && tmdb) {
-    const details = await tmdb.getDetails(metadataId)
     if (details) {
       enriched = {
         ...body,

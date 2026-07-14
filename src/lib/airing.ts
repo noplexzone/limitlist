@@ -1,5 +1,4 @@
 import { prisma } from './db'
-import { getConfiguredTmdbProvider } from './tmdb'
 import { getConfiguredTvdbProvider } from './tvdb'
 
 export interface RefreshResult {
@@ -13,7 +12,7 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
   const show = await prisma.animeShow.findUnique({ where: { id: showId } })
   if (!show) return { showId, title: '', success: false, error: 'Show not found' }
 
-  const provider = show.metadataProvider === 'tvdb' ? await getConfiguredTvdbProvider() : show.metadataProvider === 'tmdb' ? await getConfiguredTmdbProvider() : null
+  const provider = show.metadataProvider === 'tvdb' ? await getConfiguredTvdbProvider() : null
   if (!provider?.getAiringDetails) {
     return { showId, title: show.title, success: false, error: `No airing provider configured for ${show.metadataProvider}` }
   }
@@ -85,7 +84,7 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
 
 export async function refreshAllShowsAiring(): Promise<RefreshResult[]> {
   const shows = await prisma.animeShow.findMany({
-    where: { metadataProvider: { in: ['tmdb', 'tvdb'] } },
+    where: { metadataProvider: { in: ['tvdb'] } },
     select: { id: true },
   })
 

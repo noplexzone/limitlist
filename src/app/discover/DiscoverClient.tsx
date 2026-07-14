@@ -129,7 +129,7 @@ export default function DiscoverClient() {
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-500">Ranked by AniList · page {page} · TMDB matching happens on import</p>
+        <p className="text-xs text-gray-500">Ranked by AniList · page {page} · TVDB matching happens on import</p>
       </div>
 
       {loading && <div className="flex justify-center py-20 text-gray-400">Loading…</div>}
@@ -137,11 +137,7 @@ export default function DiscoverClient() {
       {!loading && fetchError && (
         <div className="text-center py-20">
           <p className="text-red-400">{fetchError}</p>
-          {fetchError.includes('TMDB_API_KEY') && (
-            <p className="text-gray-500 text-sm mt-2">
-              AniList supplies Discover rankings, but <code className="text-gray-400">TMDB_API_KEY</code> is still needed to link imports to whole-show TMDB records.
-            </p>
-          )}
+          
         </div>
       )}
 
@@ -192,7 +188,7 @@ export default function DiscoverClient() {
                         {isImporting ? 'Adding…' : '+ Add to Watchlist'}
                       </button>
                     ) : (
-                      <p className="text-center text-[10px] text-yellow-300">{result.mappingStatus ?? 'No TMDB match'}</p>
+                      <p className="text-center text-[10px] text-yellow-300">{result.mappingStatus ?? 'No TVDB match'}</p>
                     )}
                   </div>
                 </article>

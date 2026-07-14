@@ -252,7 +252,7 @@ export default function ScheduleClient({ initialEntries, compact = false }: { in
             <div className="text-center py-16">
               <p className="text-gray-400 text-lg mb-2">No upcoming episodes known.</p>
               <p className="text-gray-500 text-sm">
-                Use &ldquo;Refresh All Schedules&rdquo; to fetch airing info from TMDB, or add shows with upcoming episodes to your watchlist.
+                Use &ldquo;Refresh All Schedules&rdquo; to fetch airing info from TVDB, or add shows with upcoming episodes to your watchlist.
               </p>
             </div>
           ) : filtered.length === 0 ? (

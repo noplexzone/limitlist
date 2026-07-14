@@ -1,14 +1,10 @@
 import { prisma } from './db'
 
-export const TMDB_API_KEY_SETTING = 'tmdbApiKey'
 export const TVDB_API_KEY_SETTING = 'tvdbApiKey'
 export const TVDB_PIN_SETTING = 'tvdbPin'
 export const TVDB_SEASON_TYPE_SETTING = 'tvdbSeasonType'
 export const DEFAULT_TVDB_SEASON_TYPE = 'default'
 
-export function isTmdbApiKeyEnvLocked() {
-  return Boolean(process.env.TMDB_API_KEY)
-}
 
 export function isTvdbApiKeyEnvLocked() {
   return Boolean(process.env.TVDB_API_KEY)
@@ -31,9 +27,6 @@ export async function upsertStoredSetting(key: string, value: string) {
   })
 }
 
-export async function getEffectiveTmdbApiKey(): Promise<string | null> {
-  return process.env.TMDB_API_KEY || (await getStoredSetting(TMDB_API_KEY_SETTING))
-}
 
 export async function getEffectiveTvdbApiKey(): Promise<string | null> {
   return process.env.TVDB_API_KEY || (await getStoredSetting(TVDB_API_KEY_SETTING))

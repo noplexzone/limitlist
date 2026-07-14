@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
-import { getConfiguredTmdbProvider } from '@/lib/tmdb'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 
 export async function GET(req: NextRequest) {
@@ -12,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const provider = (await getConfiguredTvdbProvider()) ?? (await getConfiguredTmdbProvider())
+  const provider = await getConfiguredTvdbProvider()
   if (!provider) {
     return NextResponse.json(
       { error: 'TVDB_API_KEY is not configured. Add it in Settings or environment variables.' },

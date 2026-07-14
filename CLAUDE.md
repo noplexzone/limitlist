@@ -26,7 +26,6 @@ src/
     login/               # Login page
     setup/               # First-run setup page (creates AppUser)
     watchlist/           # Watchlist page
-    search/              # Search/import page
     schedule/            # Airing schedule + reminders page
     dashboard/           # Stats dashboard
   lib/
@@ -34,7 +33,7 @@ src/
     db.ts                # Prisma client singleton
     password.ts          # scrypt hash/verify (Node crypto built-ins, no extra deps)
     setup.ts             # isSetupComplete() — counts AppUser rows
-    tmdb.ts              # TMDB provider implementation + getAiringDetails()
+    tvdb.ts              # TheTVDB v4 provider implementation + getAiringDetails()
     providers.ts         # Provider abstraction
     airing.ts            # refreshShowAiring() / refreshAllShowsAiring()
     stats.ts             # computeStats()
@@ -49,7 +48,9 @@ prisma/
 | AUTH_USERNAME | **Removed** — credentials are now stored in the DB via the setup flow |
 | AUTH_PASSWORD | **Removed** — credentials are now stored in the DB via the setup flow |
 | DATABASE_URL | SQLite path (file:./dev.db or file:/data/limitlist.db) |
-| TMDB_API_KEY | TMDB API key for metadata search |
+| TVDB_API_KEY | TheTVDB v4 API key for metadata search/import/airing |
+| TVDB_PIN | Optional TheTVDB subscriber PIN |
+| TVDB_SEASON_TYPE | Season type for Plex-aligned ordering (default: default) |
 
 ## Auth / First-run setup
 
@@ -87,19 +88,19 @@ Legacy builder required: `DOCKER_BUILDKIT=0 docker build ...` (buildx TCP upgrad
 - Route: `/schedule` — auth-protected server component
 - Airing fields on `AnimeShow`: `airingStatus`, `nextEpisodeNum`, `nextAiringAt`, `lastEpisodeNum`, `lastAiredAt`, `airingRefreshedAt`
 - `EpisodeReminder` model: unique on `(animeShowId, airsAt)`, has nullable `dismissedAt`
-- `src/lib/airing.ts`: `refreshShowAiring(id)` and `refreshAllShowsAiring()` — fetch TMDB, update show, upsert reminder
-- `TmdbProvider.getAiringDetails(tmdbId)` uses `cache: 'no-store'` for live data (unlike `getDetails` which revalidates at 300s)
+- `src/lib/airing.ts`: `refreshShowAiring(id)` and `refreshAllShowsAiring()` — fetch TVDB, update show, upsert reminder
+- `TvdbProvider.getAiringDetails(tvdbId)` uses `cache: 'no-store'` for live data (unlike `getDetails` which revalidates at 300s)
 - Bulk refresh (`POST /api/airing/refresh`) never aborts on per-show failure — errors are collected and reported
 - Nav badge shows undismissed reminder count, passed as `reminderCount` prop from server page; other pages pass no prop (no badge shown)
 - Reminder dismissal is scoped to `(showId, airsAt)` — future episodes produce new reminders on next refresh
 
 ### Verification notes
-- Missing `TMDB_API_KEY`: per-show error `"TMDB_API_KEY not configured"`, 422 on per-show endpoint, `failed[]` entry on bulk
-- Non-TMDB show: per-show error `"Not a TMDB show"`
+- Missing `TVDB_API_KEY`: per-show configuration error, 422 on per-show endpoint, `failed[]` entry on bulk
+- Non-TVDB show: per-show error `"No airing provider configured"`
 - Schedule page: empty state if `nextAiringAt` is null for all shows
 
 ## Phases
-- Phase 1 (complete): Core CRUD + auth + TMDB search + Docker
+- Phase 1 (complete): Core CRUD + auth + TVDB search + Docker
 - Phase 2 (complete): Ratings/notes + anime-focused search + Docker non-root runtime
 - Phase 3 (complete): Stats dashboard at /dashboard
 - Phase 4 (complete): Airing schedule tracking + in-app reminders at /schedule

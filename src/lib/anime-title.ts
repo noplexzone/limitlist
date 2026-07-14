@@ -78,7 +78,7 @@ export function titleCandidates(...titles: Array<string | null | undefined>): st
     }
   }
 
-  // Root titles first: Discover should link AniList season entries to TMDB's
+  // Root titles first: Discover should link AniList season entries to TVDB's
   // whole-show records before considering raw season/arc-specific titles.
   return [...roots, ...rawTitles]
 }
