@@ -135,6 +135,10 @@ function shouldUseEnrichmentOverview(current?: string | null, enrichment?: strin
   return enrichment.length > current.length * 1.2
 }
 
+function stripHtml(value?: string | null) {
+  return value?.replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() || ''
+}
+
 function CastImage({ member }: { member: MetadataCastMember }) {
   const imageUrl = member.profileUrl ?? member.characterImageUrl
   if (!imageUrl) {
@@ -491,13 +495,14 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                 <div key={key} className="rounded-xl border border-gray-800 bg-gray-950 p-3">
                   <div className="flex gap-3">
                     {movie.posterUrl && (
-                      <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-800">
+                      <div className="relative h-32 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-800">
                         <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} />
                       </div>
                     )}
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="line-clamp-2 font-medium text-gray-100">{movie.title}</p>
                       {movie.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(movie.firstAiredAt)}</p>}
+                      {stripHtml(movie.overview) && <p className="mt-2 line-clamp-3 text-sm leading-5 text-gray-400">{stripHtml(movie.overview)}</p>}
                       {data.tracked && (
                         <div className="mt-3">
                           <StarRating compact rating={child?.rating ?? null} onRate={(value) => patchChildRating({ kind: 'MOVIE', providerName: movie.providerName, providerId: movie.providerId, title: movie.title, posterUrl: movie.posterUrl, airDate: movie.firstAiredAt }, value)} />
@@ -520,7 +525,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
         {enrichmentLoading ? (
           <p className="text-sm text-gray-500">Loading recommendations…</p>
         ) : anime.recommendations && anime.recommendations.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {anime.recommendations.map((item) => (
               <Link key={`${item.providerName}-${item.providerId}`} href={`/anime/${encodeURIComponent(item.providerName)}/${encodeURIComponent(item.providerId)}`} className="group overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition-colors hover:border-purple-500">
                 <div className="relative aspect-[2/3] bg-gray-800">
@@ -529,6 +534,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                 <div className="p-2">
                   <p className="line-clamp-2 text-sm font-medium text-gray-100 group-hover:text-purple-200">{item.title}</p>
                   {item.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(item.firstAiredAt)}</p>}
+                  {stripHtml(item.overview) && <p className="mt-2 line-clamp-3 text-xs leading-5 text-gray-400">{stripHtml(item.overview)}</p>}
                 </div>
               </Link>
             ))}
