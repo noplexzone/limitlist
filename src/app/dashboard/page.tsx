@@ -173,7 +173,11 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_360px] xl:items-start">
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-[320px_1fr_360px] xl:items-start">
+              <aside className="xl:sticky xl:top-[5rem]">
+                <WhatsNewPanel />
+              </aside>
+
               <div className="space-y-8 min-w-0">
                 {/* Actionable shelves */}
                 <PosterShelf title="Continue Watching" shows={continueWatching} />
@@ -237,15 +241,12 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <aside className="space-y-6 xl:sticky xl:top-[5rem]">
-                <div>
-                  <div className="mb-3">
-                    <h2 className="text-lg font-semibold text-gray-200">Airing Calendar</h2>
-                    <p className="text-sm text-gray-500">Upcoming watchlist episodes and reminders.</p>
-                  </div>
-                  <ScheduleClient initialEntries={scheduleEntries} compact />
+              <aside className="xl:sticky xl:top-[5rem]">
+                <div className="mb-3">
+                  <h2 className="text-lg font-semibold text-gray-200">Airing Calendar</h2>
+                  <p className="text-sm text-gray-500">Upcoming watchlist episodes and reminders.</p>
                 </div>
-                <WhatsNewPanel />
+                <ScheduleClient initialEntries={scheduleEntries} compact />
               </aside>
             </div>
           </div>

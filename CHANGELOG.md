@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Dashboard What's New sidebar**: The dashboard changelog panel now lives in a left sidebar so release notes stay visible beside the main dashboard, with the airing calendar remaining on the right.
+
 - First-run setup now offers optional TVDB API key, PIN, and season-type fields so new installs can search/import immediately.
 - **AniList detail metadata**: Anime detail pages now use AniList for similar recommendations, official related movies/specials, season grouping, and Japanese voice-cast fallback.
 
@@ -27,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Mark as read**: Schedule page reminder action renamed from "Dismiss" to "Mark as read" for clarity.
 
 ### Changed
+
+- **Release iteration scheme**: Active development builds should use semver patch tags; reserve `-rc.N` only for final release-candidate validation once the release scope is otherwise complete. The current candidate line resets to `1.2.0-rc.1`.
 
 - TVDB Settings and first-run setup now use hidden key/PIN inputs with show/hide controls and a labeled season-order dropdown aligned to Plex ordering.
 - **Anime detail provider priority**: TMDB remains the monitoring source for tracked shows, but detail-page related metadata now prefers AniList so titles like Jujutsu Kaisen do not collapse into one aggregate season or include stage/fan-made movie results.
@@ -53,7 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **rc.9 polish**: Status/rating changes on detail pages no longer clobber English sanitized descriptions; Tailwind now scans shared status classes; movies/specials, voice-cast cards, season ordering, and dashboard release notes were polished for 1.2.0 readiness.
+- **1.1.9 polish**: Status/rating changes on detail pages no longer clobber English sanitized descriptions; Tailwind now scans shared status classes; movies/specials, voice-cast cards, season ordering, and dashboard release notes were polished for 1.2.0 readiness.
 - Settings keeps the TVDB season-order dropdown and editable PIN controls visible when the API key is locked by environment.
 - Discover imports now surface watchlist API errors on the affected card, clear stuck loading states, and log AniList-to-TVDB import matching in development.
 - TVDB detail metadata now prefers English TVDB translations and AniList enrichment returns a sanitized English overview while logging match misses in development.
