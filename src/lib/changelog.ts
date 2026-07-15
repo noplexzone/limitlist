@@ -11,6 +11,27 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.2.0',
+    date: '2026-07-15',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added read-only Plex watch-history sync for TVDB-tracked shows, with manual sync controls and watched indicators on episode rows.',
+          'Added Plex base URL and token settings with connection validation and masked credential handling.',
+          'Preserved TVDB episode IDs and stores per-episode watched state separately from episode ratings.',
+        ],
+      },
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Plex sync now updates the existing Up-to-Date baseline when all aired episodes are watched.',
+          'Shows with incompatible Plex episode ordering now surface a clear warning instead of writing questionable watched data.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.1.0',
     date: '2026-07-14',
     sections: [

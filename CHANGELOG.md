@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.2.0] - 2026-07-15
+
+### Added
+
+- **Plex watch-history sync**: Added read-only Plex integration for TVDB-tracked shows, including Plex base URL/token settings, manual per-show and bulk sync API routes, and watched indicators on detail-page episode rows.
+- **Episode watch persistence**: Added dedicated `EpisodeWatch` rows plus cached Plex series keys and last-sync timestamps on tracked anime.
+- **TVDB episode ID passthrough**: Preserved TVDB episode IDs in season summaries so Plex `tvdb://` episode GUIDs can match reliably before falling back to season/episode numbers.
+
+### Changed
+
+- **Up-to-Date progress from Plex**: Plex sync now feeds watched/aired progress into the existing `UP_TO_DATE` baseline fields when all aired episodes are watched.
+
+### Fixed
+
+- **Ordering guard for Plex sync**: Shows using Plex absolute, DVD, or TMDB-airing ordering now return a visible warning and skip sync instead of writing mismatched watched data.
+
 ## [1.1.0] - 2026-07-14
 
 ### Added

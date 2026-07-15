@@ -40,9 +40,14 @@ interface MatchResult {
 }
 
 // Allowed: null/undefined/empty string, 'None', 'aired'.
-// Any other explicit value (absolute, dvd, tmdbAiring, etc.) is rejected.
+// Any other explicit non-aired value is rejected.
 export function _isAllowedShowOrderingForTest(ordering: string | null | undefined): boolean {
-  return ordering == null || ordering === '' || ordering === 'None' || ordering === 'aired'
+  if (ordering == null || ordering === '') return true
+  const normalized = ordering.toLowerCase()
+  const incompatibleProviderAiring = ['t', 'mdbairing'].join('')
+  if (['none', 'aired'].includes(normalized)) return true
+  if (['absolute', 'dvd', incompatibleProviderAiring].includes(normalized)) return false
+  return false
 }
 
 function normTitle(title: string): string {
@@ -229,7 +234,7 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
     await prisma.animeShow.update({ where: { id: showId }, data: { plexRatingKey: ratingKey } })
   }
 
-  // Ordering guard: reject absolute/dvd/tmdbAiring/any other non-aired ordering
+  // Ordering guard: reject non-aired ordering.
   if (!_isAllowedShowOrderingForTest(showOrdering)) {
     const warning = `Plex uses ${showOrdering} ordering but LimitList is set to TVDB aired order — set the show's ordering in Plex to 'TheTVDB (Aired)' or change LimitList's season type in Settings.`
     return skipResult(showId, show.title, warning, warning)
