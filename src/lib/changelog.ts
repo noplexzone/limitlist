@@ -11,13 +11,13 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
-    version: '0.14.1',
-    date: 'Pending release',
+    version: '1.0.0',
+    date: '2026-07-14',
     sections: [
       {
         title: 'Enhancements',
         bullets: [
-          'Restored the pre-1.0 version history as 0.x releases leading toward the official 1.0.0 release.',
+          'Promoted LimitList to the official v1.0.0 release line.',
           'Changed the updates panel so every release, including the newest one, uses the same expandable card format with the newest entry open by default.',
           'Grouped update notes into Features, Enhancements, and Bug fixes where applicable.',
         ],

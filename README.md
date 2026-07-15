@@ -49,10 +49,10 @@ There is no default username or password; you set them during setup.
 
 ## Unraid deployment
 
-The current pre-1.0 build runs as a single self-hosted Unraid app container:
+The official v1.0.0 release runs as a single self-hosted Unraid app container:
 
 - Container name: `limitlist`
-- Image/tag: `noplexzone/limitlist:v0.14.1`
+- Image/tag: `noplexzone/limitlist:v1.0.0`
 - Host port: `3020` -> container port `3000`
 - Persistent data: `/mnt/user/appdata/limitlist:/data`
 - SQLite database: `/data/limitlist.db`
@@ -67,7 +67,7 @@ Required environment variables are `AUTH_SECRET` and `DATABASE_URL=file:/data/li
 
 ## Versioning
 
-LimitList is currently in the `v0.x` pre-1.0 release line while the official `v1.0.0` release is prepared. Use `develop` for moving test builds and reserve semver tags for user-facing builds. The Docker workflow publishes `develop` plus `v<package.json version>`, so `package.json` is the source of truth for image tags.
+LimitList uses semver release tags. The official public release line starts at `v1.0.0`; use `develop` for moving test builds and reserve semver tags for user-facing builds. The Docker workflow publishes `develop` plus `v<package.json version>`, so `package.json` is the source of truth for image tags.
 
 ## Environment variables
 

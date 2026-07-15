@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-Current build: `v0.14.1`. Release target: official `v1.0.0`.
+No unreleased changes yet.
+
+## [1.0.0] - 2026-07-14
 
 ### Added
 
@@ -32,7 +34,7 @@ Current build: `v0.14.1`. Release target: official `v1.0.0`.
 
 ### Changed
 
-- **Versioning reset**: LimitList pre-1.0 builds are tracked as `v0.x.0` iterations, with this polish pass as `v0.14.1`, leading into the official `v1.0.0` release.
+- **Versioning**: LimitList is promoted to the official `v1.0.0` release line after the pre-1.0 iteration series.
 
 - TVDB Settings and first-run setup now use hidden key/PIN inputs with show/hide controls and a labeled season-order dropdown aligned to Plex ordering.
 - **Anime detail provider priority**: TMDB remains the monitoring source for tracked shows, but detail-page related metadata now prefers AniList so titles like Jujutsu Kaisen do not collapse into one aggregate season or include stage/fan-made movie results.
