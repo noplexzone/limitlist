@@ -28,11 +28,19 @@ type PatchPayload = {
 }
 
 type StatusFilter = 'ALL' | ShowStatus | 'NEEDS_UPDATE'
-type SortMode = 'updated-desc' | 'title-asc' | 'rating-desc' | 'first-aired-desc'
+type SortField = 'updated' | 'title' | 'rating' | 'first-aired'
+type SortDir = 'asc' | 'desc'
 
 const VALID_STATUS_FILTERS: string[] = ['ALL', 'NEEDS_UPDATE', ...SHOW_STATUSES]
-const VALID_SORT_MODES: string[] = ['updated-desc', 'title-asc', 'rating-desc', 'first-aired-desc']
+const VALID_SORT_FIELDS: SortField[] = ['updated', 'title', 'rating', 'first-aired']
+const VALID_SORT_DIRS: SortDir[] = ['asc', 'desc']
 
+const LEGACY_SORT_MAP: Record<string, { field: SortField; dir: SortDir }> = {
+  'updated-desc': { field: 'updated', dir: 'desc' },
+  'title-asc': { field: 'title', dir: 'asc' },
+  'rating-desc': { field: 'rating', dir: 'desc' },
+  'first-aired-desc': { field: 'first-aired', dir: 'desc' },
+}
 
 function StarIcon({ fillPct }: { fillPct: number }) {
   return (
@@ -129,15 +137,33 @@ export default function WatchlistClient() {
   const rawStatus = searchParams.get('status') ?? ''
   const statusFilter: StatusFilter = VALID_STATUS_FILTERS.includes(rawStatus) ? (rawStatus as StatusFilter) : 'ALL'
 
-  const rawSort = searchParams.get('sort') ?? ''
-  const sortMode: SortMode = VALID_SORT_MODES.includes(rawSort) ? (rawSort as SortMode) : 'updated-desc'
+  const rawField = searchParams.get('sortField') ?? ''
+  const rawDir = searchParams.get('sortDir') ?? ''
+  const legacy = !rawField ? LEGACY_SORT_MAP[searchParams.get('sort') ?? ''] : undefined
+  const sortField: SortField = VALID_SORT_FIELDS.includes(rawField as SortField)
+    ? (rawField as SortField)
+    : (legacy?.field ?? 'updated')
+  const sortDir: SortDir = VALID_SORT_DIRS.includes(rawDir as SortDir)
+    ? (rawDir as SortDir)
+    : (legacy?.dir ?? 'desc')
 
-  function applyFilter(newStatus: StatusFilter, newSort: SortMode) {
+  function applyParams(updates: { status?: StatusFilter; sortField?: SortField; sortDir?: SortDir }) {
+    const newStatus = updates.status ?? statusFilter
+    const newField = updates.sortField ?? sortField
+    const newDir = updates.sortDir ?? sortDir
+
     const params = new URLSearchParams(searchParams.toString())
+    params.delete('sort')
+
     if (newStatus === 'ALL') params.delete('status')
     else params.set('status', newStatus)
-    if (newSort === 'updated-desc') params.delete('sort')
-    else params.set('sort', newSort)
+
+    if (newField === 'updated') params.delete('sortField')
+    else params.set('sortField', newField)
+
+    if (newDir === 'desc') params.delete('sortDir')
+    else params.set('sortDir', newDir)
+
     const query = params.toString()
     router.replace(query ? `${pathname}?${query}` : pathname)
   }
@@ -198,15 +224,19 @@ export default function WatchlistClient() {
       if (statusFilter === 'NEEDS_UPDATE') return !!show.upToDateStale
       return show.status === statusFilter
     })
+    const dirMul = sortDir === 'asc' ? 1 : -1
     return [...filtered].sort((a, b) => {
-      if (sortMode === 'title-asc') return a.title.localeCompare(b.title)
-      if (sortMode === 'rating-desc') return (b.rating ?? -1) - (a.rating ?? -1)
-      if (sortMode === 'first-aired-desc') {
-        return new Date(b.firstAiredAt ?? 0).getTime() - new Date(a.firstAiredAt ?? 0).getTime()
+      let cmp: number
+      if (sortField === 'title') cmp = a.title.localeCompare(b.title)
+      else if (sortField === 'rating') cmp = (a.rating ?? -1) - (b.rating ?? -1)
+      else if (sortField === 'first-aired') {
+        cmp = new Date(a.firstAiredAt ?? 0).getTime() - new Date(b.firstAiredAt ?? 0).getTime()
+      } else {
+        cmp = new Date(a.updatedAt ?? 0).getTime() - new Date(b.updatedAt ?? 0).getTime()
       }
-      return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+      return cmp * dirMul
     })
-  }, [shows, sortMode, statusFilter])
+  }, [shows, sortField, sortDir, statusFilter])
 
   if (loading) return <p className="text-gray-400">Loading watchlist...</p>
   if (error) return <p className="text-red-400">{error}</p>
@@ -225,7 +255,7 @@ export default function WatchlistClient() {
           Status{' '}
           <select
             value={statusFilter}
-            onChange={(e) => applyFilter(e.target.value as StatusFilter, sortMode)}
+            onChange={(e) => applyParams({ status: e.target.value as StatusFilter })}
             className="ml-2 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 outline-none focus:border-purple-500"
           >
             <option value="ALL">All</option>
@@ -238,16 +268,28 @@ export default function WatchlistClient() {
         <label className="text-sm text-gray-400">
           Sort{' '}
           <select
-            value={sortMode}
-            onChange={(e) => applyFilter(statusFilter, e.target.value as SortMode)}
+            value={sortField}
+            onChange={(e) => {
+              const newField = e.target.value as SortField
+              applyParams({ sortField: newField, sortDir: newField === 'title' ? 'asc' : 'desc' })
+            }}
             className="ml-2 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 outline-none focus:border-purple-500"
           >
-            <option value="updated-desc">Recently updated</option>
-            <option value="title-asc">Title A–Z</option>
-            <option value="rating-desc">Highest rated</option>
-            <option value="first-aired-desc">Newest first aired</option>
+            <option value="updated">Last updated</option>
+            <option value="title">Title</option>
+            <option value="rating">Rating</option>
+            <option value="first-aired">First aired</option>
           </select>
         </label>
+        <button
+          type="button"
+          aria-label={sortDir === 'asc' ? 'Sort ascending' : 'Sort descending'}
+          title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+          onClick={() => applyParams({ sortDir: sortDir === 'asc' ? 'desc' : 'asc' })}
+          className="rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-sm text-gray-100 outline-none transition-colors hover:border-purple-500 focus:border-purple-500"
+        >
+          {sortDir === 'asc' ? '↑' : '↓'}
+        </button>
         <p className="ml-auto text-xs text-gray-500">{visibleShows.length} of {shows.length} shown</p>
       </div>
 
