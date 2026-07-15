@@ -55,6 +55,10 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [testing, setTesting] = useState<'tvdb' | 'plex' | null>(null)
   const [tvdbTestedSignature, setTvdbTestedSignature] = useState('')
   const [plexTestedSignature, setPlexTestedSignature] = useState('')
+  const [tvdbTestMessage, setTvdbTestMessage] = useState('')
+  const [tvdbTestError, setTvdbTestError] = useState('')
+  const [plexTestMessage, setPlexTestMessage] = useState('')
+  const [plexTestError, setPlexTestError] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -114,6 +118,13 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
     setTesting(kind)
     setError('')
     setMessage('')
+    if (kind === 'tvdb') {
+      setTvdbTestMessage('')
+      setTvdbTestError('')
+    } else {
+      setPlexTestMessage('')
+      setPlexTestError('')
+    }
     const body: Record<string, unknown> = { validateOnly: kind }
     if (kind === 'tvdb') {
       if (!settings.tvdbApiKey.lockedByEnvironment && tvdbApiKey.trim()) body.tvdbApiKey = tvdbApiKey
@@ -122,20 +133,34 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
       body.plexBaseUrl = plexBaseUrl
       if (!settings.plexToken.lockedByEnvironment && plexToken.trim()) body.plexToken = plexToken
     }
-    const res = await fetch('/api/settings', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test failed`)
-    } else {
-      if (kind === 'tvdb') setTvdbTestedSignature(tvdbCredentialSignature)
-      else setPlexTestedSignature(plexCredentialSignature)
-      setMessage(data.message ?? `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test passed.`)
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const failure = data.error ?? `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test failed`
+        if (kind === 'tvdb') setTvdbTestError(failure)
+        else setPlexTestError(failure)
+        return
+      }
+      const success = data.message ?? `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test passed.`
+      if (kind === 'tvdb') {
+        setTvdbTestedSignature(tvdbCredentialSignature)
+        setTvdbTestMessage(success)
+      } else {
+        setPlexTestedSignature(plexCredentialSignature)
+        setPlexTestMessage(success)
+      }
+    } catch (err) {
+      const failure = err instanceof Error ? err.message : `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test failed`
+      if (kind === 'tvdb') setTvdbTestError(failure)
+      else setPlexTestError(failure)
+    } finally {
+      setTesting(null)
     }
-    setTesting(null)
   }
 
   async function submitApiKeys(e: FormEvent) {
@@ -148,6 +173,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
     setTvdbApiKey('')
     setTvdbPin('')
     setTvdbTestedSignature('')
+    setTvdbTestMessage('')
+    setTvdbTestError('')
   }
 
   async function submitPlex(e: FormEvent) {
@@ -158,6 +185,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
     await savePatch(body, 'Plex settings saved.')
     setPlexToken('')
     setPlexTestedSignature('')
+    setPlexTestMessage('')
+    setPlexTestError('')
   }
 
   return (
@@ -251,7 +280,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                   <input
                     type={showTvdbApiKey ? 'text' : 'password'}
                     value={tvdbApiKey}
-                    onChange={(e) => { setTvdbApiKey(e.target.value); setTvdbTestedSignature('') }}
+                    onChange={(e) => { setTvdbApiKey(e.target.value); setTvdbTestedSignature(''); setTvdbTestMessage(''); setTvdbTestError('') }}
                     autoComplete="off"
                     placeholder={settings.tvdbApiKey.configured ? 'Enter new key to replace' : 'Paste TVDB API key'}
                     className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
@@ -270,7 +299,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                   <input
                     type={showTvdbPin ? 'text' : 'password'}
                     value={tvdbPin}
-                    onChange={(e) => { setTvdbPin(e.target.value); setTvdbTestedSignature('') }}
+                    onChange={(e) => { setTvdbPin(e.target.value); setTvdbTestedSignature(''); setTvdbTestMessage(''); setTvdbTestError('') }}
                     autoComplete="off"
                     placeholder={settings.tvdbPin.configured ? 'Enter new PIN to replace' : 'Optional subscriber PIN'}
                     className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
@@ -316,6 +345,12 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
               Save TVDB settings
             </button>
           </div>
+          {tvdbTestMessage && (
+            <p className="rounded-lg border border-green-500/40 bg-green-950/40 px-3 py-2 text-sm text-green-200">{tvdbTestMessage}</p>
+          )}
+          {tvdbTestError && (
+            <p className="rounded-lg border border-red-500/50 bg-red-950/50 px-3 py-2 text-sm text-red-200">{tvdbTestError}</p>
+          )}
           {tvdbCredentialChangeNeedsTest && tvdbTestedSignature !== tvdbCredentialSignature && (
             <p className="text-xs text-amber-300">Test the TVDB credentials before saving them.</p>
           )}
@@ -331,7 +366,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
             <span className="mb-1 block text-sm text-gray-400">Plex base URL</span>
             <input
               value={plexBaseUrl}
-              onChange={(e) => { setPlexBaseUrl(e.target.value); setPlexTestedSignature('') }}
+              onChange={(e) => { setPlexBaseUrl(e.target.value); setPlexTestedSignature(''); setPlexTestMessage(''); setPlexTestError('') }}
               placeholder="http://plex:32400"
               readOnly={settings.plexBaseUrl.lockedByEnvironment}
               className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 read-only:opacity-60"
@@ -350,7 +385,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                 <input
                   type={showPlexToken ? 'text' : 'password'}
                   value={plexToken}
-                  onChange={(e) => { setPlexToken(e.target.value); setPlexTestedSignature('') }}
+                  onChange={(e) => { setPlexToken(e.target.value); setPlexTestedSignature(''); setPlexTestMessage(''); setPlexTestError('') }}
                   autoComplete="off"
                   placeholder={settings.plexToken.configured ? 'Enter new token to replace' : 'Paste Plex token'}
                   className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
@@ -370,6 +405,12 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
               Save Plex settings
             </button>
           </div>
+          {plexTestMessage && (
+            <p className="rounded-lg border border-green-500/40 bg-green-950/40 px-3 py-2 text-sm text-green-200">{plexTestMessage}</p>
+          )}
+          {plexTestError && (
+            <p className="rounded-lg border border-red-500/50 bg-red-950/50 px-3 py-2 text-sm text-red-200">{plexTestError}</p>
+          )}
           {plexTestedSignature !== plexCredentialSignature && (
             <p className="text-xs text-amber-300">Test the Plex connection before saving these settings.</p>
           )}
