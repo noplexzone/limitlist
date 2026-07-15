@@ -213,7 +213,10 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   const episodeWatchMap = useMemo(() => new Map(episodeWatches.map((watch) => [watch.key, watch])), [episodeWatches])
   const watchedAiredProgress = useMemo(() => {
     const watched = new Set(episodeWatches.filter((watch) => watch.watched).map((watch) => watch.key))
-    const aired = (anime.seasons ?? []).flatMap((season) => (season.episodes ?? []).map((episode) => ({ seasonNumber: season.seasonNumber, episode }))).filter(({ episode }) => episode.airDate && new Date(episode.airDate).getTime() <= Date.now())
+    const aired = (anime.seasons ?? [])
+      .filter((season) => season.seasonNumber > 0)
+      .flatMap((season) => (season.episodes ?? []).map((episode) => ({ seasonNumber: season.seasonNumber, episode })))
+      .filter(({ episode }) => episode.airDate && new Date(episode.airDate).getTime() <= Date.now())
     return { watched: aired.filter(({ seasonNumber, episode }) => watched.has(`${seasonNumber}:${episode.episodeNumber}`)).length, aired: aired.length }
   }, [anime.seasons, episodeWatches])
   const recommendationsRef = useRef<HTMLDivElement | null>(null)
