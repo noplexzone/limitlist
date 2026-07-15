@@ -18,7 +18,7 @@ export async function GET() {
     _count: { _all: true },
   })
   const watchedByShow = new Map(counts.map((row) => [row.animeShowId, row._count._all]))
-  return NextResponse.json(shows.map((show) => ({ ...show, watchedCount: watchedByShow.get(show.id) ?? 0, airedCount: show.lastEpisodeNum ?? show.episodesTotal ?? 0 })))
+  return NextResponse.json(shows.map((show) => ({ ...show, watchedCount: watchedByShow.get(show.id) ?? 0, airedCount: show.airedEpisodeCount ?? show.episodesTotal ?? 0 })))
 }
 
 export async function POST(req: NextRequest) {

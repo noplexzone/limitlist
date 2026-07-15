@@ -53,6 +53,7 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
       nextEpisodeStillUrl: airingInfo.nextEpisodeStillUrl ?? null,
       lastEpisodeNum: airingInfo.lastEpisodeNum,
       lastAiredAt: airingInfo.lastAiredAt,
+      airedEpisodeCount: airingInfo.airedEpisodeCount ?? null,
       airingRefreshedAt: new Date(),
       ...(upToDateBecameStale ? { upToDateStale: true } : {}),
       ...(initializeUpToDateBaseline

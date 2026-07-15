@@ -20,6 +20,7 @@ export interface AiringInfo {
   nextEpisodeStillUrl?: string | null
   lastEpisodeNum: number | null
   lastAiredAt: Date | null
+  airedEpisodeCount?: number | null
 }
 
 export interface MetadataRelatedItem {

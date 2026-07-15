@@ -305,6 +305,7 @@ export class TvdbProvider implements MetadataProvider {
     const now = Date.now()
     const last = dated.filter((e) => e.date.getTime() <= now).sort((a, b) => b.date.getTime() - a.date.getTime())[0]
     const next = dated.filter((e) => e.date.getTime() > now).sort((a, b) => a.date.getTime() - b.date.getTime())[0]
+    const airedEpisodeCount = dated.filter((e) => (e.seasonNumber ?? 0) > 0 && e.date.getTime() <= now).length
     return {
       airingStatus: typeof series.status === 'string' ? series.status : series.status?.name ?? null,
       nextEpisodeNum: next?.number ?? null,
@@ -313,6 +314,7 @@ export class TvdbProvider implements MetadataProvider {
       nextEpisodeStillUrl: imageUrl(next?.image) ?? null,
       lastEpisodeNum: last?.number ?? null,
       lastAiredAt: parseDate(series.lastAired) ?? last?.date ?? null,
+      airedEpisodeCount: airedEpisodeCount > 0 ? airedEpisodeCount : null,
     }
   }
 
