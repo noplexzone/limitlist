@@ -59,26 +59,6 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
     },
   })
 
-  // Auto-create a reminder for the next episode if it airs in the future
-  if (airingInfo.nextAiringAt && airingInfo.nextAiringAt > new Date()) {
-    await prisma.episodeReminder.upsert({
-      where: {
-        animeShowId_airsAt: {
-          animeShowId: showId,
-          airsAt: airingInfo.nextAiringAt,
-        },
-      },
-      create: {
-        animeShowId: showId,
-        episodeNumber: airingInfo.nextEpisodeNum,
-        airsAt: airingInfo.nextAiringAt,
-      },
-      update: {
-        episodeNumber: airingInfo.nextEpisodeNum,
-      },
-    })
-  }
-
   return { showId, title: show.title, success: true }
 }
 

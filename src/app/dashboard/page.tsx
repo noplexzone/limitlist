@@ -8,7 +8,7 @@ import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { changelogEntries } from '@/lib/changelog'
 import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
-import ScheduleClient from '@/app/schedule/ScheduleClient'
+import UpcomingReleases from '@/app/schedule/UpcomingReleases'
 import OpenSearchButton from './OpenSearchButton'
 
 
@@ -119,16 +119,8 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   if (!user) redirect('/login')
 
-  const now = new Date()
   let shows = await prisma.animeShow.findMany({
     orderBy: { updatedAt: 'desc' },
-    include: {
-      reminders: {
-        where: { airsAt: { gte: now } },
-        orderBy: { airsAt: 'asc' },
-        take: 1,
-      },
-    },
   })
   let stats = computeStats(shows)
   if (stats.topStudios.length === 0 && shows.some((show) => show.metadataProvider === 'tvdb' && !show.studios)) {
@@ -163,18 +155,13 @@ export default async function DashboardPage() {
   const scheduleEntries = shows
     .filter((show) => show.nextAiringAt)
     .sort((a, b) => (a.nextAiringAt?.getTime() ?? 0) - (b.nextAiringAt?.getTime() ?? 0))
-    .map((show) => {
-      const reminder = show.reminders[0] ?? null
-      return {
-        showId: show.id,
-        title: show.title,
-        status: show.status,
-        episodeNumber: show.nextEpisodeNum,
-        airsAt: show.nextAiringAt!.toISOString(),
-        reminderId: reminder?.id ?? null,
-        reminderDismissed: reminder ? reminder.dismissedAt !== null : false,
-      }
-    })
+    .map((show) => ({
+      showId: show.id,
+      title: show.title,
+      status: show.status,
+      episodeNumber: show.nextEpisodeNum,
+      airsAt: show.nextAiringAt!.toISOString(),
+    }))
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -259,10 +246,10 @@ export default async function DashboardPage() {
 
               <aside className="xl:sticky xl:top-[5rem]">
                 <div className="mb-3">
-                  <h2 className="text-lg font-semibold text-gray-200">Airing Calendar</h2>
-                  <p className="text-sm text-gray-500">Upcoming watchlist episodes and reminders.</p>
+                  <h2 className="text-lg font-semibold text-gray-200">Upcoming Releases</h2>
+                  <p className="text-sm text-gray-500">Upcoming watchlist episodes.</p>
                 </div>
-                <ScheduleClient initialEntries={scheduleEntries} compact />
+                <UpcomingReleases initialEntries={scheduleEntries} compact />
               </aside>
             </div>
           </div>

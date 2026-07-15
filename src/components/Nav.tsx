@@ -15,18 +15,10 @@ const NAV_LINKS = [
 export default function Nav() {
   const pathname = usePathname()
   const router = useRouter()
-  const [reminderCount, setReminderCount] = useState(0)
   const [profileImageData, setProfileImageData] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    fetch('/api/reminders/count')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data) setReminderCount(data.count) })
-      .catch(() => {})
-  }, [pathname])
 
   useEffect(() => {
     function refreshProfileImage() {
@@ -111,16 +103,6 @@ export default function Nav() {
               ))}
             </div>
           </div>
-
-          {reminderCount > 0 && (
-            <Link
-              href="/dashboard"
-              className="hidden sm:inline-flex items-center rounded-full bg-red-500/90 px-2 py-0.5 text-[10px] font-bold text-white"
-              aria-label={`${reminderCount} unread reminder${reminderCount !== 1 ? 's' : ''} on dashboard`}
-            >
-              {reminderCount > 9 ? '9+' : reminderCount}
-            </Link>
-          )}
 
           {/* Right side: search icon + profile dropdown */}
           <div className="flex items-center gap-1 shrink-0">

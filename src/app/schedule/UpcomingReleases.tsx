@@ -9,8 +9,6 @@ interface ScheduleEntry {
   status: string
   episodeNumber: number | null
   airsAt: string
-  reminderId: string | null
-  reminderDismissed: boolean
 }
 
 
@@ -173,25 +171,11 @@ function AiringCalendar({
 
 // ---- Main component ----
 
-export default function ScheduleClient({ initialEntries, compact = false }: { initialEntries: ScheduleEntry[]; compact?: boolean }) {
+export default function UpcomingReleases({ initialEntries, compact = false }: { initialEntries: ScheduleEntry[]; compact?: boolean }) {
   const [entries, setEntries] = useState(initialEntries)
-  const [dismissing, setDismissing] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [refreshMsg, setRefreshMsg] = useState('')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-
-  async function markRead(reminderId: string) {
-    setDismissing(reminderId)
-    const res = await fetch(`/api/reminders/${reminderId}/dismiss`, { method: 'POST' })
-    if (res.ok) {
-      setEntries((prev) =>
-        prev.map((e) =>
-          e.reminderId === reminderId ? { ...e, reminderDismissed: true } : e
-        )
-      )
-    }
-    setDismissing(null)
-  }
 
   async function refreshAll() {
     setRefreshing(true)
@@ -268,21 +252,6 @@ export default function ScheduleClient({ initialEntries, compact = false }: { in
                       )}
                       <span className="text-purple-300">{formatAirDate(entry.airsAt)}</span>
                     </div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    {entry.reminderId && !entry.reminderDismissed && (
-                      <button
-                        onClick={() => markRead(entry.reminderId!)}
-                        disabled={dismissing === entry.reminderId}
-                        aria-label={`Mark ${entry.title} episode reminder as read`}
-                        className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-xs font-medium transition-colors"
-                      >
-                        {dismissing === entry.reminderId ? 'Saving…' : 'Mark as read'}
-                      </button>
-                    )}
-                    {entry.reminderDismissed && (
-                      <span className="text-xs text-gray-600">Read</span>
-                    )}
                   </div>
                 </div>
               ))}

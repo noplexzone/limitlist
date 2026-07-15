@@ -35,23 +35,10 @@ model AnimeShow {
   upToDateStale          Boolean   @default(false)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
-  reminders              EpisodeReminder[]
   childRatings           AnimeChildRating[]
 
   @@unique([metadataProvider, metadataId])
   @@unique([sourceProvider, sourceId])
-}
-
-model EpisodeReminder {
-  id            String    @id @default(cuid())
-  animeShowId   String
-  episodeNumber Int?
-  airsAt        DateTime
-  dismissedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)
-
-  @@unique([animeShowId, airsAt])
 }
 
 model AnimeChildRating {
