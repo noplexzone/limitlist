@@ -78,3 +78,19 @@ export async function refreshAllShowsAiring(): Promise<RefreshResult[]> {
   }
   return results
 }
+export async function backfillAiredEpisodeCounts(): Promise<RefreshResult[]> {
+  const shows = await prisma.animeShow.findMany({
+    where: {
+      metadataProvider: 'tvdb',
+      airedEpisodeCount: null,
+    },
+    select: { id: true },
+  })
+
+  const results: RefreshResult[] = []
+  for (const show of shows) {
+    const result = await refreshShowAiring(show.id)
+    results.push(result)
+  }
+  return results
+}
