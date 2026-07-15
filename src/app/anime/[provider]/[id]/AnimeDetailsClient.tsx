@@ -21,6 +21,15 @@ interface ChildRating {
   rating?: number | null
 }
 
+interface EpisodeWatchState {
+  key: string
+  seasonNumber: number
+  episodeNumber: number
+  watched: boolean
+  watchedAt?: string | null
+  source?: string | null
+}
+
 export interface AnimeDetailsData {
   tracked: boolean
   anime: {
@@ -62,6 +71,8 @@ export interface AnimeDetailsData {
     recommendations?: MetadataRelatedItem[] | null
     relatedMovies?: MetadataRelatedItem[] | null
     childRatings?: ChildRating[] | null
+    episodeWatches?: EpisodeWatchState[] | null
+    plexSyncedAt?: string | null
   }
 }
 
@@ -174,6 +185,10 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   const [enrichmentLoading, setEnrichmentLoading] = useState(false)
   const [enrichmentLoaded, setEnrichmentLoaded] = useState(Boolean(initialData.anime.voiceCast || initialData.anime.recommendations?.length || initialData.anime.relatedMovies?.length))
   const [childRatings, setChildRatings] = useState<ChildRating[]>(initialData.anime.childRatings ?? [])
+  const [episodeWatches, setEpisodeWatches] = useState<EpisodeWatchState[]>(initialData.anime.episodeWatches ?? [])
+  const [plexSyncing, setPlexSyncing] = useState(false)
+  const [plexSyncMessage, setPlexSyncMessage] = useState('')
+  const [plexSyncWarning, setPlexSyncWarning] = useState('')
   const [removeConfirm, setRemoveConfirm] = useState(false)
   const [removeError, setRemoveError] = useState('')
   const anime = data.anime
@@ -183,6 +198,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   const [voiceLanguageTouched, setVoiceLanguageTouched] = useState(false)
   const voiceCast = anime.voiceCast?.[voiceLanguage] ?? []
   const childRatingMap = useMemo(() => new Map(childRatings.map((rating) => [`${rating.kind}:${rating.key}`, rating])), [childRatings])
+  const episodeWatchMap = useMemo(() => new Map(episodeWatches.map((watch) => [watch.key, watch])), [episodeWatches])
   const recommendationsRef = useRef<HTMLDivElement | null>(null)
   const [recommendationsCanScrollLeft, setRecommendationsCanScrollLeft] = useState(false)
   const [recommendationsCanScrollRight, setRecommendationsCanScrollRight] = useState(false)
@@ -205,6 +221,12 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
     el.scrollBy({ left: direction * el.clientWidth, behavior: 'smooth' })
     window.setTimeout(updateRecommendationScrollState, 350)
   }
+
+  useEffect(() => {
+    setData(initialData)
+    setChildRatings(initialData.anime.childRatings ?? [])
+    setEpisodeWatches(initialData.anime.episodeWatches ?? [])
+  }, [initialData])
 
   useEffect(() => {
     if (!voiceLanguageTouched && defaultCastLanguage === 'english' && englishCount > 0) setVoiceLanguage('english')
@@ -336,6 +358,36 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
     }
   }
 
+  async function syncWithPlex() {
+    if (!anime.id) return
+    setPlexSyncing(true)
+    setPlexSyncMessage('')
+    setPlexSyncWarning('')
+    try {
+      const res = await fetch('/api/plex/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showId: anime.id }),
+      })
+      const body = await res.json()
+      const result = body.results?.[0]
+      if (!res.ok) {
+        setPlexSyncWarning(body.error ?? 'Plex sync failed')
+      } else if (result) {
+        const summary = `Matched ${result.matched ?? 0}, unmatched ${result.unmatched ?? 0}, watched ${result.watchedTotal ?? 0}.`
+        setPlexSyncMessage(result.skipped ? `Plex sync skipped. ${result.skipReason ?? summary}` : summary)
+        setPlexSyncWarning(result.warning ?? (result.error || ''))
+      } else {
+        setPlexSyncMessage('Plex sync completed.')
+      }
+      router.refresh()
+    } catch (err) {
+      setPlexSyncWarning(err instanceof Error ? err.message : 'Plex sync failed')
+    } finally {
+      setPlexSyncing(false)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
@@ -423,6 +475,23 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
 
           {anime.overview && <p className="max-w-4xl text-gray-300 leading-7">{anime.overview}</p>}
 
+          {data.tracked && anime.providerName === 'tvdb' && (
+            <div className="rounded-2xl border border-purple-500/30 bg-purple-950/20 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-purple-100">Plex watch history</p>
+                  <p className="text-sm text-gray-400">Sync watched episodes from Plex on demand.</p>
+                  {anime.plexSyncedAt && <p className="mt-1 text-xs text-gray-500">Last synced {formatDate(anime.plexSyncedAt)}</p>}
+                </div>
+                <button type="button" disabled={plexSyncing || busy} onClick={syncWithPlex} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+                  {plexSyncing ? 'Syncing…' : 'Sync with Plex'}
+                </button>
+              </div>
+              {plexSyncMessage && <p className="mt-3 text-sm text-green-200">{plexSyncMessage}</p>}
+              {plexSyncWarning && <p className="mt-3 rounded-lg border border-orange-500/50 bg-orange-950/50 px-3 py-2 text-sm font-medium text-orange-200">{plexSyncWarning}</p>}
+            </div>
+          )}
+
           {(asTextList(anime.genres) || asTextList(anime.studios)) && (
             <div className="grid gap-4 sm:grid-cols-2">
               {asTextList(anime.genres) && (
@@ -493,8 +562,9 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                     {season.episodes.map((episode) => {
                       const key = childRatingKey('EPISODE', { seasonNumber: season.seasonNumber, episodeNumber: episode.episodeNumber })
                       const child = childRatingMap.get(`EPISODE:${key}`)
+                      const watch = episodeWatchMap.get(key)
                       return (
-                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className="flex flex-col gap-3 rounded-xl border border-gray-800 bg-gray-900 p-3 text-sm sm:flex-row">
+                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className={`flex flex-col gap-3 rounded-xl border p-3 text-sm sm:flex-row ${watch?.watched ? 'border-purple-500/30 bg-purple-950/20' : 'border-gray-800 bg-gray-900'}`}>
                           <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-40">
                             {episode.stillUrl ? (
                               <PosterImage src={episode.stillUrl} alt={`${episode.name} still`} title={episode.name} sizes="(min-width: 640px) 160px, 100vw" />
@@ -504,8 +574,11 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                           </div>
                           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
-                              <p className="font-medium leading-snug text-gray-100">{episode.episodeNumber}. {episode.name}</p>
-                              {episode.airDate && <p className="mt-1 text-xs text-gray-500">{formatDate(episode.airDate)}</p>}
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className={`font-medium leading-snug ${watch?.watched ? 'text-purple-100' : 'text-gray-100'}`}>{episode.episodeNumber}. {episode.name}</p>
+                                {watch?.watched && <span className="rounded-full bg-purple-600/30 px-2 py-0.5 text-xs font-semibold text-purple-100">✓ Watched</span>}
+                              </div>
+                              {episode.airDate && <p className="mt-1 text-xs text-gray-500">{formatDate(episode.airDate)}{watch?.watchedAt ? ` · watched ${formatDate(watch.watchedAt)}` : ''}</p>}
                               {episode.overview && <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{episode.overview}</p>}
                             </div>
                             {data.tracked && (

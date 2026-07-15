@@ -15,6 +15,16 @@ interface SettingsState {
     configured: boolean
     masked: string | null
   }
+  plexBaseUrl: {
+    lockedByEnvironment: boolean
+    configured: boolean
+    value: string | null
+  }
+  plexToken: {
+    lockedByEnvironment: boolean
+    configured: boolean
+    masked: string | null
+  }
   tvdbSeasonType: string
   defaultCastLanguage: 'english' | 'japanese'
 }
@@ -37,13 +47,17 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [tvdbPin, setTvdbPin] = useState('')
   const [tvdbSeasonType, setTvdbSeasonType] = useState(initialSettings.tvdbSeasonType || 'default')
   const [defaultCastLanguage, setDefaultCastLanguage] = useState<'english' | 'japanese'>(initialSettings.defaultCastLanguage || 'japanese')
+  const [plexBaseUrl, setPlexBaseUrl] = useState(initialSettings.plexBaseUrl.value ?? '')
+  const [plexToken, setPlexToken] = useState('')
   const [showTvdbApiKey, setShowTvdbApiKey] = useState(false)
   const [showTvdbPin, setShowTvdbPin] = useState(false)
+  const [showPlexToken, setShowPlexToken] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => setUsername(settings.username), [settings.username])
+  useEffect(() => setPlexBaseUrl(settings.plexBaseUrl.value ?? ''), [settings.plexBaseUrl.value])
 
   async function savePatch(body: Record<string, unknown>, success: string) {
     setSaving(true)
@@ -95,6 +109,14 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
     await savePatch(body, 'Metadata settings saved.')
     setTvdbApiKey('')
     setTvdbPin('')
+  }
+
+  async function submitPlex(e: FormEvent) {
+    e.preventDefault()
+    const body: Record<string, unknown> = { plexBaseUrl }
+    if (!settings.plexToken.lockedByEnvironment) body.plexToken = plexToken
+    await savePatch(body, 'Plex connection verified and saved.')
+    setPlexToken('')
   }
 
   return (
@@ -249,6 +271,51 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
             Save metadata settings
           </button>
           <p className="text-xs text-gray-500">Metadata provided by TheTVDB.</p>
+        </form>
+      </section>
+
+      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-gray-200 mb-1">Plex</h2>
+        <p className="mb-4 text-sm text-gray-400">Sync watched episodes from your Plex anime library. Plex is read-only here.</p>
+        <form onSubmit={submitPlex} className="space-y-4">
+          <label className="block">
+            <span className="mb-1 block text-sm text-gray-400">Plex base URL</span>
+            <input
+              value={plexBaseUrl}
+              onChange={(e) => setPlexBaseUrl(e.target.value)}
+              placeholder="http://plex:32400"
+              readOnly={settings.plexBaseUrl.lockedByEnvironment}
+              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 read-only:opacity-60"
+            />
+            <p className="mt-1 text-xs text-gray-500">{settings.plexBaseUrl.lockedByEnvironment ? 'Plex base URL is set by environment variable.' : settings.plexBaseUrl.configured ? 'Currently configured.' : 'Not configured.'}</p>
+          </label>
+          {settings.plexToken.lockedByEnvironment && (
+            <div className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300">
+              Plex token is set by environment variable and cannot be changed from the UI.
+            </div>
+          )}
+          {!settings.plexToken.lockedByEnvironment && (
+            <label className="block">
+              <span className="mb-1 block text-sm text-gray-400">Plex token</span>
+              <div className="flex rounded-lg border border-gray-700 bg-gray-950 focus-within:border-purple-500">
+                <input
+                  type={showPlexToken ? 'text' : 'password'}
+                  value={plexToken}
+                  onChange={(e) => setPlexToken(e.target.value)}
+                  autoComplete="off"
+                  placeholder={settings.plexToken.configured ? 'Enter new token to replace' : 'Paste Plex token'}
+                  className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
+                />
+                <button type="button" onClick={() => setShowPlexToken((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+                  {showPlexToken ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">{settings.plexToken.configured ? `Currently configured${settings.plexToken.masked ? ` (${settings.plexToken.masked})` : ''}; leave blank to keep it.` : 'Not configured.'}</p>
+            </label>
+          )}
+          <button disabled={saving || !plexBaseUrl.trim()} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+            Test connection & save
+          </button>
         </form>
       </section>
 

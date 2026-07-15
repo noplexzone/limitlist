@@ -39,11 +39,11 @@ export default async function AnimeDetailsPage({
   const tracked = provider === 'anilist'
     ? await prisma.animeShow.findFirst({
         where: { OR: [{ metadataProvider: 'anilist', metadataId: id }, { sourceProvider: 'anilist', sourceId: id }] },
-        include: { childRatings: true },
+        include: { childRatings: true, episodeWatches: true },
       })
     : await prisma.animeShow.findUnique({
         where: { metadataProvider_metadataId: { metadataProvider: provider, metadataId: id } },
-        include: { childRatings: true },
+        include: { childRatings: true, episodeWatches: true },
       })
 
   let data: AnimeDetailsData | null = null
@@ -100,6 +100,15 @@ export default async function AnimeDetailsPage({
           airDate: rating.airDate?.toISOString(),
           rating: rating.rating,
         })),
+        episodeWatches: tracked.episodeWatches.map((watch) => ({
+          key: `${watch.seasonNumber}:${watch.episodeNumber}`,
+          seasonNumber: watch.seasonNumber,
+          episodeNumber: watch.episodeNumber,
+          watched: watch.watched,
+          watchedAt: watch.watchedAt?.toISOString(),
+          source: watch.source,
+        })),
+        plexSyncedAt: tracked.plexSyncedAt?.toISOString(),
         nextEpisodeName: enrichedDetails?.nextEpisodeName,
         lastEpisodeName: enrichedDetails?.lastEpisodeName,
         status: tracked.status,

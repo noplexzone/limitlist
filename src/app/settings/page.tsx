@@ -7,8 +7,11 @@ import {
   getStoredSetting,
   isTvdbApiKeyEnvLocked,
   isTvdbPinEnvLocked,
+  isPlexTokenEnvLocked,
   TVDB_API_KEY_SETTING,
   TVDB_PIN_SETTING,
+  PLEX_TOKEN_SETTING,
+  getEffectivePlexBaseUrl,
 } from '@/lib/settings'
 import Nav from '@/components/Nav'
 import SettingsClient from './SettingsClient'
@@ -26,6 +29,9 @@ export default async function SettingsPage() {
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
   const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
   const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
+  const storedPlexToken = await getStoredSetting(PLEX_TOKEN_SETTING)
+  const effectivePlexBaseUrl = await getEffectivePlexBaseUrl()
+  const plexTokenLocked = isPlexTokenEnvLocked()
   const tvdbKeyLocked = isTvdbApiKeyEnvLocked()
   const tvdbPinLocked = isTvdbPinEnvLocked()
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
@@ -53,6 +59,16 @@ export default async function SettingsPage() {
             },
             tvdbSeasonType,
             defaultCastLanguage,
+            plexBaseUrl: {
+              lockedByEnvironment: Boolean(process.env.PLEX_BASE_URL),
+              configured: Boolean(effectivePlexBaseUrl),
+              value: effectivePlexBaseUrl,
+            },
+            plexToken: {
+              lockedByEnvironment: plexTokenLocked,
+              configured: plexTokenLocked || Boolean(storedPlexToken),
+              masked: plexTokenLocked ? 'Set in environment' : maskKey(storedPlexToken),
+            },
           }}
         />
       </main>
