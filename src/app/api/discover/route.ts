@@ -11,8 +11,11 @@ import {
 } from '@/lib/anilist'
 import { getAnimeRootTitle } from '@/lib/anime-title'
 
+const VALID_FEED_TYPES = new Set<AniListFeedType>(['popular', 'trending', 'top-rated', 'upcoming'])
+
 function feedTypeFromRequest(req: NextRequest): AniListFeedType {
-  return req.nextUrl.searchParams.get('type') === 'trending' ? 'trending' : 'popular'
+  const type = req.nextUrl.searchParams.get('type')
+  return (type && VALID_FEED_TYPES.has(type as AniListFeedType)) ? (type as AniListFeedType) : 'popular'
 }
 
 function pageFromRequest(req: NextRequest): number {

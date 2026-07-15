@@ -3,7 +3,7 @@ import { getAnimeRootTitle, normalizeAnimeTitle, titleCandidates } from './anime
 
 const ANILIST_GRAPHQL = 'https://graphql.anilist.co'
 
-export type AniListFeedType = 'popular' | 'trending'
+export type AniListFeedType = 'popular' | 'trending' | 'top-rated' | 'upcoming'
 
 type AniListFormat = 'TV' | 'TV_SHORT' | 'MOVIE' | 'SPECIAL' | 'OVA' | 'ONA' | 'MUSIC' | string
 
@@ -157,10 +157,10 @@ const SEARCH_DETAIL_QUERY = `
 `
 
 const DISCOVER_QUERY = `
-  query DiscoverAnime($page: Int!, $perPage: Int!, $sort: [MediaSort]) {
+  query DiscoverAnime($page: Int!, $perPage: Int!, $sort: [MediaSort], $status: MediaStatus) {
     Page(page: $page, perPage: $perPage) {
       pageInfo { hasNextPage }
-      media(type: ANIME, sort: $sort, isAdult: false) {
+      media(type: ANIME, sort: $sort, isAdult: false, status: $status) {
         ${MEDIA_FIELDS}
       }
     }
@@ -401,8 +401,19 @@ export async function fetchAniListDiscover(
   page = 1,
   perPage = 42
 ): Promise<AniListDiscoverPage> {
-  const sort = type === 'trending' ? ['TRENDING_DESC'] : ['POPULARITY_DESC']
-  const data = await postAniList<AniListResponse>(DISCOVER_QUERY, { page, perPage, sort }, 5000)
+  let sort: string[]
+  let status: string | undefined
+  if (type === 'trending') {
+    sort = ['TRENDING_DESC']
+  } else if (type === 'top-rated') {
+    sort = ['SCORE_DESC']
+  } else if (type === 'upcoming') {
+    sort = ['POPULARITY_DESC']
+    status = 'NOT_YET_RELEASED'
+  } else {
+    sort = ['POPULARITY_DESC']
+  }
+  const data = await postAniList<AniListResponse>(DISCOVER_QUERY, { page, perPage, sort, status }, 5000)
   if (!data) throw new Error('AniList request failed')
   return {
     media: data.data?.Page?.media ?? [],

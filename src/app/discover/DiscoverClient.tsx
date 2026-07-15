@@ -26,7 +26,14 @@ interface DiscoverResult {
   mappingStatus?: string
 }
 
-type FeedType = 'popular' | 'trending'
+type FeedType = 'popular' | 'trending' | 'top-rated' | 'upcoming'
+
+const TABS: { type: FeedType; label: string }[] = [
+  { type: 'popular', label: 'Popular Anime' },
+  { type: 'trending', label: 'Trending This Week' },
+  { type: 'top-rated', label: 'Top Rated' },
+  { type: 'upcoming', label: 'Upcoming' },
+]
 
 export default function DiscoverClient() {
   const [feedType, setFeedType] = useState<FeedType>('popular')
@@ -130,7 +137,7 @@ export default function DiscoverClient() {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
-          {(['popular', 'trending'] as FeedType[]).map((t) => (
+          {TABS.map(({ type: t, label }) => (
             <button
               key={t}
               onClick={() => { setFeedType(t); setPage(1) }}
@@ -140,7 +147,7 @@ export default function DiscoverClient() {
                   : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
               }`}
             >
-              {t === 'popular' ? 'Popular Anime' : 'Trending This Week'}
+              {label}
             </button>
           ))}
         </div>
