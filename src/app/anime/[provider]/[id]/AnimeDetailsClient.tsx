@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, STATUS_SELECT_CLASSES, type ShowStatus } from '@/lib/status'
+import { applyShowPatch } from '@/lib/apply-show-patch'
 import type { MetadataCastMember, MetadataRelatedItem, MetadataSeasonSummary, MetadataVoiceCastGroup } from '@/lib/providers'
 
 interface ChildRating {
@@ -337,25 +338,10 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
       body: JSON.stringify(patch),
     })
     if (res.ok) {
-      const updated = await res.json()
+      const updated: Record<string, unknown> = await res.json()
       setData((cur) => ({
         tracked: true,
-        anime: {
-          ...cur.anime,
-          status: updated.status,
-          rating: updated.rating,
-          notes: updated.notes,
-          airingStatus: updated.airingStatus ?? cur.anime.airingStatus,
-          nextEpisodeNum: updated.nextEpisodeNum ?? cur.anime.nextEpisodeNum,
-          nextEpisodeName: updated.nextEpisodeName ?? cur.anime.nextEpisodeName,
-          nextAiringAt: updated.nextAiringAt ?? cur.anime.nextAiringAt,
-          lastEpisodeNum: updated.lastEpisodeNum ?? cur.anime.lastEpisodeNum,
-          lastEpisodeName: updated.lastEpisodeName ?? cur.anime.lastEpisodeName,
-          lastAiredAt: updated.lastAiredAt ?? cur.anime.lastAiredAt,
-          upToDateEpisodeNum: updated.upToDateEpisodeNum ?? cur.anime.upToDateEpisodeNum,
-          upToDateAiredAt: updated.upToDateAiredAt ?? cur.anime.upToDateAiredAt,
-          upToDateStale: updated.upToDateStale ?? cur.anime.upToDateStale,
-        },
+        anime: applyShowPatch(cur.anime, updated),
       }))
       router.refresh()
     }

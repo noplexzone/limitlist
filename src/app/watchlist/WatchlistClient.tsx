@@ -4,6 +4,7 @@ import { KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import PosterImage from '@/components/PosterImage'
 import { SHOW_STATUSES, STATUS_LABELS, STATUS_SELECT_CLASSES, type ShowStatus } from '@/lib/status'
+import { applyShowPatch } from '@/lib/apply-show-patch'
 
 interface AnimeShow {
   id: string
@@ -229,8 +230,8 @@ export default function WatchlistClient() {
       body: JSON.stringify(patch),
     })
     if (res.ok) {
-      const updated: AnimeShow = await res.json()
-      setShows((prev) => prev.map((show) => (show.id === id ? updated : show)))
+      const updated: Record<string, unknown> = await res.json()
+      setShows((prev) => prev.map((show) => (show.id === id ? applyShowPatch(show, updated) : show)))
     } else {
       setShows(previous)
     }
