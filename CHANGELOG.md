@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.2.2] - 2026-07-15
+
+### Fixed
+
+- **Plex import matching**: Import from Plex now requests external GUIDs in library listings, falls back to bounded per-show metadata lookups when needed, and parses legacy TVDB agent GUIDs.
+- **Watchlist progress denominators**: Watchlist cards now use persisted aired episode counts instead of the latest season episode number for watched/aired progress.
+- **Detail-page progress denominators**: Show-level watched/aired detail progress now excludes season-zero specials while season headers continue to use each season's own episode count.
+
 ## [1.2.1] - 2026-07-15
 
 ### Added

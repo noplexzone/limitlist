@@ -11,6 +11,20 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.2.2',
+    date: '2026-07-15',
+    sections: [
+      {
+        title: 'Bug fixes',
+        bullets: [
+          'Import from Plex now resolves TVDB IDs from Plex library listings by requesting external GUIDs and using a bounded metadata fallback.',
+          'Watchlist watched/aired progress now uses persisted aired episode counts instead of the latest episode number within a season.',
+          'Detail-page watched/aired progress now excludes specials from the show-level denominator while preserving per-season episode counts.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.2.1',
     date: '2026-07-15',
     sections: [
