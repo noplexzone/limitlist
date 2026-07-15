@@ -42,6 +42,21 @@ export async function getConfiguredTvdbSeasonType(): Promise<string> {
   return process.env.TVDB_SEASON_TYPE || (await getStoredSetting(TVDB_SEASON_TYPE_SETTING)) || DEFAULT_TVDB_SEASON_TYPE
 }
 
+export const PLEX_BASE_URL_SETTING = 'plexBaseUrl'
+export const PLEX_TOKEN_SETTING = 'plexToken'
+
+export function isPlexTokenEnvLocked() {
+  return Boolean(process.env.PLEX_TOKEN)
+}
+
+export async function getEffectivePlexBaseUrl(): Promise<string | null> {
+  return process.env.PLEX_BASE_URL || (await getStoredSetting(PLEX_BASE_URL_SETTING))
+}
+
+export async function getEffectivePlexToken(): Promise<string | null> {
+  return process.env.PLEX_TOKEN || (await getStoredSetting(PLEX_TOKEN_SETTING))
+}
+
 export function normalizeCastLanguage(value?: string | null): 'english' | 'japanese' {
   return value === 'english' || value === 'japanese' ? value : DEFAULT_CAST_LANGUAGE
 }
