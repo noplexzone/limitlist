@@ -20,6 +20,13 @@ export const changelogEntries: ChangelogEntry[] = [
           'Import from Plex now resolves TVDB IDs from Plex library listings by requesting external GUIDs and using a bounded metadata fallback.',
           'Watchlist watched/aired progress now uses persisted aired episode counts instead of the latest episode number within a season.',
           'Detail-page watched/aired progress now excludes specials from the show-level denominator while preserving per-season episode counts.',
+          'Watchlist and detail-page status/rating changes now merge PATCH responses without dropping computed progress counts or enriched metadata.',
+        ],
+      },
+      {
+        title: 'Features',
+        bullets: [
+          'Settings now includes a one-time aired-episode-count backfill for existing TVDB shows added before this update.',
         ],
       },
     ],

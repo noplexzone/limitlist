@@ -15,6 +15,11 @@ No unreleased changes yet.
 - **Plex import matching**: Import from Plex now requests external GUIDs in library listings, falls back to bounded per-show metadata lookups when needed, and parses legacy TVDB agent GUIDs.
 - **Watchlist progress denominators**: Watchlist cards now use persisted aired episode counts instead of the latest season episode number for watched/aired progress.
 - **Detail-page progress denominators**: Show-level watched/aired detail progress now excludes season-zero specials while season headers continue to use each season's own episode count.
+- **Status/rating updates**: Watchlist and detail-page status/rating changes now merge PATCH responses without dropping computed progress counts or enriched metadata.
+
+### Added
+
+- **Aired count backfill**: Settings now includes a one-time backfill action that populates aired-episode counts for existing TVDB shows added before this update.
 
 ## [1.2.1] - 2026-07-15
 
