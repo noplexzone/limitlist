@@ -62,6 +62,7 @@ interface PlexMetadataItem {
   type?: string
   key?: string
   Guid?: PlexGuid[]
+  guid?: string
 }
 
 interface PlexContainer {
@@ -115,13 +116,15 @@ export class PlexClient {
       ? sectionKeys
       : (await this.getSections()).filter((section) => section.type === 'show').map((section) => section.key)
     const batches = await Promise.all(keys.map(async (key) => {
-      const params = new URLSearchParams({ type: '2' })
+      const params = new URLSearchParams({ type: '2', includeGuids: '1' })
       if (accountId) params.set('accountID', accountId)
       const data = await this.fetchJson<PlexContainer>(`/library/sections/${encodeURIComponent(key)}/all?${params.toString()}`)
       return (data?.MediaContainer?.Metadata ?? []).map((item) => ({ item, key }))
     }))
-    return batches.flat().filter(({ item }) => (item.viewedLeafCount ?? 0) > 0 && item.ratingKey && item.title).map(({ item, key }) => {
-      const guids = (item.Guid ?? []).map((g) => g.id).filter(Boolean)
+
+    const watched = batches.flat().filter(({ item }) => (item.viewedLeafCount ?? 0) > 0 && item.ratingKey && item.title)
+    const results: PlexWatchedShow[] = watched.map(({ item, key }) => {
+      const guids = getPlexGuids(item)
       return {
         ratingKey: item.ratingKey!,
         title: item.title!,
@@ -134,6 +137,36 @@ export class PlexClient {
         librarySectionKey: key,
       }
     })
+
+    const noGuidIndexes = results.map((show, i) => (show.guids.length === 0 ? i : -1)).filter((i) => i >= 0)
+    const FALLBACK_LIMIT = 50
+    if (noGuidIndexes.length > 0 && noGuidIndexes.length <= FALLBACK_LIMIT) {
+      for (const idx of noGuidIndexes) {
+        const show = results[idx]
+        const meta = await this.fetchJson<PlexContainer>(`/library/metadata/${encodeURIComponent(show.ratingKey)}`)
+        const metaItem = meta?.MediaContainer?.Metadata?.[0]
+        if (metaItem) {
+          const guids = getPlexGuids(metaItem)
+          if (guids.length > 0) {
+            results[idx] = { ...show, guids, tvdbId: extractTvdbId(guids) }
+          }
+        }
+      }
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      const resolvedCount = results.filter((show) => show.tvdbId !== null).length
+      const fallbackCount = noGuidIndexes.length
+      const skippedFallback = fallbackCount > FALLBACK_LIMIT
+      console.info('[plex] getWatchedShows', {
+        totalShows: results.length,
+        tvdbResolved: resolvedCount,
+        fallbackAttempted: skippedFallback ? 0 : fallbackCount,
+        fallbackSkipped: skippedFallback ? fallbackCount : 0,
+      })
+    }
+
+    return results
   }
 
   async getShowOrdering(seriesRatingKey: string): Promise<string | null> {
@@ -202,7 +235,7 @@ export class PlexClient {
         lastViewedAt: item.lastViewedAt ?? null,
         viewOffset: item.viewOffset ?? 0,
         duration: item.duration ?? 0,
-        guids: (item.Guid ?? []).map((g) => g.id).filter(Boolean),
+        guids: getPlexGuids(item),
         watched: (item.viewCount ?? 0) > 0,
       }))
   }
@@ -234,9 +267,16 @@ function scorePlexMatch(
   return score
 }
 
+function getPlexGuids(item: PlexMetadataItem): string[] {
+  return [
+    ...(item.Guid ?? []).map((g) => g.id),
+    item.guid,
+  ].filter((guid): guid is string => Boolean(guid))
+}
+
 export function extractTvdbId(guids: string[]): string | null {
   for (const guid of guids) {
-    const match = guid.match(/^tvdb:\/\/(\d+)/)
+    const match = guid.match(/^tvdb:\/\/(\d+)/) ?? guid.match(/^com\.plexapp\.agents\.thetvdb:\/\/(\d+)/)
     if (match) return match[1]
   }
   return null
