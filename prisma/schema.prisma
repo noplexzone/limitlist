@@ -33,6 +33,8 @@ model AnimeShow {
   upToDateEpisodeNum     Int?
   upToDateAiredAt        DateTime?
   upToDateStale          Boolean   @default(false)
+  nextEpisodeName        String?
+  nextEpisodeStillUrl    String?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
   childRatings           AnimeChildRating[]

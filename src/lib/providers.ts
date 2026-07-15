@@ -16,6 +16,8 @@ export interface AiringInfo {
   airingStatus: string | null
   nextEpisodeNum: number | null
   nextAiringAt: Date | null
+  nextEpisodeName?: string | null
+  nextEpisodeStillUrl?: string | null
   lastEpisodeNum: number | null
   lastAiredAt: Date | null
 }

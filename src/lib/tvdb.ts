@@ -307,6 +307,8 @@ export class TvdbProvider implements MetadataProvider {
       airingStatus: typeof series.status === 'string' ? series.status : series.status?.name ?? null,
       nextEpisodeNum: next?.number ?? null,
       nextAiringAt: parseDate(series.nextAired) ?? next?.date ?? null,
+      nextEpisodeName: next?.name ?? null,
+      nextEpisodeStillUrl: imageUrl(next?.image) ?? null,
       lastEpisodeNum: last?.number ?? null,
       lastAiredAt: parseDate(series.lastAired) ?? last?.date ?? null,
     }

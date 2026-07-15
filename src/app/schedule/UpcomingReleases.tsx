@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { isShowStatus, STATUS_BADGE_CLASSES, STATUS_LABELS } from '@/lib/status'
 
 interface ScheduleEntry {
@@ -8,6 +9,9 @@ interface ScheduleEntry {
   title: string
   status: string
   episodeNumber: number | null
+  episodeName?: string | null
+  stillUrl?: string | null
+  posterUrl?: string | null
   airsAt: string
 }
 
@@ -232,29 +236,44 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
             </div>
           ) : (
             <div className="grid gap-3">
-              {filtered.map((entry) => (
-                <div
-                  key={`${entry.showId}-${entry.airsAt}`}
-                  className={`bg-gray-900 border border-gray-800 rounded-xl ${compact ? 'p-3 flex-col items-start' : 'p-4 items-center'} flex justify-between gap-4`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-white truncate">{entry.title}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium text-white flex-shrink-0 ${isShowStatus(entry.status) ? STATUS_BADGE_CLASSES[entry.status] : 'bg-gray-600'}`}
-                      >
-                        {isShowStatus(entry.status) ? STATUS_LABELS[entry.status] : entry.status}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-3 text-sm text-gray-400">
-                      {entry.episodeNumber != null && (
-                        <span>Episode {entry.episodeNumber}</span>
-                      )}
-                      <span className="text-purple-300">{formatAirDate(entry.airsAt)}</span>
+              {filtered.map((entry) => {
+                const thumbSrc = entry.stillUrl ?? entry.posterUrl ?? null
+                const episodeLabel = entry.episodeName ?? (entry.episodeNumber != null ? `Episode ${entry.episodeNumber}` : null)
+                return (
+                  <div
+                    key={`${entry.showId}-${entry.airsAt}`}
+                    className={`bg-gray-900 border border-gray-800 rounded-xl ${compact ? 'p-3' : 'p-4'} flex gap-3 items-start`}
+                  >
+                    {thumbSrc && (
+                      <div className="relative shrink-0 w-[72px] h-[54px] rounded-lg overflow-hidden bg-gray-800">
+                        <Image
+                          src={thumbSrc}
+                          alt=""
+                          fill
+                          sizes="72px"
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-white truncate">{entry.title}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-medium text-white flex-shrink-0 ${isShowStatus(entry.status) ? STATUS_BADGE_CLASSES[entry.status] : 'bg-gray-600'}`}
+                        >
+                          {isShowStatus(entry.status) ? STATUS_LABELS[entry.status] : entry.status}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-col gap-0.5">
+                        {episodeLabel && (
+                          <span className="text-sm text-gray-300 truncate">{episodeLabel}</span>
+                        )}
+                        <span className="text-xs text-purple-300">{formatAirDate(entry.airsAt)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

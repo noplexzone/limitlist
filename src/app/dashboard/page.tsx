@@ -160,6 +160,9 @@ export default async function DashboardPage() {
       title: show.title,
       status: show.status,
       episodeNumber: show.nextEpisodeNum,
+      episodeName: show.nextEpisodeName ?? null,
+      stillUrl: show.nextEpisodeStillUrl ?? null,
+      posterUrl: show.posterUrl ?? null,
       airsAt: show.nextAiringAt!.toISOString(),
     }))
 

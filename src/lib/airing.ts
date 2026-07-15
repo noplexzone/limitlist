@@ -49,6 +49,8 @@ export async function refreshShowAiring(showId: string): Promise<RefreshResult> 
       airingStatus: airingInfo.airingStatus,
       nextEpisodeNum: airingInfo.nextEpisodeNum,
       nextAiringAt: airingInfo.nextAiringAt,
+      nextEpisodeName: airingInfo.nextEpisodeName ?? null,
+      nextEpisodeStillUrl: airingInfo.nextEpisodeStillUrl ?? null,
       lastEpisodeNum: airingInfo.lastEpisodeNum,
       lastAiredAt: airingInfo.lastAiredAt,
       airingRefreshedAt: new Date(),
