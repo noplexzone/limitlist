@@ -139,6 +139,17 @@ function asTextList(value: string[] | string | null | undefined) {
   return value ?? ''
 }
 
+function formatRelative(value?: string | null) {
+  if (!value) return ''
+  const diffMs = Date.now() - new Date(value).getTime()
+  const diffMin = Math.max(1, Math.round(diffMs / 60000))
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHours = Math.round(diffMin / 60)
+  if (diffHours < 48) return `${diffHours}h ago`
+  const diffDays = Math.round(diffHours / 24)
+  return `${diffDays}d ago`
+}
+
 function formatDate(value?: string | null) {
   if (!value) return ''
   return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
@@ -189,6 +200,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   const [plexSyncing, setPlexSyncing] = useState(false)
   const [plexSyncMessage, setPlexSyncMessage] = useState('')
   const [plexSyncWarning, setPlexSyncWarning] = useState('')
+  const [watchTogglingKey, setWatchTogglingKey] = useState<string | null>(null)
   const [removeConfirm, setRemoveConfirm] = useState(false)
   const [removeError, setRemoveError] = useState('')
   const anime = data.anime
@@ -199,6 +211,11 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   const voiceCast = anime.voiceCast?.[voiceLanguage] ?? []
   const childRatingMap = useMemo(() => new Map(childRatings.map((rating) => [`${rating.kind}:${rating.key}`, rating])), [childRatings])
   const episodeWatchMap = useMemo(() => new Map(episodeWatches.map((watch) => [watch.key, watch])), [episodeWatches])
+  const watchedAiredProgress = useMemo(() => {
+    const watched = new Set(episodeWatches.filter((watch) => watch.watched).map((watch) => watch.key))
+    const aired = (anime.seasons ?? []).flatMap((season) => (season.episodes ?? []).map((episode) => ({ seasonNumber: season.seasonNumber, episode }))).filter(({ episode }) => episode.airDate && new Date(episode.airDate).getTime() <= Date.now())
+    return { watched: aired.filter(({ seasonNumber, episode }) => watched.has(`${seasonNumber}:${episode.episodeNumber}`)).length, aired: aired.length }
+  }, [anime.seasons, episodeWatches])
   const recommendationsRef = useRef<HTMLDivElement | null>(null)
   const [recommendationsCanScrollLeft, setRecommendationsCanScrollLeft] = useState(false)
   const [recommendationsCanScrollRight, setRecommendationsCanScrollRight] = useState(false)
@@ -358,6 +375,30 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
     }
   }
 
+  async function toggleEpisodeWatch(seasonNumber: number, episodeNumber: number, watched: boolean) {
+    if (!anime.id) return
+    const key = `${seasonNumber}:${episodeNumber}`
+    setWatchTogglingKey(key)
+    const previous = episodeWatches
+    setEpisodeWatches((current) => {
+      const next = { key, seasonNumber, episodeNumber, watched, watchedAt: watched ? new Date().toISOString() : null, source: 'manual' }
+      return [...current.filter((item) => item.key !== key), next]
+    })
+    const res = await fetch(`/api/watchlist/${anime.id}/watch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seasonNumber, episodeNumber, watched }),
+    })
+    if (res.ok) {
+      const updated: EpisodeWatchState = await res.json()
+      setEpisodeWatches((current) => [...current.filter((item) => item.key !== updated.key), updated])
+      router.refresh()
+    } else {
+      setEpisodeWatches(previous)
+    }
+    setWatchTogglingKey(null)
+  }
+
   async function syncWithPlex() {
     if (!anime.id) return
     setPlexSyncing(true)
@@ -471,6 +512,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
             {anime.contentRating && <span className="rounded-full bg-gray-900 px-3 py-1">Rated {anime.contentRating}</span>}
             {anime.originalLanguage && <span className="rounded-full bg-gray-900 px-3 py-1">Language {anime.originalLanguage.toUpperCase()}</span>}
             {data.tracked && anime.rating != null && <span className="rounded-full bg-purple-900/70 px-3 py-1">Your rating {anime.rating.toFixed(1)}/5</span>}
+            {data.tracked && watchedAiredProgress.aired > 0 && <span className="rounded-full bg-purple-900/70 px-3 py-1">Watched {watchedAiredProgress.watched}/{watchedAiredProgress.aired} aired</span>}
           </div>
 
           {anime.overview && <p className="max-w-4xl text-gray-300 leading-7">{anime.overview}</p>}
@@ -481,7 +523,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                 <div>
                   <p className="font-semibold text-purple-100">Plex watch history</p>
                   <p className="text-sm text-gray-400">Sync watched episodes from Plex on demand.</p>
-                  {anime.plexSyncedAt && <p className="mt-1 text-xs text-gray-500">Last synced {formatDate(anime.plexSyncedAt)}</p>}
+                  {anime.plexSyncedAt && <p className="mt-1 text-xs text-gray-500">Synced with Plex {formatRelative(anime.plexSyncedAt)}</p>}
                 </div>
                 <button type="button" disabled={plexSyncing || busy} onClick={syncWithPlex} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
                   {plexSyncing ? 'Syncing…' : 'Sync with Plex'}
@@ -554,7 +596,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
             {[...anime.seasons].sort((a, b) => b.seasonNumber - a.seasonNumber).map((season) => (
               <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
                 <summary className="cursor-pointer font-semibold text-gray-100">
-                  {season.name} <span className="text-sm font-normal text-gray-500">{season.episodeCount ?? season.episodes?.length ? ` · ${season.episodeCount ?? season.episodes?.length} episodes in this season` : ''}{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
+                  {season.name} <span className="text-sm font-normal text-gray-500">{season.episodeCount ?? season.episodes?.length ? ` · ${season.episodeCount ?? season.episodes?.length} episodes in this season` : ''}{` · ${(season.episodes ?? []).filter((episode) => episodeWatchMap.get(`${season.seasonNumber}:${episode.episodeNumber}`)?.watched).length}/${season.episodes?.length ?? season.episodeCount ?? 0} watched`}{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
                 </summary>
                 {season.overview && <p className="mt-2 text-sm text-gray-400">{season.overview}</p>}
                 {season.episodes && season.episodes.length > 0 && (
@@ -576,7 +618,16 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                                 <p className={`font-medium leading-snug ${watch?.watched ? 'text-purple-100' : 'text-gray-100'}`}>{episode.episodeNumber}. {episode.name}</p>
-                                {watch?.watched && <span className="rounded-full bg-purple-600/30 px-2 py-0.5 text-xs font-semibold text-purple-100">✓ Watched</span>}
+                                {data.tracked && (
+                                  <button
+                                    type="button"
+                                    disabled={watchTogglingKey === key}
+                                    onClick={() => toggleEpisodeWatch(season.seasonNumber, episode.episodeNumber, !watch?.watched)}
+                                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${watch?.watched ? 'bg-purple-600/30 text-purple-100 hover:bg-purple-600/50' : 'bg-gray-800 text-gray-300 hover:bg-purple-900/50'}`}
+                                  >
+                                    {watch?.watched ? '✓ Watched' : 'Mark watched'}
+                                  </button>
+                                )}
                               </div>
                               {episode.airDate && <p className="mt-1 text-xs text-gray-500">{formatDate(episode.airDate)}{watch?.watchedAt ? ` · watched ${formatDate(watch.watchedAt)}` : ''}</p>}
                               {episode.overview && <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{episode.overview}</p>}

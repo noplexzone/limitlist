@@ -1,10 +1,28 @@
 import { getAnimeRootTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
-import { getEffectivePlexBaseUrl, getEffectivePlexToken } from './settings'
+import { getConfiguredPlexAccountId, getConfiguredPlexLibrarySections, getEffectivePlexBaseUrl, getEffectivePlexToken } from './settings'
 
 export interface PlexSeries {
   ratingKey: string
   title: string
   showOrdering: string | null
+}
+
+export interface PlexSection {
+  key: string
+  title: string
+  type: string
+}
+
+export interface PlexWatchedShow {
+  ratingKey: string
+  title: string
+  year: number | null
+  guids: string[]
+  tvdbId: string | null
+  viewedLeafCount: number
+  leafCount: number
+  showOrdering: string | null
+  librarySectionKey: string
 }
 
 export interface PlexEpisode {
@@ -17,6 +35,7 @@ export interface PlexEpisode {
   viewCount: number
   lastViewedAt: number | null
   viewOffset: number
+  duration: number
   guids: string[]
   watched: boolean
 }
@@ -37,12 +56,18 @@ interface PlexMetadataItem {
   viewCount?: number
   lastViewedAt?: number
   viewOffset?: number
+  duration?: number
+  viewedLeafCount?: number
+  leafCount?: number
+  type?: string
+  key?: string
   Guid?: PlexGuid[]
 }
 
 interface PlexContainer {
   MediaContainer: {
     Metadata?: PlexMetadataItem[]
+    Directory?: PlexMetadataItem[]
     size?: number
   }
 }
@@ -76,6 +101,39 @@ export class PlexClient {
 
   async validate(): Promise<boolean> {
     return (await this.fetchJson<unknown>('/identity')) !== null
+  }
+
+  async getSections(): Promise<PlexSection[]> {
+    const data = await this.fetchJson<PlexContainer>('/library/sections')
+    return (data?.MediaContainer?.Directory ?? [])
+      .filter((item) => item.key && item.title && item.type)
+      .map((item) => ({ key: String(item.key), title: item.title!, type: item.type! }))
+  }
+
+  async getWatchedShows(sectionKeys: string[] = [], accountId?: string | null): Promise<PlexWatchedShow[]> {
+    const keys = sectionKeys.length > 0
+      ? sectionKeys
+      : (await this.getSections()).filter((section) => section.type === 'show').map((section) => section.key)
+    const batches = await Promise.all(keys.map(async (key) => {
+      const params = new URLSearchParams({ type: '2' })
+      if (accountId) params.set('accountID', accountId)
+      const data = await this.fetchJson<PlexContainer>(`/library/sections/${encodeURIComponent(key)}/all?${params.toString()}`)
+      return (data?.MediaContainer?.Metadata ?? []).map((item) => ({ item, key }))
+    }))
+    return batches.flat().filter(({ item }) => (item.viewedLeafCount ?? 0) > 0 && item.ratingKey && item.title).map(({ item, key }) => {
+      const guids = (item.Guid ?? []).map((g) => g.id).filter(Boolean)
+      return {
+        ratingKey: item.ratingKey!,
+        title: item.title!,
+        year: item.year ?? null,
+        guids,
+        tvdbId: extractTvdbId(guids),
+        viewedLeafCount: item.viewedLeafCount ?? 0,
+        leafCount: item.leafCount ?? 0,
+        showOrdering: item.showOrdering ?? item.viewingOrder ?? null,
+        librarySectionKey: key,
+      }
+    })
   }
 
   async getShowOrdering(seriesRatingKey: string): Promise<string | null> {
@@ -143,6 +201,7 @@ export class PlexClient {
         viewCount: item.viewCount ?? 0,
         lastViewedAt: item.lastViewedAt ?? null,
         viewOffset: item.viewOffset ?? 0,
+        duration: item.duration ?? 0,
         guids: (item.Guid ?? []).map((g) => g.id).filter(Boolean),
         watched: (item.viewCount ?? 0) > 0,
       }))
@@ -175,8 +234,21 @@ function scorePlexMatch(
   return score
 }
 
+export function extractTvdbId(guids: string[]): string | null {
+  for (const guid of guids) {
+    const match = guid.match(/^tvdb:\/\/(\d+)/)
+    if (match) return match[1]
+  }
+  return null
+}
+
 export async function getConfiguredPlexClient(): Promise<PlexClient | null> {
   const [baseUrl, token] = await Promise.all([getEffectivePlexBaseUrl(), getEffectivePlexToken()])
   if (!baseUrl || !token) return null
   return new PlexClient(baseUrl, token)
+}
+
+export async function getConfiguredPlexDiscoveryOptions() {
+  const [sectionKeys, accountId] = await Promise.all([getConfiguredPlexLibrarySections(), getConfiguredPlexAccountId()])
+  return { sectionKeys, accountId }
 }

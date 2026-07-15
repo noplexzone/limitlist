@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { fetchAniListMediaById, getAniListTitles, getAniListYear } from '@/lib/anilist'
+import { importTvdbShowToWatchlist } from '@/lib/watchlist-import'
 
 export async function GET() {
   const user = await requireAuth()
@@ -11,7 +12,13 @@ export async function GET() {
   const shows = await prisma.animeShow.findMany({
     orderBy: { updatedAt: 'desc' },
   })
-  return NextResponse.json(shows)
+  const counts = await prisma.episodeWatch.groupBy({
+    by: ['animeShowId'],
+    where: { watched: true },
+    _count: { _all: true },
+  })
+  const watchedByShow = new Map(counts.map((row) => [row.animeShowId, row._count._all]))
+  return NextResponse.json(shows.map((show) => ({ ...show, watchedCount: watchedByShow.get(show.id) ?? 0, airedCount: show.lastEpisodeNum ?? show.episodesTotal ?? 0 })))
 }
 
 export async function POST(req: NextRequest) {
@@ -103,20 +110,12 @@ export async function POST(req: NextRequest) {
         { status: 422 }
       )
     }
-  } else if (metadataProvider === 'tvdb' && tvdb) {
-    const details = await tvdb.getDetails(metadataId)
-    if (details) {
-      enriched = {
-        ...body,
-        title: details.title,
-        originalTitle: details.originalTitle,
-        overview: details.overview,
-        posterUrl: details.posterUrl,
-        firstAiredAt: details.firstAiredAt,
-        genres: details.genres?.join(', '),
-        studios: details.studios?.join(', '),
-        episodesTotal: details.episodesTotal,
-      }
+  } else if (metadataProvider === 'tvdb') {
+    try {
+      const show = await importTvdbShowToWatchlist(metadataId)
+      return NextResponse.json(show, { status: 201 })
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : 'TVDB import failed' }, { status: 422 })
     }
   }
 

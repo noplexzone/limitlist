@@ -1,6 +1,9 @@
 import { prisma } from './db'
-import { getConfiguredPlexClient, type PlexEpisode } from './plex'
+import { getConfiguredPlexClient, getConfiguredPlexDiscoveryOptions, type PlexEpisode, type PlexWatchedShow } from './plex'
 import { getConfiguredTvdbProvider } from './tvdb'
+import { getConfiguredPlexAutoStatus, getConfiguredPlexWatchedThreshold, type PlexWatchedThreshold } from './settings'
+import { importTvdbShowToWatchlist } from './watchlist-import'
+import type { ShowStatus } from './status'
 import type { MetadataSeasonSummary } from './providers'
 
 export interface PlexSyncResult {
@@ -23,6 +26,35 @@ export interface PlexSyncAllResult {
   totalUnmatched: number
   totalWatched: number
   failedCount: number
+}
+
+export interface PlexDiscoveryShow {
+  ratingKey: string
+  title: string
+  year: number | null
+  tvdbId: string | null
+  viewedLeafCount: number
+  leafCount: number
+  showOrdering: string | null
+  librarySectionKey: string
+  alreadyTracked: boolean
+  trackedShowId: string | null
+  warning?: string
+}
+
+export interface PlexDiscoveryResult {
+  shows: PlexDiscoveryShow[]
+}
+
+export interface PlexImportResult {
+  ratingKey: string
+  title: string
+  status: 'imported' | 'skipped' | 'unresolved' | 'failed'
+  showId?: string
+  tvdbId?: string | null
+  warning?: string
+  error?: string
+  sync?: PlexSyncResult
 }
 
 interface MatchedEpisode {
@@ -59,7 +91,8 @@ function normTitle(title: string): string {
 // Plex specials (parentIndex <= 0) are skipped.
 export function _matchPlexEpisodesForTest(
   plexEpisodes: PlexEpisode[],
-  seasons: MetadataSeasonSummary[]
+  seasons: MetadataSeasonSummary[],
+  threshold: PlexWatchedThreshold = 'viewcount'
 ): MatchResult {
   // guidMap: providerEpisodeId -> { seasonNumber, episodeNumber }
   const guidMap = new Map<string, { seasonNumber: number; episodeNumber: number }>()
@@ -92,7 +125,8 @@ export function _matchPlexEpisodesForTest(
   for (const plexEp of plexEpisodes) {
     if (plexEp.parentIndex <= 0) continue
 
-    const isWatched = plexEp.watched || plexEp.viewCount > 0
+    const partialWatched = threshold === 'partial' && plexEp.duration > 0 && plexEp.viewOffset / plexEp.duration >= 0.9
+    const isWatched = plexEp.watched || plexEp.viewCount > 0 || partialWatched
     const watchedAt = plexEp.lastViewedAt != null ? new Date(plexEp.lastViewedAt * 1000) : null
     let matchedKey: { seasonNumber: number; episodeNumber: number } | null = null
 
@@ -254,6 +288,11 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
     return errorResult(showId, show.title, 'TVDB returned no season/episode data')
   }
 
+  const [watchedThreshold, plexAutoStatus] = await Promise.all([
+    getConfiguredPlexWatchedThreshold(),
+    getConfiguredPlexAutoStatus(),
+  ])
+
   // Fetch Plex episodes
   let plexEpisodes: PlexEpisode[]
   try {
@@ -263,7 +302,7 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
   }
 
   // Match
-  const { matched, unmatched } = _matchPlexEpisodesForTest(plexEpisodes, tvdbDetails.seasons)
+  const { matched, unmatched } = _matchPlexEpisodesForTest(plexEpisodes, tvdbDetails.seasons, watchedThreshold)
 
   // Load existing rows for preservation check
   const existingWatches = await prisma.episodeWatch.findMany({ where: { animeShowId: showId } })
@@ -315,7 +354,7 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
     await prisma.animeShow.update({
       where: { id: showId },
       data: {
-        status: 'UP_TO_DATE',
+        ...(plexAutoStatus ? { status: 'UP_TO_DATE' } : {}),
         upToDateEpisodeNum: upToDate.newestWatchedEpisode.episodeNumber,
         upToDateAiredAt: new Date(upToDate.newestWatchedEpisode.airDate),
         upToDateStale: false,
@@ -339,6 +378,96 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
     watchedTotal,
     warning,
   }
+}
+
+
+export async function discoverWatchedFromPlex(): Promise<PlexDiscoveryResult> {
+  const client = await getConfiguredPlexClient()
+  if (!client) return { shows: [] }
+  const { sectionKeys, accountId } = await getConfiguredPlexDiscoveryOptions()
+  // Library scan is the source of truth for watched discovery. Plex session history is paginated/truncated
+  // on many servers, so it must never be used to decide whether a show has watch history.
+  const watchedShows = await client.getWatchedShows(sectionKeys, accountId)
+  const tvdbIds = watchedShows.map((show) => show.tvdbId).filter((id): id is string => Boolean(id))
+  const ratingKeys = watchedShows.map((show) => show.ratingKey)
+  const tracked = await prisma.animeShow.findMany({
+    where: {
+      OR: [
+        { metadataProvider: 'tvdb', metadataId: { in: tvdbIds.length ? tvdbIds : ['__none__'] } },
+        { plexRatingKey: { in: ratingKeys.length ? ratingKeys : ['__none__'] } },
+      ],
+    },
+    select: { id: true, metadataId: true, plexRatingKey: true },
+  })
+  const byTvdb = new Map(tracked.map((show) => [show.metadataId, show]))
+  const byRatingKey = new Map(tracked.filter((show) => show.plexRatingKey).map((show) => [show.plexRatingKey!, show]))
+  return {
+    shows: watchedShows.map((show) => {
+      const trackedShow = (show.tvdbId ? byTvdb.get(show.tvdbId) : null) ?? byRatingKey.get(show.ratingKey) ?? null
+      return {
+        ratingKey: show.ratingKey,
+        title: show.title,
+        year: show.year,
+        tvdbId: show.tvdbId,
+        viewedLeafCount: show.viewedLeafCount,
+        leafCount: show.leafCount,
+        showOrdering: show.showOrdering,
+        librarySectionKey: show.librarySectionKey,
+        alreadyTracked: Boolean(trackedShow),
+        trackedShowId: trackedShow?.id ?? null,
+        warning: !_isAllowedShowOrderingForTest(show.showOrdering) ? `Plex uses ${show.showOrdering} ordering; watched-state sync is skipped until the show uses aired ordering.` : undefined,
+      }
+    }),
+  }
+}
+
+function initialStatusForImportedShow(show: PlexWatchedShow, airingStatus?: string | null): ShowStatus {
+  if (show.leafCount > 0 && show.viewedLeafCount >= show.leafCount && airingStatus && ['ended', 'completed'].includes(airingStatus.toLowerCase())) return 'COMPLETED'
+  return show.viewedLeafCount > 0 ? 'WATCHING' : 'PLAN_TO_WATCH'
+}
+
+export async function importWatchedFromPlex(ratingKeys: string[]): Promise<{ results: PlexImportResult[] }> {
+  const selected = new Set(ratingKeys)
+  const client = await getConfiguredPlexClient()
+  if (!client) throw new Error('Plex is not configured')
+  const discovery = await discoverWatchedFromPlex()
+  const watchedShows = discovery.shows.filter((show) => selected.has(show.ratingKey))
+  const tvdb = await getConfiguredTvdbProvider()
+  if (!tvdb) throw new Error('TVDB is not configured')
+  const results: PlexImportResult[] = []
+  for (const discovered of watchedShows) {
+    try {
+      if (discovered.alreadyTracked && discovered.trackedShowId) {
+        results.push({ ratingKey: discovered.ratingKey, title: discovered.title, status: 'skipped', showId: discovered.trackedShowId, tvdbId: discovered.tvdbId, warning: 'Already in watchlist' })
+        continue
+      }
+      let tvdbId = discovered.tvdbId
+      if (!tvdbId) {
+        const match = await tvdb.findShowForAnime([discovered.title], discovered.year)
+        tvdbId = match?.providerId ?? null
+      }
+      if (!tvdbId) {
+        results.push({ ratingKey: discovered.ratingKey, title: discovered.title, status: 'unresolved', tvdbId: null, error: 'No confident TVDB match' })
+        continue
+      }
+      const details = await tvdb.getDetails(tvdbId)
+      const initialStatus = initialStatusForImportedShow({ ...discovered, guids: [] }, details?.airingStatus)
+      const show = await importTvdbShowToWatchlist(tvdbId, { status: initialStatus, plexRatingKey: discovered.ratingKey })
+      const sync = _isAllowedShowOrderingForTest(discovered.showOrdering) ? await syncShowFromPlex(show.id) : undefined
+      results.push({
+        ratingKey: discovered.ratingKey,
+        title: discovered.title,
+        status: 'imported',
+        showId: show.id,
+        tvdbId,
+        warning: discovered.warning ?? sync?.warning,
+        sync,
+      })
+    } catch (e) {
+      results.push({ ratingKey: discovered.ratingKey, title: discovered.title, status: 'failed', tvdbId: discovered.tvdbId, error: e instanceof Error ? e.message : 'Unknown error' })
+    }
+  }
+  return { results }
 }
 
 export async function syncAllShowsFromPlex(): Promise<PlexSyncAllResult> {

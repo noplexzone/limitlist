@@ -2,6 +2,17 @@
 
 import { FormEvent, useEffect, useState } from 'react'
 
+interface PlexDiscoveryShow {
+  ratingKey: string
+  title: string
+  year: number | null
+  tvdbId: string | null
+  viewedLeafCount: number
+  leafCount: number
+  alreadyTracked: boolean
+  warning?: string
+}
+
 interface SettingsState {
   username: string
   profileImageData: string | null
@@ -27,6 +38,11 @@ interface SettingsState {
   }
   tvdbSeasonType: string
   defaultCastLanguage: 'english' | 'japanese'
+  plexLibrarySections: { lockedByEnvironment: boolean; value: string[] }
+  plexAccountId: { lockedByEnvironment: boolean; value: string }
+  plexWatchedThreshold: { lockedByEnvironment: boolean; value: 'viewcount' | 'partial' }
+  plexAutoStatus: { lockedByEnvironment: boolean; value: boolean }
+  plexSyncOnRefresh: { lockedByEnvironment: boolean; value: boolean }
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -49,6 +65,13 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [defaultCastLanguage, setDefaultCastLanguage] = useState<'english' | 'japanese'>(initialSettings.defaultCastLanguage || 'japanese')
   const [plexBaseUrl, setPlexBaseUrl] = useState(initialSettings.plexBaseUrl.value ?? '')
   const [plexToken, setPlexToken] = useState('')
+  const [plexSections, setPlexSections] = useState<Array<{ key: string; title: string; type: string }>>([])
+  const [plexSectionsLoading, setPlexSectionsLoading] = useState(false)
+  const [plexLibrarySections, setPlexLibrarySections] = useState<string[]>(initialSettings.plexLibrarySections.value ?? [])
+  const [plexAccountId, setPlexAccountId] = useState(initialSettings.plexAccountId.value ?? '')
+  const [plexWatchedThreshold, setPlexWatchedThreshold] = useState<'viewcount' | 'partial'>(initialSettings.plexWatchedThreshold.value ?? 'viewcount')
+  const [plexAutoStatus, setPlexAutoStatus] = useState(initialSettings.plexAutoStatus.value ?? true)
+  const [plexSyncOnRefresh, setPlexSyncOnRefresh] = useState(initialSettings.plexSyncOnRefresh.value ?? false)
   const [showTvdbApiKey, setShowTvdbApiKey] = useState(false)
   const [showTvdbPin, setShowTvdbPin] = useState(false)
   const [showPlexToken, setShowPlexToken] = useState(false)
@@ -62,9 +85,31 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [discoveringPlex, setDiscoveringPlex] = useState(false)
+  const [plexDiscovery, setPlexDiscovery] = useState<PlexDiscoveryShow[]>([])
+  const [selectedPlexImports, setSelectedPlexImports] = useState<string[]>([])
+  const [importingPlex, setImportingPlex] = useState(false)
+  const [plexImportSummary, setPlexImportSummary] = useState('')
 
   useEffect(() => setUsername(settings.username), [settings.username])
   useEffect(() => setPlexBaseUrl(settings.plexBaseUrl.value ?? ''), [settings.plexBaseUrl.value])
+  useEffect(() => {
+    setPlexLibrarySections(settings.plexLibrarySections.value ?? [])
+    setPlexAccountId(settings.plexAccountId.value ?? '')
+    setPlexWatchedThreshold(settings.plexWatchedThreshold.value ?? 'viewcount')
+    setPlexAutoStatus(settings.plexAutoStatus.value ?? true)
+    setPlexSyncOnRefresh(settings.plexSyncOnRefresh.value ?? false)
+  }, [settings.plexLibrarySections.value, settings.plexAccountId.value, settings.plexWatchedThreshold.value, settings.plexAutoStatus.value, settings.plexSyncOnRefresh.value])
+  useEffect(() => {
+    if (!settings.plexBaseUrl.configured || !settings.plexToken.configured) return
+    let cancelled = false
+    setPlexSectionsLoading(true)
+    fetch('/api/plex/sections')
+      .then((res) => res.ok ? res.json() : { sections: [] })
+      .then((data) => { if (!cancelled) setPlexSections(data.sections ?? []) })
+      .finally(() => { if (!cancelled) setPlexSectionsLoading(false) })
+    return () => { cancelled = true }
+  }, [settings.plexBaseUrl.configured, settings.plexToken.configured])
 
   const tvdbCredentialSignature = `${tvdbApiKey.trim() || '__stored__'}|${tvdbPin.trim() || '__stored__'}`
   const plexCredentialSignature = `${plexBaseUrl.trim()}|${plexToken.trim() || '__stored__'}`
@@ -177,11 +222,49 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
     setTvdbTestError('')
   }
 
+  async function discoverPlexImports() {
+    setDiscoveringPlex(true)
+    setPlexImportSummary('')
+    const res = await fetch('/api/plex/discover')
+    const body = await res.json().catch(() => ({}))
+    if (res.ok) {
+      const shows: PlexDiscoveryShow[] = body.shows ?? []
+      setPlexDiscovery(shows)
+      setSelectedPlexImports(shows.filter((show) => !show.alreadyTracked && show.tvdbId).map((show) => show.ratingKey))
+    } else {
+      setPlexImportSummary(body.error ?? 'Plex discovery failed')
+    }
+    setDiscoveringPlex(false)
+  }
+
+  async function importSelectedPlexShows() {
+    setImportingPlex(true)
+    const res = await fetch('/api/plex/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ratingKeys: selectedPlexImports }) })
+    const body = await res.json().catch(() => ({}))
+    if (res.ok) {
+      const results = body.results ?? []
+      const imported = results.filter((r: { status: string }) => r.status === 'imported').length
+      const skipped = results.filter((r: { status: string }) => r.status === 'skipped').length
+      const unresolved = results.filter((r: { status: string }) => r.status === 'unresolved').length
+      const failed = results.filter((r: { status: string }) => r.status === 'failed').length
+      setPlexImportSummary(`Import finished: ${imported} imported, ${skipped} skipped, ${unresolved} unresolved, ${failed} failed.`)
+      await discoverPlexImports()
+    } else {
+      setPlexImportSummary(body.error ?? 'Plex import failed')
+    }
+    setImportingPlex(false)
+  }
+
   async function submitPlex(e: FormEvent) {
     e.preventDefault()
     if (plexSaveDisabled) return
     const body: Record<string, unknown> = { plexBaseUrl }
     if (!settings.plexToken.lockedByEnvironment) body.plexToken = plexToken
+    if (!settings.plexLibrarySections.lockedByEnvironment) body.plexLibrarySections = plexLibrarySections
+    if (!settings.plexAccountId.lockedByEnvironment) body.plexAccountId = plexAccountId
+    if (!settings.plexWatchedThreshold.lockedByEnvironment) body.plexWatchedThreshold = plexWatchedThreshold
+    if (!settings.plexAutoStatus.lockedByEnvironment) body.plexAutoStatus = plexAutoStatus
+    if (!settings.plexSyncOnRefresh.lockedByEnvironment) body.plexSyncOnRefresh = plexSyncOnRefresh
     await savePatch(body, 'Plex settings saved.')
     setPlexToken('')
     setPlexTestedSignature('')
@@ -397,6 +480,59 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
               <p className="mt-1 text-xs text-gray-500">{settings.plexToken.configured ? `Currently configured${settings.plexToken.masked ? ` (${settings.plexToken.masked})` : ''}; leave blank to keep it.` : 'Not configured.'}</p>
             </label>
           )}
+
+          <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-purple-100">Plex sync options</h3>
+              <p className="text-xs text-gray-500">Controls library discovery, watched thresholds, and status updates.</p>
+            </div>
+            <div>
+              <p className="mb-2 text-sm text-gray-400">Libraries to scan</p>
+              {settings.plexLibrarySections.lockedByEnvironment ? (
+                <p className="text-xs text-gray-500">Library sections are set by environment variable.</p>
+              ) : plexSectionsLoading ? (
+                <p className="text-xs text-gray-500">Loading Plex show libraries…</p>
+              ) : plexSections.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {plexSections.map((section) => (
+                    <label key={section.key} className="flex items-center gap-2 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={plexLibrarySections.includes(section.key)}
+                        onChange={(e) => setPlexLibrarySections((current) => e.target.checked ? [...current, section.key] : current.filter((key) => key !== section.key))}
+                        className="accent-purple-500"
+                      />
+                      {section.title}
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">No show libraries loaded yet; save/test Plex credentials first. Empty means all show libraries.</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">Choose dedicated Anime libraries to make discovery faster and avoid regular TV imports. Leave none selected to scan all show libraries.</p>
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-sm text-gray-400">Plex account ID <span className="text-gray-600">(optional)</span></span>
+              <input value={plexAccountId} onChange={(e) => setPlexAccountId(e.target.value)} readOnly={settings.plexAccountId.lockedByEnvironment} className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 read-only:opacity-60" />
+              <p className="mt-1 text-xs text-gray-500">Scope shared-server history to one Plex account. Blank uses the server owner.</p>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm text-gray-400">Watched threshold</span>
+              <select value={plexWatchedThreshold} onChange={(e) => setPlexWatchedThreshold(e.target.value as 'viewcount' | 'partial')} disabled={settings.plexWatchedThreshold.lockedByEnvironment} className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 disabled:opacity-60">
+                <option value="viewcount">Plex view count only</option>
+                <option value="partial">Also count 90% complete plays</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">Partial catches nearly-finished episodes Plex has not marked played.</p>
+            </label>
+            <label className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+              <input type="checkbox" checked={plexAutoStatus} onChange={(e) => setPlexAutoStatus(e.target.checked)} disabled={settings.plexAutoStatus.lockedByEnvironment} className="mt-1 accent-purple-500" />
+              <span><span className="font-medium">Auto-set Up-to-Date</span><span className="block text-xs text-gray-500">When all aired episodes are watched, Plex may update the show status.</span></span>
+            </label>
+            <label className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+              <input type="checkbox" checked={plexSyncOnRefresh} onChange={(e) => setPlexSyncOnRefresh(e.target.checked)} disabled={settings.plexSyncOnRefresh.lockedByEnvironment} className="mt-1 accent-purple-500" />
+              <span><span className="font-medium">Sync after schedule refresh</span><span className="block text-xs text-gray-500">Refresh All Schedules also runs Plex sync afterward.</span></span>
+            </label>
+          </div>
           <div className="flex flex-wrap gap-3">
             <button type="button" disabled={saving || testing !== null || !plexBaseUrl.trim() || (!settings.plexToken.configured && !plexToken.trim())} onClick={() => testSettings('plex')} className="rounded-lg border border-purple-500/60 px-4 py-2 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50">
               {testing === 'plex' ? 'Testing…' : 'Test Plex'}
@@ -404,6 +540,37 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
             <button disabled={plexSaveDisabled} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
               Save Plex settings
             </button>
+          </div>
+
+          <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-purple-100">Import from Plex</h3>
+                <p className="text-xs text-gray-500">Review watched Plex shows before creating watchlist rows.</p>
+              </div>
+              <button type="button" disabled={discoveringPlex || importingPlex} onClick={discoverPlexImports} className="rounded-lg border border-purple-500/60 px-3 py-1.5 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50">{discoveringPlex ? 'Scanning…' : 'Import from Plex'}</button>
+            </div>
+            {plexDiscovery.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setSelectedPlexImports(plexDiscovery.filter((show) => !show.alreadyTracked && show.tvdbId).map((show) => show.ratingKey))} className="text-xs text-purple-200 underline">Select resolvable</button>
+                  <button type="button" onClick={() => setSelectedPlexImports([])} className="text-xs text-gray-300 underline">Select none</button>
+                </div>
+                <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                  {plexDiscovery.slice(0, 150).map((show) => {
+                    const disabled = show.alreadyTracked || !show.tvdbId
+                    return (
+                      <label key={show.ratingKey} className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm ${disabled ? 'border-gray-800 bg-gray-900/50 text-gray-500' : 'border-gray-700 bg-gray-900 text-gray-100'}`}>
+                        <input type="checkbox" disabled={disabled} checked={selectedPlexImports.includes(show.ratingKey)} onChange={(e) => setSelectedPlexImports((current) => e.target.checked ? [...current, show.ratingKey] : current.filter((key) => key !== show.ratingKey))} className="mt-1 accent-purple-500" />
+                        <span className="min-w-0 flex-1"><span className="block font-medium">{show.title}{show.year ? ` (${show.year})` : ''}</span><span className="block text-xs text-gray-500">{show.viewedLeafCount}/{show.leafCount} watched {show.alreadyTracked ? ' · Already in watchlist' : ''}{!show.tvdbId ? ' · No TVDB match' : ''}{show.warning ? ` · ${show.warning}` : ''}</span></span>
+                      </label>
+                    )
+                  })}
+                </div>
+                <button type="button" disabled={importingPlex || selectedPlexImports.length === 0} onClick={importSelectedPlexShows} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">{importingPlex ? 'Importing…' : `Import ${selectedPlexImports.length} selected`}</button>
+              </div>
+            )}
+            {plexImportSummary && <p className="rounded-lg border border-purple-500/30 bg-purple-950/30 px-3 py-2 text-sm text-purple-100">{plexImportSummary}</p>}
           </div>
           {plexTestMessage && (
             <p className="rounded-lg border border-green-500/40 bg-green-950/40 px-3 py-2 text-sm text-green-200">{plexTestMessage}</p>

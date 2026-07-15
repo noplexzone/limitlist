@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.2.1] - 2026-07-15
+
+### Added
+
+- **Plex sync options**: Added library section selection, account scoping, watched-threshold mode, auto-status control, and sync-on-refresh settings.
+- **Plex library discovery and import**: Added watched-show discovery across configured Plex libraries plus a review-before-import flow for previously watched anime.
+- **Watch progress controls**: Added show, season, detail-row, and watchlist watched/aired progress plus manual episode watched toggles.
+
+### Changed
+
+- Plex sync can now count near-complete partial plays when configured and can preserve curated statuses while still writing watched episodes and Up-to-Date baselines.
+- Refresh All Schedules can optionally trigger Plex sync afterward.
+
 ## [1.2.0] - 2026-07-15
 
 ### Added

@@ -11,7 +11,24 @@ import {
   DEFAULT_CAST_LANGUAGE_SETTING,
   PLEX_BASE_URL_SETTING,
   PLEX_TOKEN_SETTING,
+  PLEX_LIBRARY_SECTIONS_SETTING,
+  PLEX_ACCOUNT_ID_SETTING,
+  PLEX_WATCHED_THRESHOLD_SETTING,
+  PLEX_AUTO_STATUS_SETTING,
+  PLEX_SYNC_ON_REFRESH_SETTING,
   getConfiguredTvdbSeasonType,
+  getConfiguredPlexLibrarySections,
+  getConfiguredPlexAccountId,
+  getConfiguredPlexWatchedThreshold,
+  getConfiguredPlexAutoStatus,
+  getConfiguredPlexSyncOnRefresh,
+  normalizePlexWatchedThreshold,
+  isPlexBaseUrlEnvLocked,
+  isPlexLibrarySectionsEnvLocked,
+  isPlexAccountIdEnvLocked,
+  isPlexWatchedThresholdEnvLocked,
+  isPlexAutoStatusEnvLocked,
+  isPlexSyncOnRefreshEnvLocked,
   getDefaultCastLanguage,
   getEffectiveTvdbApiKey,
   getEffectiveTvdbPin,
@@ -52,7 +69,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
-  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage] =
+  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh] =
     await Promise.all([
       getStoredSetting(TVDB_API_KEY_SETTING),
       getStoredSetting(TVDB_PIN_SETTING),
@@ -60,6 +77,11 @@ export async function GET() {
       getStoredSetting(PLEX_TOKEN_SETTING),
       getConfiguredTvdbSeasonType(),
       getDefaultCastLanguage(),
+      getConfiguredPlexLibrarySections(),
+      getConfiguredPlexAccountId(),
+      getConfiguredPlexWatchedThreshold(),
+      getConfiguredPlexAutoStatus(),
+      getConfiguredPlexSyncOnRefresh(),
     ])
 
   return NextResponse.json({
@@ -78,7 +100,7 @@ export async function GET() {
     tvdbSeasonType,
     defaultCastLanguage,
     plexBaseUrl: {
-      lockedByEnvironment: Boolean(process.env.PLEX_BASE_URL),
+      lockedByEnvironment: isPlexBaseUrlEnvLocked(),
       configured: Boolean(effectivePlexBaseUrl),
       value: effectivePlexBaseUrl,
     },
@@ -87,6 +109,11 @@ export async function GET() {
       configured: isPlexTokenEnvLocked() || Boolean(storedPlexToken),
       masked: isPlexTokenEnvLocked() ? 'Set in environment' : maskKey(storedPlexToken),
     },
+    plexLibrarySections: { lockedByEnvironment: isPlexLibrarySectionsEnvLocked(), value: plexLibrarySections },
+    plexAccountId: { lockedByEnvironment: isPlexAccountIdEnvLocked(), value: plexAccountId ?? '' },
+    plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
+    plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
+    plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
   })
 }
 
@@ -244,13 +271,33 @@ export async function PATCH(req: NextRequest) {
     if (storePlexToken) await upsertStoredSetting(PLEX_TOKEN_SETTING, candidatePlexToken!)
   }
 
+  if (!isPlexLibrarySectionsEnvLocked() && 'plexLibrarySections' in body) {
+    const sections = Array.isArray(body.plexLibrarySections) ? body.plexLibrarySections.filter((v: unknown): v is string => typeof v === 'string') : []
+    await upsertStoredSetting(PLEX_LIBRARY_SECTIONS_SETTING, sections.map((v: string) => v.trim()).filter(Boolean).join(','))
+  }
+  if (!isPlexAccountIdEnvLocked() && 'plexAccountId' in body) {
+    await upsertStoredSetting(PLEX_ACCOUNT_ID_SETTING, typeof body.plexAccountId === 'string' ? body.plexAccountId.trim() : '')
+  }
+  if (!isPlexWatchedThresholdEnvLocked() && 'plexWatchedThreshold' in body) {
+    if (body.plexWatchedThreshold !== 'viewcount' && body.plexWatchedThreshold !== 'partial') {
+      return NextResponse.json({ error: 'Plex watched threshold must be viewcount or partial' }, { status: 400 })
+    }
+    await upsertStoredSetting(PLEX_WATCHED_THRESHOLD_SETTING, normalizePlexWatchedThreshold(body.plexWatchedThreshold))
+  }
+  if (!isPlexAutoStatusEnvLocked() && 'plexAutoStatus' in body) {
+    await upsertStoredSetting(PLEX_AUTO_STATUS_SETTING, body.plexAutoStatus ? 'true' : 'false')
+  }
+  if (!isPlexSyncOnRefreshEnvLocked() && 'plexSyncOnRefresh' in body) {
+    await upsertStoredSetting(PLEX_SYNC_ON_REFRESH_SETTING, body.plexSyncOnRefresh ? 'true' : 'false')
+  }
+
   if (updated.username !== user.username) {
     const session = await getSession()
     session.user = { username: updated.username }
     await session.save()
   }
 
-  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage] =
+  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh] =
     await Promise.all([
       getStoredSetting(TVDB_API_KEY_SETTING),
       getStoredSetting(TVDB_PIN_SETTING),
@@ -258,6 +305,11 @@ export async function PATCH(req: NextRequest) {
       getStoredSetting(PLEX_TOKEN_SETTING),
       getConfiguredTvdbSeasonType(),
       getDefaultCastLanguage(),
+      getConfiguredPlexLibrarySections(),
+      getConfiguredPlexAccountId(),
+      getConfiguredPlexWatchedThreshold(),
+      getConfiguredPlexAutoStatus(),
+      getConfiguredPlexSyncOnRefresh(),
     ])
   return NextResponse.json({
     username: updated.username,
@@ -275,7 +327,7 @@ export async function PATCH(req: NextRequest) {
     tvdbSeasonType,
     defaultCastLanguage,
     plexBaseUrl: {
-      lockedByEnvironment: Boolean(process.env.PLEX_BASE_URL),
+      lockedByEnvironment: isPlexBaseUrlEnvLocked(),
       configured: Boolean(effectivePlexBaseUrl),
       value: effectivePlexBaseUrl,
     },
@@ -284,5 +336,10 @@ export async function PATCH(req: NextRequest) {
       configured: isPlexTokenEnvLocked() || Boolean(storedPlexToken),
       masked: isPlexTokenEnvLocked() ? 'Set in environment' : maskKey(storedPlexToken),
     },
+    plexLibrarySections: { lockedByEnvironment: isPlexLibrarySectionsEnvLocked(), value: plexLibrarySections },
+    plexAccountId: { lockedByEnvironment: isPlexAccountIdEnvLocked(), value: plexAccountId ?? '' },
+    plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
+    plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
+    plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
   })
 }

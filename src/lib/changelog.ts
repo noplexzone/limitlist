@@ -11,6 +11,26 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.2.1',
+    date: '2026-07-15',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added Plex sync options for library scoping, shared-account history, watched thresholds, auto-status updates, and sync-on-refresh.',
+          'Added review-before-import discovery for previously watched Plex anime that are not yet in the watchlist.',
+          'Added season/show/watchlist progress displays and manual episode watched toggles.',
+        ],
+      },
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Plex sync can count 90% complete plays when configured and can preserve curated statuses while still recording watched episodes.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-07-15',
     sections: [

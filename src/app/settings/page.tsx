@@ -8,6 +8,17 @@ import {
   isTvdbApiKeyEnvLocked,
   isTvdbPinEnvLocked,
   isPlexTokenEnvLocked,
+  isPlexBaseUrlEnvLocked,
+  isPlexLibrarySectionsEnvLocked,
+  isPlexAccountIdEnvLocked,
+  isPlexWatchedThresholdEnvLocked,
+  isPlexAutoStatusEnvLocked,
+  isPlexSyncOnRefreshEnvLocked,
+  getConfiguredPlexLibrarySections,
+  getConfiguredPlexAccountId,
+  getConfiguredPlexWatchedThreshold,
+  getConfiguredPlexAutoStatus,
+  getConfiguredPlexSyncOnRefresh,
   TVDB_API_KEY_SETTING,
   TVDB_PIN_SETTING,
   PLEX_TOKEN_SETTING,
@@ -36,6 +47,11 @@ export default async function SettingsPage() {
   const tvdbPinLocked = isTvdbPinEnvLocked()
   const tvdbSeasonType = await getConfiguredTvdbSeasonType()
   const defaultCastLanguage = await getDefaultCastLanguage()
+  const plexLibrarySections = await getConfiguredPlexLibrarySections()
+  const plexAccountId = await getConfiguredPlexAccountId()
+  const plexWatchedThreshold = await getConfiguredPlexWatchedThreshold()
+  const plexAutoStatus = await getConfiguredPlexAutoStatus()
+  const plexSyncOnRefresh = await getConfiguredPlexSyncOnRefresh()
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -60,7 +76,7 @@ export default async function SettingsPage() {
             tvdbSeasonType,
             defaultCastLanguage,
             plexBaseUrl: {
-              lockedByEnvironment: Boolean(process.env.PLEX_BASE_URL),
+              lockedByEnvironment: isPlexBaseUrlEnvLocked(),
               configured: Boolean(effectivePlexBaseUrl),
               value: effectivePlexBaseUrl,
             },
@@ -69,6 +85,11 @@ export default async function SettingsPage() {
               configured: plexTokenLocked || Boolean(storedPlexToken),
               masked: plexTokenLocked ? 'Set in environment' : maskKey(storedPlexToken),
             },
+            plexLibrarySections: { lockedByEnvironment: isPlexLibrarySectionsEnvLocked(), value: plexLibrarySections },
+            plexAccountId: { lockedByEnvironment: isPlexAccountIdEnvLocked(), value: plexAccountId ?? '' },
+            plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
+            plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
+            plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
           }}
         />
       </main>

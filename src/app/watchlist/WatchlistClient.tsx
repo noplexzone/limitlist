@@ -20,6 +20,8 @@ interface AnimeShow {
   nextAiringAt?: string | null
   lastEpisodeNum?: number | null
   upToDateStale?: boolean
+  watchedCount?: number
+  airedCount?: number
 }
 
 type PatchPayload = {
@@ -133,6 +135,8 @@ export default function WatchlistClient() {
   const [error, setError] = useState('')
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [syncingAll, setSyncingAll] = useState(false)
+  const [syncSummary, setSyncSummary] = useState('')
 
   const rawStatus = searchParams.get('status') ?? ''
   const statusFilter: StatusFilter = VALID_STATUS_FILTERS.includes(rawStatus) ? (rawStatus as StatusFilter) : 'ALL'
@@ -181,6 +185,20 @@ export default function WatchlistClient() {
       setError('Failed to load watchlist')
     }
     setLoading(false)
+  }
+
+  async function syncAllWithPlex() {
+    setSyncingAll(true)
+    setSyncSummary('')
+    const res = await fetch('/api/plex/sync', { method: 'POST' })
+    const body = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setSyncSummary(`Plex sync: ${body.succeeded ?? 0} succeeded, ${body.skipped?.length ?? 0} skipped, ${body.failed?.length ?? 0} failed.`)
+      await fetchWatchlist()
+    } else {
+      setSyncSummary(body.error ?? 'Plex sync failed')
+    }
+    setSyncingAll(false)
   }
 
   async function removeShow(id: string) {
@@ -290,8 +308,11 @@ export default function WatchlistClient() {
         >
           {sortDir === 'asc' ? '↑' : '↓'}
         </button>
+        <button type="button" disabled={syncingAll} onClick={syncAllWithPlex} className="rounded-lg border border-purple-500/60 px-3 py-1.5 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50">{syncingAll ? 'Syncing…' : 'Sync all with Plex'}</button>
         <p className="ml-auto text-xs text-gray-500">{visibleShows.length} of {shows.length} shown</p>
       </div>
+
+      {syncSummary && <p className="rounded-xl border border-purple-500/30 bg-purple-950/30 px-4 py-3 text-sm text-purple-100">{syncSummary}</p>}
 
       {visibleShows.length === 0 ? (
         <div className="py-16 text-center text-gray-500">No shows match those filters.</div>
@@ -365,6 +386,12 @@ export default function WatchlistClient() {
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-2 pb-3 pt-12 pointer-events-none">
                 <div className="space-y-2">
                   <p className="text-[11px] font-medium leading-tight text-white line-clamp-2">{show.title}</p>
+                  {show.airedCount ? (
+                    <div className="mt-1">
+                      <div className="h-1 overflow-hidden rounded-full bg-gray-800"><div className="h-full bg-purple-500" style={{ width: `${Math.min(100, Math.round(((show.watchedCount ?? 0) / show.airedCount) * 100))}%` }} /></div>
+                      <p className="mt-1 text-[10px] text-gray-300">{show.watchedCount ?? 0}/{show.airedCount} watched</p>
+                    </div>
+                  ) : null}
                   <div className="hidden pointer-events-auto group-hover:block group-focus-within:block">
                     <StarRating rating={show.rating ?? null} onRate={(value) => patchShow(show.id, { rating: value })} />
                   </div>
