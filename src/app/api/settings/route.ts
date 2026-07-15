@@ -13,6 +13,8 @@ import {
   PLEX_TOKEN_SETTING,
   getConfiguredTvdbSeasonType,
   getDefaultCastLanguage,
+  getEffectiveTvdbApiKey,
+  getEffectiveTvdbPin,
   getStoredSetting,
   normalizeCastLanguage,
   isTvdbApiKeyEnvLocked,
@@ -95,6 +97,44 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json()
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
   if (!appUser) return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+
+  if (body.validateOnly === 'tvdb') {
+    const candidateKey = typeof body.tvdbApiKey === 'string' && body.tvdbApiKey.trim()
+      ? body.tvdbApiKey.trim()
+      : await getEffectiveTvdbApiKey()
+    const candidatePin = typeof body.tvdbPin === 'string'
+      ? body.tvdbPin.trim()
+      : await getEffectiveTvdbPin()
+    if (!candidateKey) {
+      return NextResponse.json({ error: 'TVDB API key is required before testing' }, { status: 400 })
+    }
+    const candidateTvdb = getTvdbProvider(candidateKey, candidatePin || undefined)
+    const validTvdbKey = candidateTvdb ? await candidateTvdb.validateApiKey() : false
+    if (!validTvdbKey) {
+      return NextResponse.json({ error: 'TVDB API key could not be validated' }, { status: 400 })
+    }
+    return NextResponse.json({ ok: true, message: 'TVDB connection test passed.' })
+  }
+
+  if (body.validateOnly === 'plex') {
+    const candidateBaseUrl = typeof body.plexBaseUrl === 'string' && body.plexBaseUrl.trim()
+      ? body.plexBaseUrl.trim()
+      : await getEffectivePlexBaseUrl()
+    const candidateToken = !isPlexTokenEnvLocked() && typeof body.plexToken === 'string' && body.plexToken.trim()
+      ? body.plexToken.trim()
+      : await getEffectivePlexToken()
+    if (!candidateBaseUrl) {
+      return NextResponse.json({ error: 'Plex base URL is required before testing' }, { status: 400 })
+    }
+    if (!candidateToken) {
+      return NextResponse.json({ error: 'Plex token is required before testing' }, { status: 400 })
+    }
+    const valid = await new PlexClient(candidateBaseUrl, candidateToken).validate()
+    if (!valid) {
+      return NextResponse.json({ error: 'Plex connection test failed' }, { status: 400 })
+    }
+    return NextResponse.json({ ok: true, message: 'Plex connection test passed.' })
+  }
 
   const data: { username?: string; passwordHash?: string; profileImageData?: string | null } = {}
 

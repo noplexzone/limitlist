@@ -23,6 +23,7 @@ No unreleased changes yet.
 ### Fixed
 
 - **Ordering guard for Plex sync**: Shows using Plex absolute, DVD, or TMDB-airing ordering now return a visible warning and skip sync instead of writing mismatched watched data.
+- **Settings credential flow**: TVDB and Plex settings now test credentials separately before saving, and Plex tokens are saved only after an explicit successful test/save flow.
 
 ## [1.1.0] - 2026-07-14
 

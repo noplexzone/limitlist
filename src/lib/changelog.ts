@@ -27,6 +27,7 @@ export const changelogEntries: ChangelogEntry[] = [
         bullets: [
           'Plex sync now updates the existing Up-to-Date baseline when all aired episodes are watched.',
           'Shows with incompatible Plex episode ordering now surface a clear warning instead of writing questionable watched data.',
+          'TVDB and Plex settings now use separate test and save actions so credentials are validated before being stored.',
         ],
       },
     ],

@@ -52,12 +52,21 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   const [showTvdbApiKey, setShowTvdbApiKey] = useState(false)
   const [showTvdbPin, setShowTvdbPin] = useState(false)
   const [showPlexToken, setShowPlexToken] = useState(false)
+  const [testing, setTesting] = useState<'tvdb' | 'plex' | null>(null)
+  const [tvdbTestedSignature, setTvdbTestedSignature] = useState('')
+  const [plexTestedSignature, setPlexTestedSignature] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => setUsername(settings.username), [settings.username])
   useEffect(() => setPlexBaseUrl(settings.plexBaseUrl.value ?? ''), [settings.plexBaseUrl.value])
+
+  const tvdbCredentialSignature = `${tvdbApiKey.trim() || '__stored__'}|${tvdbPin.trim() || '__stored__'}`
+  const plexCredentialSignature = `${plexBaseUrl.trim()}|${plexToken.trim() || '__stored__'}`
+  const tvdbCredentialChangeNeedsTest = Boolean(tvdbApiKey.trim() || tvdbPin.trim())
+  const tvdbSaveDisabled = saving || testing !== null || (tvdbCredentialChangeNeedsTest && tvdbTestedSignature !== tvdbCredentialSignature)
+  const plexSaveDisabled = saving || testing !== null || !plexBaseUrl.trim() || plexTestedSignature !== plexCredentialSignature
 
   async function savePatch(body: Record<string, unknown>, success: string) {
     setSaving(true)
@@ -101,22 +110,54 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
     await savePatch({ profileImageData: dataUrl }, 'Profile picture updated.')
   }
 
+  async function testSettings(kind: 'tvdb' | 'plex') {
+    setTesting(kind)
+    setError('')
+    setMessage('')
+    const body: Record<string, unknown> = { validateOnly: kind }
+    if (kind === 'tvdb') {
+      if (!settings.tvdbApiKey.lockedByEnvironment && tvdbApiKey.trim()) body.tvdbApiKey = tvdbApiKey
+      if (!settings.tvdbPin.lockedByEnvironment && tvdbPin.trim()) body.tvdbPin = tvdbPin
+    } else {
+      body.plexBaseUrl = plexBaseUrl
+      if (!settings.plexToken.lockedByEnvironment && plexToken.trim()) body.plexToken = plexToken
+    }
+    const res = await fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error ?? `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test failed`)
+    } else {
+      if (kind === 'tvdb') setTvdbTestedSignature(tvdbCredentialSignature)
+      else setPlexTestedSignature(plexCredentialSignature)
+      setMessage(data.message ?? `${kind === 'tvdb' ? 'TVDB' : 'Plex'} connection test passed.`)
+    }
+    setTesting(null)
+  }
+
   async function submitApiKeys(e: FormEvent) {
     e.preventDefault()
+    if (tvdbSaveDisabled) return
     const body: Record<string, unknown> = { tvdbSeasonType, defaultCastLanguage }
     if (!settings.tvdbApiKey.lockedByEnvironment && tvdbApiKey.trim()) body.tvdbApiKey = tvdbApiKey
     if (!settings.tvdbPin.lockedByEnvironment && (tvdbPin.trim() || tvdbApiKey.trim())) body.tvdbPin = tvdbPin
-    await savePatch(body, 'Metadata settings saved.')
+    await savePatch(body, 'TVDB settings saved.')
     setTvdbApiKey('')
     setTvdbPin('')
+    setTvdbTestedSignature('')
   }
 
   async function submitPlex(e: FormEvent) {
     e.preventDefault()
+    if (plexSaveDisabled) return
     const body: Record<string, unknown> = { plexBaseUrl }
     if (!settings.plexToken.lockedByEnvironment) body.plexToken = plexToken
-    await savePatch(body, 'Plex connection verified and saved.')
+    await savePatch(body, 'Plex settings saved.')
     setPlexToken('')
+    setPlexTestedSignature('')
   }
 
   return (
@@ -195,7 +236,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
       </section>
 
       <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-1">API keys</h2>
+        <h2 className="text-lg font-semibold text-gray-200 mb-1">TVDB</h2>
         <p className="mb-4 text-sm text-gray-400">TheTVDB is used for search, imports, airing metadata, and season ordering.</p>
         <form onSubmit={submitApiKeys} className="space-y-4">
           {settings.tvdbApiKey.lockedByEnvironment && (
@@ -210,7 +251,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                   <input
                     type={showTvdbApiKey ? 'text' : 'password'}
                     value={tvdbApiKey}
-                    onChange={(e) => setTvdbApiKey(e.target.value)}
+                    onChange={(e) => { setTvdbApiKey(e.target.value); setTvdbTestedSignature('') }}
                     autoComplete="off"
                     placeholder={settings.tvdbApiKey.configured ? 'Enter new key to replace' : 'Paste TVDB API key'}
                     className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
@@ -229,7 +270,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                   <input
                     type={showTvdbPin ? 'text' : 'password'}
                     value={tvdbPin}
-                    onChange={(e) => setTvdbPin(e.target.value)}
+                    onChange={(e) => { setTvdbPin(e.target.value); setTvdbTestedSignature('') }}
                     autoComplete="off"
                     placeholder={settings.tvdbPin.configured ? 'Enter new PIN to replace' : 'Optional subscriber PIN'}
                     className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
@@ -267,9 +308,17 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
             </select>
             <p className="mt-1 text-xs text-gray-500">Falls back to whichever is available if your choice has no cast.</p>
           </label>
-          <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
-            Save metadata settings
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button type="button" disabled={saving || testing !== null || (!settings.tvdbApiKey.configured && !tvdbApiKey.trim())} onClick={() => testSettings('tvdb')} className="rounded-lg border border-purple-500/60 px-4 py-2 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50">
+              {testing === 'tvdb' ? 'Testing…' : 'Test TVDB'}
+            </button>
+            <button disabled={tvdbSaveDisabled} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+              Save TVDB settings
+            </button>
+          </div>
+          {tvdbCredentialChangeNeedsTest && tvdbTestedSignature !== tvdbCredentialSignature && (
+            <p className="text-xs text-amber-300">Test the TVDB credentials before saving them.</p>
+          )}
           <p className="text-xs text-gray-500">Metadata provided by TheTVDB.</p>
         </form>
       </section>
@@ -282,7 +331,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
             <span className="mb-1 block text-sm text-gray-400">Plex base URL</span>
             <input
               value={plexBaseUrl}
-              onChange={(e) => setPlexBaseUrl(e.target.value)}
+              onChange={(e) => { setPlexBaseUrl(e.target.value); setPlexTestedSignature('') }}
               placeholder="http://plex:32400"
               readOnly={settings.plexBaseUrl.lockedByEnvironment}
               className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 read-only:opacity-60"
@@ -301,7 +350,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
                 <input
                   type={showPlexToken ? 'text' : 'password'}
                   value={plexToken}
-                  onChange={(e) => setPlexToken(e.target.value)}
+                  onChange={(e) => { setPlexToken(e.target.value); setPlexTestedSignature('') }}
                   autoComplete="off"
                   placeholder={settings.plexToken.configured ? 'Enter new token to replace' : 'Paste Plex token'}
                   className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 outline-none"
@@ -313,9 +362,17 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
               <p className="mt-1 text-xs text-gray-500">{settings.plexToken.configured ? `Currently configured${settings.plexToken.masked ? ` (${settings.plexToken.masked})` : ''}; leave blank to keep it.` : 'Not configured.'}</p>
             </label>
           )}
-          <button disabled={saving || !plexBaseUrl.trim()} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
-            Test connection & save
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button type="button" disabled={saving || testing !== null || !plexBaseUrl.trim() || (!settings.plexToken.configured && !plexToken.trim())} onClick={() => testSettings('plex')} className="rounded-lg border border-purple-500/60 px-4 py-2 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50">
+              {testing === 'plex' ? 'Testing…' : 'Test Plex'}
+            </button>
+            <button disabled={plexSaveDisabled} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+              Save Plex settings
+            </button>
+          </div>
+          {plexTestedSignature !== plexCredentialSignature && (
+            <p className="text-xs text-amber-300">Test the Plex connection before saving these settings.</p>
+          )}
         </form>
       </section>
 
