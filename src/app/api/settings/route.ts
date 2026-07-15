@@ -3,17 +3,23 @@ import { getSession, requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { getTvdbProvider } from '@/lib/tvdb'
+import { PlexClient } from '@/lib/plex'
 import {
   TVDB_API_KEY_SETTING,
   TVDB_PIN_SETTING,
   TVDB_SEASON_TYPE_SETTING,
   DEFAULT_CAST_LANGUAGE_SETTING,
+  PLEX_BASE_URL_SETTING,
+  PLEX_TOKEN_SETTING,
   getConfiguredTvdbSeasonType,
   getDefaultCastLanguage,
   getStoredSetting,
   normalizeCastLanguage,
   isTvdbApiKeyEnvLocked,
   isTvdbPinEnvLocked,
+  isPlexTokenEnvLocked,
+  getEffectivePlexBaseUrl,
+  getEffectivePlexToken,
   upsertStoredSetting,
 } from '@/lib/settings'
 
@@ -44,10 +50,15 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
-  const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
-  const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
-  const tvdbSeasonType = await getConfiguredTvdbSeasonType()
-  const defaultCastLanguage = await getDefaultCastLanguage()
+  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage] =
+    await Promise.all([
+      getStoredSetting(TVDB_API_KEY_SETTING),
+      getStoredSetting(TVDB_PIN_SETTING),
+      getEffectivePlexBaseUrl(),
+      getStoredSetting(PLEX_TOKEN_SETTING),
+      getConfiguredTvdbSeasonType(),
+      getDefaultCastLanguage(),
+    ])
 
   return NextResponse.json({
     username: appUser?.username ?? user.username,
@@ -64,6 +75,16 @@ export async function GET() {
     },
     tvdbSeasonType,
     defaultCastLanguage,
+    plexBaseUrl: {
+      lockedByEnvironment: Boolean(process.env.PLEX_BASE_URL),
+      configured: Boolean(effectivePlexBaseUrl),
+      value: effectivePlexBaseUrl,
+    },
+    plexToken: {
+      lockedByEnvironment: isPlexTokenEnvLocked(),
+      configured: isPlexTokenEnvLocked() || Boolean(storedPlexToken),
+      masked: isPlexTokenEnvLocked() ? 'Set in environment' : maskKey(storedPlexToken),
+    },
   })
 }
 
@@ -155,16 +176,49 @@ export async function PATCH(req: NextRequest) {
     await upsertStoredSetting(DEFAULT_CAST_LANGUAGE_SETTING, normalizeCastLanguage(body.defaultCastLanguage))
   }
 
+  // Plex settings
+  const candidatePlexBaseUrl =
+    'plexBaseUrl' in body && typeof body.plexBaseUrl === 'string' ? body.plexBaseUrl.trim() : null
+  const candidatePlexToken =
+    !isPlexTokenEnvLocked() && 'plexToken' in body && typeof body.plexToken === 'string'
+      ? body.plexToken.trim()
+      : null
+
+  const storePlexBaseUrl = candidatePlexBaseUrl !== null && candidatePlexBaseUrl !== ''
+  const storePlexToken = candidatePlexToken !== null && candidatePlexToken !== ''
+
+  if (storePlexBaseUrl || storePlexToken) {
+    const validateBaseUrl = (storePlexBaseUrl ? candidatePlexBaseUrl : null) ?? (await getEffectivePlexBaseUrl())
+    const validateToken = (storePlexToken ? candidatePlexToken : null) ?? (await getEffectivePlexToken())
+
+    if (validateBaseUrl && validateToken) {
+      const valid = await new PlexClient(validateBaseUrl, validateToken).validate()
+      if (!valid) {
+        return NextResponse.json({ error: 'Plex credentials could not be validated' }, { status: 400 })
+      }
+    } else if (storePlexToken && !validateBaseUrl) {
+      return NextResponse.json({ error: 'Plex base URL must be configured to validate the token' }, { status: 400 })
+    }
+
+    if (storePlexBaseUrl) await upsertStoredSetting(PLEX_BASE_URL_SETTING, candidatePlexBaseUrl!)
+    if (storePlexToken) await upsertStoredSetting(PLEX_TOKEN_SETTING, candidatePlexToken!)
+  }
+
   if (updated.username !== user.username) {
     const session = await getSession()
     session.user = { username: updated.username }
     await session.save()
   }
 
-  const storedTvdbKey = await getStoredSetting(TVDB_API_KEY_SETTING)
-  const storedTvdbPin = await getStoredSetting(TVDB_PIN_SETTING)
-  const tvdbSeasonType = await getConfiguredTvdbSeasonType()
-  const defaultCastLanguage = await getDefaultCastLanguage()
+  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage] =
+    await Promise.all([
+      getStoredSetting(TVDB_API_KEY_SETTING),
+      getStoredSetting(TVDB_PIN_SETTING),
+      getEffectivePlexBaseUrl(),
+      getStoredSetting(PLEX_TOKEN_SETTING),
+      getConfiguredTvdbSeasonType(),
+      getDefaultCastLanguage(),
+    ])
   return NextResponse.json({
     username: updated.username,
     profileImageData: updated.profileImageData ?? null,
@@ -180,5 +234,15 @@ export async function PATCH(req: NextRequest) {
     },
     tvdbSeasonType,
     defaultCastLanguage,
+    plexBaseUrl: {
+      lockedByEnvironment: Boolean(process.env.PLEX_BASE_URL),
+      configured: Boolean(effectivePlexBaseUrl),
+      value: effectivePlexBaseUrl,
+    },
+    plexToken: {
+      lockedByEnvironment: isPlexTokenEnvLocked(),
+      configured: isPlexTokenEnvLocked() || Boolean(storedPlexToken),
+      masked: isPlexTokenEnvLocked() ? 'Set in environment' : maskKey(storedPlexToken),
+    },
   })
 }
