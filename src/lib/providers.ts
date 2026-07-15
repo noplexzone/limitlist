@@ -40,6 +40,7 @@ export interface MetadataSeasonSummary {
   airDate?: string | null
   overview?: string | null
   episodes?: Array<{
+    providerEpisodeId?: string | null
     episodeNumber: number
     name: string
     airDate?: string | null
@@ -88,7 +89,7 @@ export interface MetadataProvider {
   name: string
   search(query: string, options?: SearchOptions): Promise<MetadataResult[]>
   getDetails?(id: string): Promise<MetadataResult | null>
-  getSeasonEpisodes?(id: string, seasonNumber: number): Promise<Array<{ episodeNumber: number; name: string; airDate?: string | null; voteAverage?: number | null; stillUrl?: string | null; overview?: string | null }> | null>
+  getSeasonEpisodes?(id: string, seasonNumber: number): Promise<Array<{ providerEpisodeId?: string | null; episodeNumber: number; name: string; airDate?: string | null; voteAverage?: number | null; stillUrl?: string | null; overview?: string | null }> | null>
   getAiringDetails?(id: string): Promise<AiringInfo | null>
   findShowForAnime?(titles: Array<string | null | undefined>, year?: number | null): Promise<MetadataResult | null>
 }

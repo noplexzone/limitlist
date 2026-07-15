@@ -234,6 +234,7 @@ export class TvdbProvider implements MetadataProvider {
         episodeCount: sorted.length,
         airDate: sorted[0]?.aired ?? null,
         episodes: sorted.map((episode) => ({
+          providerEpisodeId: episode.id != null ? String(episode.id) : null,
           episodeNumber: episode.number ?? episode.absoluteNumber ?? 0,
           name: episode.name || `Episode ${episode.number ?? episode.absoluteNumber ?? ''}`.trim(),
           airDate: episode.aired ?? null,
@@ -283,6 +284,7 @@ export class TvdbProvider implements MetadataProvider {
   async getSeasonEpisodes(tvdbId: string, seasonNumber: number) {
     const episodes = await this.getAllEpisodes(tvdbId)
     return episodes.filter((e) => e.seasonNumber === seasonNumber).sort((a, b) => (a.number ?? 0) - (b.number ?? 0)).map((episode) => ({
+      providerEpisodeId: episode.id != null ? String(episode.id) : null,
       episodeNumber: episode.number ?? episode.absoluteNumber ?? 0,
       name: episode.name || `Episode ${episode.number ?? episode.absoluteNumber ?? ''}`.trim(),
       airDate: episode.aired ?? null,
