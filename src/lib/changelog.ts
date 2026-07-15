@@ -11,6 +11,21 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.1.0',
+    date: '2026-07-14',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added Top Rated and Upcoming tabs to Discover.',
+          'Episode names and still images now appear on upcoming release cards in the dashboard.',
+          'Watchlist sort direction is now an independent toggle, persisted in the URL (legacy ?sort param still works).',
+          'Removed the reminder read/dismiss system; upcoming releases are now stateless and always reflect live airing data.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-07-14',
     sections: [

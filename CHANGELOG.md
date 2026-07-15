@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.1.0] - 2026-07-14
+
+### Added
+
+- **Discover Top Rated and Upcoming tabs**: Discover now has Top Rated and Upcoming release tabs alongside the existing Popular and Trending tabs.
+- **Episode names and stills on upcoming release cards**: Dashboard upcoming release cards now display the episode name and still image when available.
+
+### Changed
+
+- **Independent watchlist sort direction**: Sort direction is now a separate toggle from the sort field, persisted in the URL; the legacy `?sort` param continues to work.
+- **Stateless upcoming releases**: Removed the reminder read/dismiss system; upcoming releases are now stateless and always reflect the latest airing data.
+
 ## [1.0.0] - 2026-07-14
 
 ### Added
