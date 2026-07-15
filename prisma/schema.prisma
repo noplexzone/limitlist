@@ -33,11 +33,14 @@ model AnimeShow {
   upToDateEpisodeNum     Int?
   upToDateAiredAt        DateTime?
   upToDateStale          Boolean   @default(false)
+  plexRatingKey          String?
+  plexSyncedAt           DateTime?
   nextEpisodeName        String?
   nextEpisodeStillUrl    String?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
   childRatings           AnimeChildRating[]
+  episodeWatches         EpisodeWatch[]
 
   @@unique([metadataProvider, metadataId])
   @@unique([sourceProvider, sourceId])
@@ -62,6 +65,23 @@ model AnimeChildRating {
 
   @@unique([animeShowId, kind, key])
   @@index([animeShowId, kind])
+}
+
+model EpisodeWatch {
+  id            String    @id @default(cuid())
+  animeShowId   String
+  seasonNumber  Int
+  episodeNumber Int
+  watched       Boolean   @default(false)
+  watchedAt     DateTime?
+  source        String    @default("plex")
+  plexRatingKey String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)
+
+  @@unique([animeShowId, seasonNumber, episodeNumber])
+  @@index([animeShowId])
 }
 
 model AppUser {
