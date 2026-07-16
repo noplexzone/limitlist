@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { isShowStatus, STATUS_BADGE_CLASSES, STATUS_LABELS } from '@/lib/status'
 
@@ -176,7 +177,7 @@ function AiringCalendar({
 // ---- Main component ----
 
 export default function UpcomingReleases({ initialEntries, compact = false }: { initialEntries: ScheduleEntry[]; compact?: boolean }) {
-  const [entries, setEntries] = useState(initialEntries)
+  const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
   const [refreshMsg, setRefreshMsg] = useState('')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -187,23 +188,28 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
     const res = await fetch('/api/airing/refresh', { method: 'POST' })
     if (res.ok) {
       const data = await res.json()
-      setRefreshMsg(`Refreshed ${data.succeeded}/${data.total} shows. Reload to see updates.`)
+      let msg = `Refreshed ${data.succeeded}/${data.total} shows.`
+      if (data.plex) {
+        msg += ` Plex: ${data.plex.totalMatched} matched, ${data.plex.totalWatched} watched.`
+      }
+      setRefreshMsg(msg)
+      router.refresh()
     } else {
       setRefreshMsg('Refresh failed.')
     }
     setRefreshing(false)
   }
 
-  const hasEntries = entries.length > 0
+  const hasEntries = initialEntries.length > 0
 
   // Filter by selected calendar date if one is chosen
   const filtered = selectedDate
-    ? entries.filter((e) => {
+    ? initialEntries.filter((e) => {
         const d = new Date(e.airsAt)
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         return key === selectedDate
       })
-    : entries
+    : initialEntries
 
   return (
     <div>
@@ -281,7 +287,7 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
         {/* Calendar sidebar */}
         <div className="lg:sticky lg:top-[5rem]">
           <AiringCalendar
-            entries={entries}
+            entries={initialEntries}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
           />
