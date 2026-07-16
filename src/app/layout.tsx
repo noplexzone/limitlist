@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { getConfiguredTheme } from '@/lib/settings'
 
 export const metadata: Metadata = {
   title: 'LimitList',
@@ -15,16 +16,18 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#7c3aed',
+  themeColor: '#2563eb',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const themeId = await getConfiguredTheme()
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={themeId}>
       <body className="bg-surface-950 text-surface-100 min-h-screen">
         {children}
       </body>

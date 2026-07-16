@@ -16,12 +16,14 @@ import {
   PLEX_WATCHED_THRESHOLD_SETTING,
   PLEX_AUTO_STATUS_SETTING,
   PLEX_SYNC_ON_REFRESH_SETTING,
+  THEME_SETTING,
   getConfiguredTvdbSeasonType,
   getConfiguredPlexLibrarySections,
   getConfiguredPlexAccountId,
   getConfiguredPlexWatchedThreshold,
   getConfiguredPlexAutoStatus,
   getConfiguredPlexSyncOnRefresh,
+  getConfiguredTheme,
   normalizePlexWatchedThreshold,
   isPlexBaseUrlEnvLocked,
   isPlexLibrarySectionsEnvLocked,
@@ -41,6 +43,7 @@ import {
   getEffectivePlexToken,
   upsertStoredSetting,
 } from '@/lib/settings'
+import { isThemeId } from '@/lib/themes'
 
 const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024
 
@@ -69,7 +72,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
-  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh] =
+  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh, theme] =
     await Promise.all([
       getStoredSetting(TVDB_API_KEY_SETTING),
       getStoredSetting(TVDB_PIN_SETTING),
@@ -82,6 +85,7 @@ export async function GET() {
       getConfiguredPlexWatchedThreshold(),
       getConfiguredPlexAutoStatus(),
       getConfiguredPlexSyncOnRefresh(),
+      getConfiguredTheme(),
     ])
 
   return NextResponse.json({
@@ -114,6 +118,7 @@ export async function GET() {
     plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
     plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
     plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
+    theme,
   })
 }
 
@@ -291,13 +296,20 @@ export async function PATCH(req: NextRequest) {
     await upsertStoredSetting(PLEX_SYNC_ON_REFRESH_SETTING, body.plexSyncOnRefresh ? 'true' : 'false')
   }
 
+  if ('theme' in body) {
+    if (typeof body.theme !== 'string' || !isThemeId(body.theme)) {
+      return NextResponse.json({ error: 'Unknown theme' }, { status: 400 })
+    }
+    await upsertStoredSetting(THEME_SETTING, body.theme)
+  }
+
   if (updated.username !== user.username) {
     const session = await getSession()
     session.user = { username: updated.username }
     await session.save()
   }
 
-  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh] =
+  const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh, theme] =
     await Promise.all([
       getStoredSetting(TVDB_API_KEY_SETTING),
       getStoredSetting(TVDB_PIN_SETTING),
@@ -310,6 +322,7 @@ export async function PATCH(req: NextRequest) {
       getConfiguredPlexWatchedThreshold(),
       getConfiguredPlexAutoStatus(),
       getConfiguredPlexSyncOnRefresh(),
+      getConfiguredTheme(),
     ])
   return NextResponse.json({
     username: updated.username,
@@ -341,5 +354,6 @@ export async function PATCH(req: NextRequest) {
     plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
     plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
     plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
+    theme,
   })
 }

@@ -1,4 +1,5 @@
 import { prisma } from './db'
+import { DEFAULT_THEME_ID, isThemeId } from './themes'
 
 export const TVDB_API_KEY_SETTING = 'tvdbApiKey'
 export const TVDB_PIN_SETTING = 'tvdbPin'
@@ -60,3 +61,10 @@ export async function getConfiguredPlexAutoStatus(): Promise<boolean> { return p
 export async function getConfiguredPlexSyncOnRefresh(): Promise<boolean> { return parseBooleanSetting(process.env.PLEX_SYNC_ON_REFRESH ?? (await getStoredSetting(PLEX_SYNC_ON_REFRESH_SETTING)), false) }
 export function normalizeCastLanguage(value?: string | null): 'english' | 'japanese' { return value === 'english' || value === 'japanese' ? value : DEFAULT_CAST_LANGUAGE }
 export async function getDefaultCastLanguage(): Promise<'english' | 'japanese'> { return normalizeCastLanguage(await getStoredSetting(DEFAULT_CAST_LANGUAGE_SETTING)) }
+
+export const THEME_SETTING = 'theme'
+export const DEFAULT_THEME = DEFAULT_THEME_ID
+export async function getConfiguredTheme(): Promise<string> {
+  const storedTheme = await getStoredSetting(THEME_SETTING)
+  return isThemeId(storedTheme) ? storedTheme : DEFAULT_THEME
+}

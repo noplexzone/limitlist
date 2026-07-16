@@ -39,4 +39,5 @@ export interface SettingsState {
   plexWatchedThreshold: { lockedByEnvironment: boolean; value: 'viewcount' | 'partial' }
   plexAutoStatus: { lockedByEnvironment: boolean; value: boolean }
   plexSyncOnRefresh: { lockedByEnvironment: boolean; value: boolean }
+  theme: string
 }

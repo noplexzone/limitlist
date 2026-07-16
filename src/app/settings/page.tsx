@@ -19,6 +19,7 @@ import {
   getConfiguredPlexWatchedThreshold,
   getConfiguredPlexAutoStatus,
   getConfiguredPlexSyncOnRefresh,
+  getConfiguredTheme,
   TVDB_API_KEY_SETTING,
   TVDB_PIN_SETTING,
   PLEX_TOKEN_SETTING,
@@ -53,6 +54,7 @@ export default async function SettingsPage() {
   const plexWatchedThreshold = await getConfiguredPlexWatchedThreshold()
   const plexAutoStatus = await getConfiguredPlexAutoStatus()
   const plexSyncOnRefresh = await getConfiguredPlexSyncOnRefresh()
+  const theme = await getConfiguredTheme()
 
   return (
     <div className="min-h-screen bg-surface-950">
@@ -92,6 +94,7 @@ export default async function SettingsPage() {
             plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
             plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
             plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
+            theme,
           }}
         />
       </main>

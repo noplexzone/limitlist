@@ -9,6 +9,7 @@ import PlexConnectionSection from './sections/PlexConnectionSection'
 import PlexSyncSection from './sections/PlexSyncSection'
 import ImportFromPlexSection from './sections/ImportFromPlexSection'
 import TasksSection from './sections/TasksSection'
+import AppearanceSection from './sections/AppearanceSection'
 import AboutSection from './sections/AboutSection'
 
 const SECTIONS = [
@@ -16,6 +17,7 @@ const SECTIONS = [
   { id: 'metadata', label: 'Metadata' },
   { id: 'plex', label: 'Plex' },
   { id: 'tasks', label: 'Tasks' },
+  { id: 'appearance', label: 'Appearance' },
   { id: 'about', label: 'About' },
 ] as const
 
@@ -115,6 +117,8 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
         )
       case 'tasks':
         return <TasksSection />
+      case 'appearance':
+        return <AppearanceSection settings={settings} onSettingsChange={setSettings} />
       case 'about':
         return <AboutSection version={version} />
     }
