@@ -100,3 +100,16 @@ model AppSetting {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ScheduledTask {
+  id          String    @id @default(cuid())
+  taskKey     String    @unique
+  enabled     Boolean   @default(false)
+  cronExpr    String    @default("0 3 * * *")
+  lastRunAt   DateTime?
+  lastStatus  String?
+  lastMessage String?
+  nextRunAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
