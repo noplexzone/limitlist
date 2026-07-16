@@ -23,7 +23,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ta
 
   const result = await runTaskNow(taskKey)
 
-  if (result.status === 'skipped') {
+  // "already running" is a concurrency guard — return 409 so the UI can show a distinct message.
+  if (result.message === 'Task is already running') {
     return NextResponse.json({ status: 'skipped', message: result.message }, { status: 409 })
   }
 

@@ -94,9 +94,10 @@ async function executeTask(taskKey: string): Promise<{ status: string; message: 
   const startedAt = new Date()
 
   try {
+    // Mark running without touching lastRunAt — skipped tasks should not bump it.
     await prisma.scheduledTask.update({
       where: { taskKey },
-      data: { lastRunAt: startedAt, lastStatus: 'running', lastMessage: 'Running…' },
+      data: { lastStatus: 'running', lastMessage: 'Running…' },
     })
 
     const result = await runTaskFn(taskKey)
@@ -104,10 +105,18 @@ async function executeTask(taskKey: string): Promise<{ status: string; message: 
     const task = await prisma.scheduledTask.findUnique({ where: { taskKey } })
     const nextRunAt = task ? computeNextRunAt(task.cronExpr) : null
 
-    await prisma.scheduledTask.update({
-      where: { taskKey },
-      data: { lastStatus: result.status, lastMessage: result.message, nextRunAt },
-    })
+    if (result.status === 'skipped') {
+      // Don't update lastRunAt — skipped means no work was done.
+      await prisma.scheduledTask.update({
+        where: { taskKey },
+        data: { lastStatus: 'skipped', lastMessage: result.message, nextRunAt },
+      })
+    } else {
+      await prisma.scheduledTask.update({
+        where: { taskKey },
+        data: { lastRunAt: startedAt, lastStatus: result.status, lastMessage: result.message, nextRunAt },
+      })
+    }
 
     return result
   } catch (e) {
@@ -115,7 +124,7 @@ async function executeTask(taskKey: string): Promise<{ status: string; message: 
     const task = await prisma.scheduledTask.findUnique({ where: { taskKey } }).catch(() => null)
     const nextRunAt = task ? computeNextRunAt(task.cronExpr) : null
     await prisma.scheduledTask
-      .update({ where: { taskKey }, data: { lastStatus: 'error', lastMessage: message, nextRunAt } })
+      .update({ where: { taskKey }, data: { lastRunAt: startedAt, lastStatus: 'error', lastMessage: message, nextRunAt } })
       .catch(() => {})
     return { status: 'error', message }
   } finally {
@@ -124,10 +133,6 @@ async function executeTask(taskKey: string): Promise<{ status: string; message: 
 }
 
 export async function runTaskNow(taskKey: string): Promise<{ status: string; message: string }> {
-  const running = getRunningSet()
-  if (running.has(taskKey)) {
-    return { status: 'skipped', message: 'Task is already running' }
-  }
   return executeTask(taskKey)
 }
 
@@ -191,6 +196,12 @@ export async function startScheduler(): Promise<void> {
 
   try {
     await ensureScheduledTasks()
+
+    // Any task still marked 'running' at boot cannot have survived the restart.
+    await prisma.scheduledTask.updateMany({
+      where: { lastStatus: 'running' },
+      data: { lastStatus: 'interrupted', lastMessage: 'Interrupted by server restart' },
+    })
 
     const tasks = await prisma.scheduledTask.findMany({ where: { enabled: true } })
     for (const task of tasks) {

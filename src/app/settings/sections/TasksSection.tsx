@@ -43,6 +43,20 @@ function StatusBadge({ status }: { status: string | null }) {
       </span>
     )
   }
+  if (status === 'skipped') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-950 border border-yellow-500/40 px-2 py-0.5 text-xs font-medium text-yellow-300">
+        Skipped
+      </span>
+    )
+  }
+  if (status === 'interrupted') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-orange-950 border border-orange-500/40 px-2 py-0.5 text-xs font-medium text-orange-300">
+        Interrupted
+      </span>
+    )
+  }
   if (status === 'error') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-red-950 border border-red-500/40 px-2 py-0.5 text-xs font-medium text-red-300">
