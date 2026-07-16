@@ -11,6 +11,32 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.4.0',
+    date: '2026-07-15',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added server-rendered anime-inspired themes with an Appearance settings picker and no wrong-theme flash on reload.',
+          'Added Gojo, Chainsaw Man, Nanami, and Levi themes with CSS-authored decorative motifs.',
+        ],
+      },
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Grouped Plex Connection, Plex Sync, and Import from Plex under one Plex settings section with inner tabs and legacy URL compatibility.',
+          'Tokenized the color system into CSS variables and made Gojo electric blue the default accent.',
+        ],
+      },
+      {
+        title: 'Bug fixes',
+        bullets: [
+          'Skipped scheduled tasks no longer update last-run timestamps, run-now overlap checks are centralized, and interrupted running tasks are cleaned up on scheduler startup.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.3.0',
     date: '2026-07-15',
     sections: [

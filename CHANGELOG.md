@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.4.0] - 2026-07-15
+
+### Added
+
+- **Anime-inspired themes**: Added global Appearance settings with server-rendered theme application and Gojo, Chainsaw Man, Nanami, and Levi themes.
+- **Theme design tokens**: Added CSS variable-backed accent/surface tokens and decorative theme motifs without copyrighted assets.
+
+### Changed
+
+- **Plex settings navigation**: Grouped Plex Connection, Plex Sync, and Import from Plex under one Plex sidebar section with inner tabs and legacy URL compatibility.
+- **Default accent**: Replaced the old purple accent with the Gojo electric-blue default theme.
+
+### Fixed
+
+- **Scheduler bookkeeping**: Skipped scheduled tasks no longer bump `lastRunAt`; persisted interrupted `running` tasks are marked as errors on scheduler startup, and run-now overlap prevention is centralized.
+
 ## [1.3.0] - 2026-07-15
 
 ### Added
