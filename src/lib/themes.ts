@@ -25,6 +25,9 @@ export const THEMES: ThemeDefinition[] = [
       '--color-accent-800': '30 64 175',
       '--color-accent-900': '30 58 138',
       '--color-accent-950': '23 37 84',
+      '--accent-glow': '59 130 246',
+      '--radius-card': '0.75rem',
+      '--surface-texture': 'none',
     },
   },
   {
@@ -43,6 +46,9 @@ export const THEMES: ThemeDefinition[] = [
       '--color-accent-800': '154 52 18',
       '--color-accent-900': '124 45 18',
       '--color-accent-950': '67 20 7',
+      '--accent-glow': '249 115 22',
+      '--radius-card': '0.75rem',
+      '--surface-texture': 'none',
     },
   },
   {
@@ -61,6 +67,9 @@ export const THEMES: ThemeDefinition[] = [
       '--color-accent-800': '133 77 14',
       '--color-accent-900': '113 63 18',
       '--color-accent-950': '66 32 6',
+      '--accent-glow': '202 138 4',
+      '--radius-card': '0.35rem',
+      '--surface-texture': 'repeating-linear-gradient(90deg, rgb(255 255 255 / 0.035) 0 1px, transparent 1px 9px)',
     },
   },
   {
@@ -79,6 +88,9 @@ export const THEMES: ThemeDefinition[] = [
       '--color-accent-800': '22 101 52',
       '--color-accent-900': '20 83 45',
       '--color-accent-950': '5 46 22',
+      '--accent-glow': '34 197 94',
+      '--radius-card': '0.75rem',
+      '--surface-texture': 'none',
     },
   },
 ]
