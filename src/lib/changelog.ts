@@ -11,6 +11,32 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-07-15',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added disabled-by-default scheduled tasks for airing refresh and Plex sync with run-now controls, preset schedules, advanced cron editing, last-run status, and next-run display.',
+          'Settings now has a dedicated Tasks section for recurring automation and maintenance operations.',
+        ],
+      },
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Settings is now organized into deep-linkable sidebar sections for Account, Metadata, Plex Connection, Plex Sync, Import from Plex, Tasks, and About.',
+          'Discover now filters to TV/TV_SHORT AniList entries and hides sequel seasons when AniList marks them with TV prequel relations.',
+        ],
+      },
+      {
+        title: 'Bug fixes',
+        bullets: [
+          'Refresh All Schedules now refreshes upcoming releases in place without requiring a manual page reload.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.2.2',
     date: '2026-07-15',
     sections: [

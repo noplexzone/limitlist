@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.3.0] - 2026-07-15
+
+### Added
+
+- **Scheduled tasks**: Added disabled-by-default scheduled airing refresh and Plex sync tasks with preset schedules, advanced cron editing, run-now controls, last-run status, and next-run display.
+- **Settings tasks panel**: Added a dedicated Tasks settings section for recurring automation and maintenance operations.
+
+### Changed
+
+- **Settings navigation**: Rebuilt Settings as a sidebar-driven page with deep-linkable sections for Account, Metadata, Plex Connection, Plex Sync, Import from Plex, Tasks, and About.
+- **Discover condensing**: Discover now filters to TV/TV_SHORT AniList entries and hides sequel seasons when AniList marks them with TV prequel relations, reducing one-card-per-season duplication.
+
+### Fixed
+
+- **Schedule refresh**: Refresh All Schedules now refreshes the dashboard server data in place and no longer requires a manual page reload to show updated episode names, stills, and upcoming dates.
+
 ## [1.2.2] - 2026-07-15
 
 ### Fixed
