@@ -65,7 +65,7 @@ function StatusBadge({ status }: { status: string | null }) {
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-800 border border-gray-600 px-2 py-0.5 text-xs font-medium text-gray-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-surface-800 border border-surface-600 px-2 py-0.5 text-xs font-medium text-surface-400">
       {status}
     </span>
   )
@@ -160,19 +160,19 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-4 space-y-4">
+    <div className="rounded-xl border border-surface-800 bg-surface-950/70 p-4 space-y-4">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-purple-100">{task.name}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>
+          <h3 className="text-sm font-semibold text-accent-100">{task.name}</h3>
+          <p className="text-xs text-surface-500 mt-0.5">{task.description}</p>
         </div>
         <button
           type="button"
           onClick={toggleEnabled}
           disabled={toggling}
           aria-label={task.enabled ? 'Disable task' : 'Enable task'}
-          className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${task.enabled ? 'bg-purple-600' : 'bg-gray-700'}`}
+          className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${task.enabled ? 'bg-accent-600' : 'bg-surface-700'}`}
         >
           <span
             className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${task.enabled ? 'translate-x-6' : 'translate-x-1'}`}
@@ -182,7 +182,7 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
 
       {/* Schedule presets */}
       <div>
-        <p className="mb-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Schedule</p>
+        <p className="mb-2 text-xs font-medium text-surface-400 uppercase tracking-wide">Schedule</p>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((preset) => (
             <button
@@ -192,8 +192,8 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
               onClick={() => selectPreset(preset.cron)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
                 activePreset?.cron === preset.cron && !showAdvanced
-                  ? 'bg-purple-700 text-white border border-purple-500'
-                  : 'border border-gray-700 text-gray-300 hover:border-purple-500/60 hover:text-purple-200'
+                  ? 'bg-accent-700 text-white border border-accent-500'
+                  : 'border border-surface-700 text-surface-300 hover:border-accent-500/60 hover:text-accent-200'
               }`}
             >
               {preset.label}
@@ -204,8 +204,8 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
             onClick={() => setShowAdvanced((v) => !v)}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border ${
               showAdvanced || (!activePreset && task.cronExpr)
-                ? 'bg-purple-700 text-white border-purple-500'
-                : 'border-gray-700 text-gray-300 hover:border-purple-500/60 hover:text-purple-200'
+                ? 'bg-accent-700 text-white border-accent-500'
+                : 'border-surface-700 text-surface-300 hover:border-accent-500/60 hover:text-accent-200'
             }`}
           >
             Advanced
@@ -219,13 +219,13 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
               value={cronInput}
               onChange={(e) => { setCronInput(e.target.value); setCronError('') }}
               placeholder="e.g. 0 3 * * *"
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 outline-none focus:border-purple-500 font-mono"
+              className="flex-1 rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none focus:border-accent-500 font-mono"
             />
             <button
               type="button"
               disabled={savingCron || cronInput.trim() === task.cronExpr}
               onClick={saveCronExpr}
-              className="rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50"
+              className="rounded-lg bg-accent-600 px-3 py-2 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50"
             >
               {savingCron ? 'Saving…' : 'Save'}
             </button>
@@ -237,12 +237,12 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
         )}
 
         {task.nextRunAt && task.enabled && (
-          <p className="mt-1 text-xs text-gray-500">Next run: {formatRelative(task.nextRunAt)}</p>
+          <p className="mt-1 text-xs text-surface-500">Next run: {formatRelative(task.nextRunAt)}</p>
         )}
       </div>
 
       {/* Status row */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500">
         <span className="flex items-center gap-1.5">
           Status: <StatusBadge status={task.lastStatus} />
         </span>
@@ -250,7 +250,7 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
           <span>Last run: {formatRelative(task.lastRunAt)}</span>
         )}
         {task.lastMessage && task.lastStatus !== null && (
-          <span className="w-full text-gray-500 truncate">{task.lastMessage}</span>
+          <span className="w-full text-surface-500 truncate">{task.lastMessage}</span>
         )}
       </div>
 
@@ -260,7 +260,7 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
           type="button"
           disabled={running}
           onClick={runNow}
-          className="rounded-lg border border-purple-500/60 px-4 py-2 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50"
+          className="rounded-lg border border-accent-500/60 px-4 py-2 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50"
         >
           {running ? 'Running…' : 'Run now'}
         </button>
@@ -305,39 +305,39 @@ export default function TasksSection() {
 
   return (
     <div className="space-y-6">
-      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-1">Tasks</h2>
-        <p className="mb-4 text-sm text-gray-400">Data maintenance operations.</p>
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-surface-200 mb-1">Tasks</h2>
+        <p className="mb-4 text-sm text-surface-400">Data maintenance operations.</p>
         <div className="space-y-4">
-          <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-4 space-y-3">
+          <div className="rounded-xl border border-surface-800 bg-surface-950/70 p-4 space-y-3">
             <div>
-              <h3 className="text-sm font-semibold text-purple-100">Aired episode counts</h3>
-              <p className="text-xs text-gray-500">Populates aired-episode counts for shows added before the v1.2.2 update. Only needed once.</p>
+              <h3 className="text-sm font-semibold text-accent-100">Aired episode counts</h3>
+              <p className="text-xs text-surface-500">Populates aired-episode counts for shows added before the v1.2.2 update. Only needed once.</p>
             </div>
             <button
               type="button"
               disabled={backfillingAiredCounts}
               onClick={backfillAiredEpisodeCounts}
-              className="rounded-lg border border-purple-500/60 px-4 py-2 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50"
+              className="rounded-lg border border-accent-500/60 px-4 py-2 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50"
             >
               {backfillingAiredCounts ? 'Backfilling…' : 'Backfill episode counts'}
             </button>
             {airedBackfillSummary && (
-              <p className="rounded-lg border border-purple-500/30 bg-purple-950/30 px-3 py-2 text-sm text-purple-100">{airedBackfillSummary}</p>
+              <p className="rounded-lg border border-accent-500/30 bg-accent-950/30 px-3 py-2 text-sm text-accent-100">{airedBackfillSummary}</p>
             )}
           </div>
         </div>
       </section>
 
-      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-1">Scheduled tasks</h2>
-        <p className="mb-4 text-sm text-gray-400">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-surface-200 mb-1">Scheduled tasks</h2>
+        <p className="mb-4 text-sm text-surface-400">
           Recurring tasks that run automatically on a schedule. Tasks run in the server process and restart with the server.
         </p>
         {tasksLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-surface-500">Loading…</p>
         ) : tasks.length === 0 ? (
-          <p className="text-sm text-gray-500">No scheduled tasks found.</p>
+          <p className="text-sm text-surface-500">No scheduled tasks found.</p>
         ) : (
           <div className="space-y-4">
             {tasks.map((task) => (

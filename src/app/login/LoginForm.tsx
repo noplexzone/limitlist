@@ -35,7 +35,7 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1 text-gray-300">
+        <label className="block text-sm font-medium mb-1 text-surface-300">
           Username
         </label>
         <input
@@ -43,11 +43,11 @@ export default function LoginForm() {
           type="text"
           required
           autoComplete="username"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+          className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg focus:outline-none focus:border-accent-500 text-surface-100"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1 text-gray-300">
+        <label className="block text-sm font-medium mb-1 text-surface-300">
           Password
         </label>
         <input
@@ -55,7 +55,7 @@ export default function LoginForm() {
           type="password"
           required
           autoComplete="current-password"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+          className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg focus:outline-none focus:border-accent-500 text-surface-100"
         />
       </div>
       {error && (
@@ -64,7 +64,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
+        className="w-full py-2 bg-accent-600 hover:bg-accent-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
       >
         {loading ? 'Signing in...' : 'Sign in'}
       </button>

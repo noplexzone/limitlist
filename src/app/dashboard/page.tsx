@@ -14,8 +14,8 @@ import OpenSearchButton from './OpenSearchButton'
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <p className="text-sm text-gray-400 mb-1">{label}</p>
+    <div className="bg-surface-900 border border-surface-800 rounded-xl p-5">
+      <p className="text-sm text-surface-400 mb-1">{label}</p>
       <p className="text-2xl font-bold text-white">{value}</p>
     </div>
   )
@@ -24,21 +24,21 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 function WhatsNewPanel() {
   return (
-    <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <section className="rounded-xl border border-surface-800 bg-surface-900 p-5">
       <div className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-purple-300">What&apos;s New</p>
-        <h2 className="mt-1 text-lg font-semibold text-gray-100">LimitList updates</h2>
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent-300">What&apos;s New</p>
+        <h2 className="mt-1 text-lg font-semibold text-surface-100">LimitList updates</h2>
       </div>
       <div className="max-h-[38rem] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
         {changelogEntries.map((entry, index) => (
-          <details key={entry.version} open={index === 0} className="rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2">
-            <summary className="cursor-pointer text-sm font-medium text-gray-200">
-              {entry.version} <span className="text-xs font-normal text-gray-500">· {entry.date}</span>
+          <details key={entry.version} open={index === 0} className="rounded-lg border border-surface-800 bg-surface-950/70 px-3 py-2">
+            <summary className="cursor-pointer text-sm font-medium text-surface-200">
+              {entry.version} <span className="text-xs font-normal text-surface-500">· {entry.date}</span>
             </summary>
-            <div className="mt-3 space-y-3 text-xs leading-5 text-gray-400">
+            <div className="mt-3 space-y-3 text-xs leading-5 text-surface-400">
               {entry.sections.map((section) => (
                 <div key={section.title}>
-                  <p className="mb-1 font-semibold uppercase tracking-wide text-purple-300">{section.title}</p>
+                  <p className="mb-1 font-semibold uppercase tracking-wide text-accent-300">{section.title}</p>
                   <ul className="space-y-1">
                     {section.bullets.map((bullet) => <li key={bullet}>• {bullet}</li>)}
                   </ul>
@@ -56,13 +56,13 @@ function TokenBar({ name, count, max }: { name: string; count: number; max: numb
   const pct = max === 0 ? 0 : Math.round((count / max) * 100)
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-300 w-36 truncate shrink-0" title={name}>
+      <span className="text-sm text-surface-300 w-36 truncate shrink-0" title={name}>
         {name}
       </span>
-      <div className="flex-1 bg-gray-800 rounded-full h-2">
-        <div className="bg-purple-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      <div className="flex-1 bg-surface-800 rounded-full h-2">
+        <div className="bg-accent-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-sm text-gray-400 w-6 text-right shrink-0">{count}</span>
+      <span className="text-sm text-surface-400 w-6 text-right shrink-0">{count}</span>
     </div>
   )
 }
@@ -81,15 +81,15 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-200">{title}</h2>
-        <Link href="/watchlist" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+        <h2 className="text-lg font-semibold text-surface-200">{title}</h2>
+        <Link href="/watchlist" className="text-xs text-accent-400 hover:text-accent-300 transition-colors">
           Go to Watchlist →
         </Link>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-700">
+      <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-surface-700">
         {shows.map((show) => (
           <Link key={show.id} href={`/anime/${show.metadataProvider}/${show.metadataId}`} className="shrink-0 w-24 group">
-            <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-gray-800 bg-gray-900 group-hover:border-purple-500/70 transition-colors">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-surface-800 bg-surface-900 group-hover:border-accent-500/70 transition-colors">
               {show.posterUrl ? (
                 <Image
                   src={show.posterUrl}
@@ -99,12 +99,12 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-xs text-gray-500 text-center p-1">
+                <div className="flex h-full items-center justify-center text-xs text-surface-500 text-center p-1">
                   {show.title}
                 </div>
               )}
             </div>
-            <p className="mt-1 text-[10px] text-gray-400 leading-tight line-clamp-2">{show.title}</p>
+            <p className="mt-1 text-[10px] text-surface-400 leading-tight line-clamp-2">{show.title}</p>
             {show.rating != null && (
               <p className="text-[10px] text-yellow-400">★ {show.rating}</p>
             )}
@@ -167,13 +167,13 @@ export default async function DashboardPage() {
     }))
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-surface-950">
       <Nav />
       <main className="mx-auto max-w-[112rem] px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold mb-8 text-purple-400">Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-8 text-accent-400">Dashboard</h1>
 
         {isEmpty ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-surface-500">
             <p className="text-lg mb-4">No shows tracked yet.</p>
             <OpenSearchButton />
           </div>
@@ -200,16 +200,16 @@ export default async function DashboardPage() {
 
                 {/* Status breakdown */}
                 <section>
-              <h2 className="text-lg font-semibold text-gray-200 mb-3">By Status</h2>
+              <h2 className="text-lg font-semibold text-surface-200 mb-3">By Status</h2>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {SHOW_STATUSES.map((status) => (
                   <div
                     key={status}
-                    className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-3"
+                    className="bg-surface-900 border border-surface-800 rounded-xl p-4 flex items-center gap-3"
                   >
                     <div className={`w-3 h-3 rounded-full shrink-0 ${STATUS_DOT_CLASSES[status]}`} />
                     <div>
-                      <p className="text-xs text-gray-400">{STATUS_LABELS[status]}</p>
+                      <p className="text-xs text-surface-400">{STATUS_LABELS[status]}</p>
                       <p className="text-xl font-bold text-white">{stats.byStatus[status]}</p>
                     </div>
                   </div>
@@ -220,9 +220,9 @@ export default async function DashboardPage() {
                 {/* Top genres + studios */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <section>
-                <h2 className="text-lg font-semibold text-gray-200 mb-3">Top Genres</h2>
+                <h2 className="text-lg font-semibold text-surface-200 mb-3">Top Genres</h2>
                 {stats.topGenres.length === 0 ? (
-                  <p className="text-sm text-gray-500">No genre data.</p>
+                  <p className="text-sm text-surface-500">No genre data.</p>
                 ) : (
                   <div className="space-y-2">
                     {stats.topGenres.map((g) => (
@@ -233,9 +233,9 @@ export default async function DashboardPage() {
               </section>
 
               <section>
-                <h2 className="text-lg font-semibold text-gray-200 mb-3">Top Studios</h2>
+                <h2 className="text-lg font-semibold text-surface-200 mb-3">Top Studios</h2>
                 {stats.topStudios.length === 0 ? (
-                  <p className="text-sm text-gray-500">No studio data.</p>
+                  <p className="text-sm text-surface-500">No studio data.</p>
                 ) : (
                   <div className="space-y-2">
                     {stats.topStudios.map((s) => (
@@ -249,8 +249,8 @@ export default async function DashboardPage() {
 
               <aside className="xl:sticky xl:top-[5rem]">
                 <div className="mb-3">
-                  <h2 className="text-lg font-semibold text-gray-200">Upcoming Releases</h2>
-                  <p className="text-sm text-gray-500">Upcoming watchlist episodes.</p>
+                  <h2 className="text-lg font-semibold text-surface-200">Upcoming Releases</h2>
+                  <p className="text-sm text-surface-500">Upcoming watchlist episodes.</p>
                 </div>
                 <UpcomingReleases initialEntries={scheduleEntries} compact />
               </aside>

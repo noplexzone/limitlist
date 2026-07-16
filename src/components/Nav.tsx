@@ -133,7 +133,7 @@ export default function Nav() {
                 aria-haspopup="menu"
                 className="flex items-center gap-1 p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               >
-                <span className="h-7 w-7 overflow-hidden rounded-sm bg-purple-700 flex items-center justify-center text-xs font-bold text-white select-none" aria-hidden="true">
+                <span className="h-7 w-7 overflow-hidden rounded-sm bg-accent-700 flex items-center justify-center text-xs font-bold text-white select-none" aria-hidden="true">
                   {profileImageData ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={profileImageData} alt="" className="h-full w-full object-cover" />

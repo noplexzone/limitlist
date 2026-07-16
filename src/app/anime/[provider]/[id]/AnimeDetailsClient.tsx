@@ -83,7 +83,7 @@ function StarIcon({ fillPct, small = false }: { fillPct: number; small?: boolean
     <svg viewBox="0 0 24 24" aria-hidden="true" className={`${small ? 'h-4 w-4' : 'h-5 w-5 sm:h-6 sm:w-6'} drop-shadow`}>
       <path
         d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
-        className="fill-gray-500/80"
+        className="fill-surface-500/80"
       />
       <path
         d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
@@ -123,7 +123,7 @@ function StarRating({ rating, onRate, compact = false }: { rating: number | null
         })}
       </div>
       {rating != null && (
-        <button type="button" onClick={(e) => click(e, null)} onKeyDown={stopKeyNavigation} aria-label="Clear rating" className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-0.5 text-xs font-medium text-gray-200 hover:bg-black/90" title="Clear rating">×</button>
+        <button type="button" onClick={(e) => click(e, null)} onKeyDown={stopKeyNavigation} aria-label="Clear rating" className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-0.5 text-xs font-medium text-surface-200 hover:bg-black/90" title="Clear rating">×</button>
       )}
     </div>
   )
@@ -164,26 +164,26 @@ function CastImage({ imageUrl, fallback, side }: { imageUrl?: string | null; fal
   if (!imageUrl) {
     if (side === 'character') return null
     return (
-      <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-800 text-xs text-gray-500">
+      <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-800 text-xs text-surface-500">
         {fallback.slice(0, 2)}
       </div>
     )
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={imageUrl} alt="" className="h-16 w-12 shrink-0 rounded-lg bg-gray-800 object-cover" loading="lazy" />
+    <img src={imageUrl} alt="" className="h-16 w-12 shrink-0 rounded-lg bg-surface-800 object-cover" loading="lazy" />
   )
 }
 
 function CastCard({ member }: { member: MetadataCastMember }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-gray-800 bg-gray-950 p-3">
+    <div className="flex items-center gap-3 rounded-xl border border-surface-800 bg-surface-950 p-3">
       <CastImage imageUrl={member.profileUrl} fallback={member.name} side="actor" />
       <div className="min-w-0 flex-1 text-center sm:text-left">
         <p className="truncate font-medium text-white" title={member.name}>{member.name}</p>
-        {member.originalName && <p className="truncate text-xs text-gray-500" title={member.originalName}>{member.originalName}</p>}
-        {member.character && <p className="mt-1 line-clamp-2 text-sm text-purple-300">{member.character}</p>}
-        {member.episodeCount != null && <p className="text-xs text-gray-500">{member.episodeCount} episodes</p>}
+        {member.originalName && <p className="truncate text-xs text-surface-500" title={member.originalName}>{member.originalName}</p>}
+        {member.character && <p className="mt-1 line-clamp-2 text-sm text-accent-300">{member.character}</p>}
+        {member.episodeCount != null && <p className="text-xs text-surface-500">{member.episodeCount} episodes</p>}
       </div>
       <CastImage imageUrl={member.characterImageUrl} fallback={member.character ?? member.name} side="character" />
     </div>
@@ -421,16 +421,16 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
   return (
     <div className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
-        <div className="relative aspect-[2/3] overflow-hidden rounded-3xl border border-gray-800 bg-gray-900 shadow-2xl shadow-black/40">
+        <div className="relative aspect-[2/3] overflow-hidden rounded-3xl border border-surface-800 bg-surface-900 shadow-2xl shadow-black/40">
           {anime.posterUrl ? (
             <PosterImage src={anime.posterUrl} alt={`${anime.title} poster`} title={anime.title} />
           ) : (
-            <div className="flex h-full items-center justify-center px-6 text-center text-gray-500">{anime.title}</div>
+            <div className="flex h-full items-center justify-center px-6 text-center text-surface-500">{anime.title}</div>
           )}
 
           {data.tracked && (
             <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/90 via-black/60 to-transparent p-4 pb-10">
-              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-300">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-surface-300">
                 Status
                 <select
                   value={(anime.status as ShowStatus) ?? 'PLAN_TO_WATCH'}
@@ -450,14 +450,14 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
             {data.tracked ? (
               <div className="space-y-3">
                 <div>
-                  <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-300">Rating</p>
+                  <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wide text-surface-300">Rating</p>
                   <StarRating rating={anime.rating ?? null} onRate={(value) => patchTracked({ rating: value })} />
                 </div>
                 {removeConfirm ? (
-                  <div className="rounded-xl border border-red-400/40 bg-gray-950/95 p-3 text-center">
-                    <p className="mb-2 text-sm font-medium text-gray-100">Remove from watchlist?</p>
+                  <div className="rounded-xl border border-red-400/40 bg-surface-950/95 p-3 text-center">
+                    <p className="mb-2 text-sm font-medium text-surface-100">Remove from watchlist?</p>
                     <div className="flex justify-center gap-2">
-                      <button type="button" disabled={busy} onClick={() => setRemoveConfirm(false)} className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm text-gray-200 hover:bg-gray-700 disabled:opacity-50">Cancel</button>
+                      <button type="button" disabled={busy} onClick={() => setRemoveConfirm(false)} className="rounded-lg bg-surface-800 px-3 py-1.5 text-sm text-surface-200 hover:bg-surface-700 disabled:opacity-50">Cancel</button>
                       <button type="button" disabled={busy} onClick={removeFromWatchlist} className="rounded-lg bg-red-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50">Remove</button>
                     </div>
                   </div>
@@ -472,7 +472,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
               <button
                 onClick={addToWatchlist}
                 disabled={busy}
-                className="w-full rounded-xl bg-purple-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-purple-500 disabled:opacity-50"
+                className="w-full rounded-xl bg-accent-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-accent-500 disabled:opacity-50"
               >
                 {busy ? 'Adding…' : '+ Add to Watchlist'}
               </button>
@@ -484,7 +484,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
           <div>
             <h1 className="text-4xl font-bold text-white">{anime.title}</h1>
             {anime.originalTitle && anime.originalTitle !== anime.title && (
-              <p className="mt-1 text-gray-400">{anime.originalTitle}</p>
+              <p className="mt-1 text-surface-400">{anime.originalTitle}</p>
             )}
             {data.tracked && anime.upToDateStale && (
               <p className="mt-4 rounded-xl border border-orange-500/50 bg-orange-950/60 px-4 py-3 text-sm font-medium text-orange-200">
@@ -493,28 +493,28 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
             )}
           </div>
 
-          <div className="flex flex-wrap gap-3 text-sm text-gray-300">
-            {anime.firstAiredAt && <span className="rounded-full bg-gray-900 px-3 py-1">First aired {formatDate(anime.firstAiredAt)}</span>}
-            {anime.episodesTotal != null && <span className="rounded-full bg-gray-900 px-3 py-1">{anime.episodesTotal} episodes</span>}
-            {anime.airingStatus && <span className="rounded-full bg-gray-900 px-3 py-1">Status: {anime.airingStatus}</span>}
-            {anime.nextAiringAt && <span className="rounded-full bg-purple-900/70 px-3 py-1">Next: Ep {anime.nextEpisodeNum ?? '?'}{anime.nextEpisodeName ? ` — ${anime.nextEpisodeName}` : ''} · {formatDate(anime.nextAiringAt)}</span>}
-            {anime.contentRating && <span className="rounded-full bg-gray-900 px-3 py-1">Rated {anime.contentRating}</span>}
-            {anime.originalLanguage && <span className="rounded-full bg-gray-900 px-3 py-1">Language {anime.originalLanguage.toUpperCase()}</span>}
-            {data.tracked && anime.rating != null && <span className="rounded-full bg-purple-900/70 px-3 py-1">Your rating {anime.rating.toFixed(1)}/5</span>}
-            {data.tracked && watchedAiredProgress.aired > 0 && <span className="rounded-full bg-purple-900/70 px-3 py-1">Watched {watchedAiredProgress.watched}/{watchedAiredProgress.aired} aired</span>}
+          <div className="flex flex-wrap gap-3 text-sm text-surface-300">
+            {anime.firstAiredAt && <span className="rounded-full bg-surface-900 px-3 py-1">First aired {formatDate(anime.firstAiredAt)}</span>}
+            {anime.episodesTotal != null && <span className="rounded-full bg-surface-900 px-3 py-1">{anime.episodesTotal} episodes</span>}
+            {anime.airingStatus && <span className="rounded-full bg-surface-900 px-3 py-1">Status: {anime.airingStatus}</span>}
+            {anime.nextAiringAt && <span className="rounded-full bg-accent-900/70 px-3 py-1">Next: Ep {anime.nextEpisodeNum ?? '?'}{anime.nextEpisodeName ? ` — ${anime.nextEpisodeName}` : ''} · {formatDate(anime.nextAiringAt)}</span>}
+            {anime.contentRating && <span className="rounded-full bg-surface-900 px-3 py-1">Rated {anime.contentRating}</span>}
+            {anime.originalLanguage && <span className="rounded-full bg-surface-900 px-3 py-1">Language {anime.originalLanguage.toUpperCase()}</span>}
+            {data.tracked && anime.rating != null && <span className="rounded-full bg-accent-900/70 px-3 py-1">Your rating {anime.rating.toFixed(1)}/5</span>}
+            {data.tracked && watchedAiredProgress.aired > 0 && <span className="rounded-full bg-accent-900/70 px-3 py-1">Watched {watchedAiredProgress.watched}/{watchedAiredProgress.aired} aired</span>}
           </div>
 
-          {anime.overview && <p className="max-w-4xl text-gray-300 leading-7">{anime.overview}</p>}
+          {anime.overview && <p className="max-w-4xl text-surface-300 leading-7">{anime.overview}</p>}
 
           {data.tracked && anime.providerName === 'tvdb' && (
-            <div className="rounded-2xl border border-purple-500/30 bg-purple-950/20 p-4">
+            <div className="rounded-2xl border border-accent-500/30 bg-accent-950/20 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-purple-100">Plex watch history</p>
-                  <p className="text-sm text-gray-400">Sync watched episodes from Plex on demand.</p>
-                  {anime.plexSyncedAt && <p className="mt-1 text-xs text-gray-500">Synced with Plex {formatRelative(anime.plexSyncedAt)}</p>}
+                  <p className="font-semibold text-accent-100">Plex watch history</p>
+                  <p className="text-sm text-surface-400">Sync watched episodes from Plex on demand.</p>
+                  {anime.plexSyncedAt && <p className="mt-1 text-xs text-surface-500">Synced with Plex {formatRelative(anime.plexSyncedAt)}</p>}
                 </div>
-                <button type="button" disabled={plexSyncing || busy} onClick={syncWithPlex} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+                <button type="button" disabled={plexSyncing || busy} onClick={syncWithPlex} className="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50">
                   {plexSyncing ? 'Syncing…' : 'Sync with Plex'}
                 </button>
               </div>
@@ -526,15 +526,15 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
           {(asTextList(anime.genres) || asTextList(anime.studios)) && (
             <div className="grid gap-4 sm:grid-cols-2">
               {asTextList(anime.genres) && (
-                <div className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
-                  <p className="mb-1 text-xs uppercase tracking-wide text-gray-500">Genres</p>
-                  <p className="text-gray-200">{asTextList(anime.genres)}</p>
+                <div className="rounded-2xl border border-surface-800 bg-surface-900 p-4">
+                  <p className="mb-1 text-xs uppercase tracking-wide text-surface-500">Genres</p>
+                  <p className="text-surface-200">{asTextList(anime.genres)}</p>
                 </div>
               )}
               {asTextList(anime.studios) && (
-                <div className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
-                  <p className="mb-1 text-xs uppercase tracking-wide text-gray-500">Studios</p>
-                  <p className="text-gray-200">{asTextList(anime.studios)}</p>
+                <div className="rounded-2xl border border-surface-800 bg-surface-900 p-4">
+                  <p className="mb-1 text-xs uppercase tracking-wide text-surface-500">Studios</p>
+                  <p className="text-surface-200">{asTextList(anime.studios)}</p>
                 </div>
               )}
             </div>
@@ -543,14 +543,14 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
       </div>
 
 
-      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+      <section className="rounded-2xl border border-surface-800 bg-surface-900 p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-200">Voice cast</h2>
-            <p className="text-sm text-gray-500">Choose the dub/sub cast list.</p>
+            <h2 className="text-lg font-semibold text-surface-200">Voice cast</h2>
+            <p className="text-sm text-surface-500">Choose the dub/sub cast list.</p>
           </div>
           {(anime.voiceCast?.english.length || anime.voiceCast?.japanese.length) ? (
-            <div className="rounded-full border border-gray-700 bg-gray-950 p-1">
+            <div className="rounded-full border border-surface-700 bg-surface-950 p-1">
               {(['english', 'japanese'] as const).map((language) => (
                 <button
                   key={language}
@@ -558,7 +558,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                   onClick={() => { setVoiceLanguageTouched(true); setVoiceLanguage(language) }}
                   disabled={(anime.voiceCast?.[language].length ?? 0) === 0}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
-                    voiceLanguage === language ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white disabled:cursor-not-allowed disabled:text-gray-700'
+                    voiceLanguage === language ? 'bg-accent-600 text-white' : 'text-surface-400 hover:text-white disabled:cursor-not-allowed disabled:text-surface-700'
                   }`}
                 >
                   {language} <span className="text-xs opacity-75">{anime.voiceCast?.[language].length ?? 0}</span>
@@ -568,26 +568,26 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
           ) : null}
         </div>
         {enrichmentLoading ? (
-          <p className="text-sm text-gray-500">Loading voice cast…</p>
+          <p className="text-sm text-surface-500">Loading voice cast…</p>
         ) : voiceCast.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {voiceCast.map((actor) => <CastCard key={`${voiceLanguage}-${actor.name}-${actor.character ?? ''}`} member={actor} />)}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No voice cast found.</p>
+          <p className="text-sm text-surface-500">No voice cast found.</p>
         )}
       </section>
 
       {anime.seasons && anime.seasons.length > 0 && (
-        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-          <h2 className="mb-4 text-lg font-semibold text-gray-200">Seasons & episodes</h2>
+        <section className="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+          <h2 className="mb-4 text-lg font-semibold text-surface-200">Seasons & episodes</h2>
           <div className="space-y-4">
             {[...anime.seasons].sort((a, b) => b.seasonNumber - a.seasonNumber).map((season) => (
-              <details key={season.seasonNumber} className="rounded-xl border border-gray-800 bg-gray-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
-                <summary className="cursor-pointer font-semibold text-gray-100">
-                  {season.name} <span className="text-sm font-normal text-gray-500">{season.episodeCount ?? season.episodes?.length ? ` · ${season.episodeCount ?? season.episodes?.length} episodes in this season` : ''}{` · ${(season.episodes ?? []).filter((episode) => episodeWatchMap.get(`${season.seasonNumber}:${episode.episodeNumber}`)?.watched).length}/${season.episodes?.length ?? season.episodeCount ?? 0} watched`}{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
+              <details key={season.seasonNumber} className="rounded-xl border border-surface-800 bg-surface-950 p-4" open={Boolean(season.episodes && season.seasonNumber === Math.max(...(anime.seasons ?? []).map((s) => s.seasonNumber)))}>
+                <summary className="cursor-pointer font-semibold text-surface-100">
+                  {season.name} <span className="text-sm font-normal text-surface-500">{season.episodeCount ?? season.episodes?.length ? ` · ${season.episodeCount ?? season.episodes?.length} episodes in this season` : ''}{` · ${(season.episodes ?? []).filter((episode) => episodeWatchMap.get(`${season.seasonNumber}:${episode.episodeNumber}`)?.watched).length}/${season.episodes?.length ?? season.episodeCount ?? 0} watched`}{season.airDate ? ` · ${formatDate(season.airDate)}` : ''}</span>
                 </summary>
-                {season.overview && <p className="mt-2 text-sm text-gray-400">{season.overview}</p>}
+                {season.overview && <p className="mt-2 text-sm text-surface-400">{season.overview}</p>}
                 {season.episodes && season.episodes.length > 0 && (
                   <ol className="mt-4 max-h-[36rem] space-y-3 overflow-y-auto pr-1">
                     {season.episodes.map((episode) => {
@@ -595,31 +595,31 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                       const child = childRatingMap.get(`EPISODE:${key}`)
                       const watch = episodeWatchMap.get(key)
                       return (
-                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className={`flex flex-col gap-3 rounded-xl border p-3 text-sm sm:flex-row ${watch?.watched ? 'border-purple-500/30 bg-purple-950/20' : 'border-gray-800 bg-gray-900'}`}>
-                          <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-40">
+                        <li key={`${season.seasonNumber}-${episode.episodeNumber}`} className={`flex flex-col gap-3 rounded-xl border p-3 text-sm sm:flex-row ${watch?.watched ? 'border-accent-500/30 bg-accent-950/20' : 'border-surface-800 bg-surface-900'}`}>
+                          <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg bg-surface-800 sm:w-40">
                             {episode.stillUrl ? (
                               <PosterImage src={episode.stillUrl} alt={`${episode.name} still`} title={episode.name} sizes="(min-width: 640px) 160px, 100vw" />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs text-gray-500">No still image</div>
+                              <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs text-surface-500">No still image</div>
                             )}
                           </div>
                           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className={`font-medium leading-snug ${watch?.watched ? 'text-purple-100' : 'text-gray-100'}`}>{episode.episodeNumber}. {episode.name}</p>
+                                <p className={`font-medium leading-snug ${watch?.watched ? 'text-accent-100' : 'text-surface-100'}`}>{episode.episodeNumber}. {episode.name}</p>
                                 {data.tracked && (
                                   <button
                                     type="button"
                                     disabled={watchTogglingKey === key}
                                     onClick={() => toggleEpisodeWatch(season.seasonNumber, episode.episodeNumber, !watch?.watched)}
-                                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${watch?.watched ? 'bg-purple-600/30 text-purple-100 hover:bg-purple-600/50' : 'bg-gray-800 text-gray-300 hover:bg-purple-900/50'}`}
+                                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${watch?.watched ? 'bg-accent-600/30 text-accent-100 hover:bg-accent-600/50' : 'bg-surface-800 text-surface-300 hover:bg-accent-900/50'}`}
                                   >
                                     {watch?.watched ? '✓ Watched' : 'Mark watched'}
                                   </button>
                                 )}
                               </div>
-                              {episode.airDate && <p className="mt-1 text-xs text-gray-500">{formatDate(episode.airDate)}{watch?.watchedAt ? ` · watched ${formatDate(watch.watchedAt)}` : ''}</p>}
-                              {episode.overview && <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{episode.overview}</p>}
+                              {episode.airDate && <p className="mt-1 text-xs text-surface-500">{formatDate(episode.airDate)}{watch?.watchedAt ? ` · watched ${formatDate(watch.watchedAt)}` : ''}</p>}
+                              {episode.overview && <p className="mt-2 line-clamp-3 text-sm leading-6 text-surface-400">{episode.overview}</p>}
                             </div>
                             {data.tracked && (
                               <div className="shrink-0 sm:pt-1">
@@ -643,11 +643,11 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
       )}
 
 
-      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="mb-1 text-lg font-semibold text-gray-200">Movies and specials</h2>
-        <p className="mb-4 text-sm text-gray-500">Rated under {anime.title}, not added as separate watchlist shows.</p>
+      <section className="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+        <h2 className="mb-1 text-lg font-semibold text-surface-200">Movies and specials</h2>
+        <p className="mb-4 text-sm text-surface-500">Rated under {anime.title}, not added as separate watchlist shows.</p>
         {enrichmentLoading ? (
-          <p className="text-sm text-gray-500">Loading movies and specials…</p>
+          <p className="text-sm text-surface-500">Loading movies and specials…</p>
         ) : anime.relatedMovies && anime.relatedMovies.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {anime.relatedMovies.map((movie) => {
@@ -655,20 +655,20 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
               const child = childRatingMap.get(`MOVIE:${key}`)
               const overview = stripHtml(movie.overview)
               return (
-                <div key={key} className="rounded-xl border border-gray-800 bg-gray-950 p-4">
+                <div key={key} className="rounded-xl border border-surface-800 bg-surface-950 p-4">
                   <div className="flex flex-col gap-4 sm:flex-row">
                     {movie.posterUrl && (
-                      <div className="relative aspect-[2/3] w-28 shrink-0 overflow-hidden rounded-lg bg-gray-800 sm:w-32">
+                      <div className="relative aspect-[2/3] w-28 shrink-0 overflow-hidden rounded-lg bg-surface-800 sm:w-32">
                         <PosterImage src={movie.posterUrl} alt={`${movie.title} poster`} title={movie.title} sizes="(min-width: 640px) 128px, 112px" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium leading-snug text-gray-100">{movie.title}</p>
-                      {movie.firstAiredAt && <p className="mt-1 text-xs text-gray-500">{formatDate(movie.firstAiredAt)}</p>}
-                      {overview && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-400">{overview}</p>}
+                      <p className="font-medium leading-snug text-surface-100">{movie.title}</p>
+                      {movie.firstAiredAt && <p className="mt-1 text-xs text-surface-500">{formatDate(movie.firstAiredAt)}</p>}
+                      {overview && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-surface-400">{overview}</p>}
                       {movie.cast && movie.cast.length > 0 && (
-                        <p className="mt-3 text-sm leading-6 text-purple-200">
-                          <span className="font-semibold text-purple-100">Cast:</span> {movie.cast.join(', ')}
+                        <p className="mt-3 text-sm leading-6 text-accent-200">
+                          <span className="font-semibold text-accent-100">Cast:</span> {movie.cast.join(', ')}
                         </p>
                       )}
                       {data.tracked && (
@@ -683,15 +683,15 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
             })}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No related movies or specials found.</p>
+          <p className="text-sm text-surface-500">No related movies or specials found.</p>
         )}
       </section>
 
 
-      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="mb-4 text-lg font-semibold text-gray-200">Recommended similar anime</h2>
+      <section className="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+        <h2 className="mb-4 text-lg font-semibold text-surface-200">Recommended similar anime</h2>
         {enrichmentLoading ? (
-          <p className="text-sm text-gray-500">Loading recommendations…</p>
+          <p className="text-sm text-surface-500">Loading recommendations…</p>
         ) : anime.recommendations && anime.recommendations.length > 0 ? (
           <div className="relative">
             <div
@@ -703,14 +703,14 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
                 <Link
                   key={`${item.providerName}-${item.providerId}`}
                   href={`/anime/${encodeURIComponent(item.providerName)}/${encodeURIComponent(item.providerId)}`}
-                  className="group min-w-[70%] basis-[70%] snap-start overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition-colors hover:border-purple-500 sm:min-w-[36%] sm:basis-[36%] md:min-w-[27%] md:basis-[27%] lg:min-w-[calc((100%_-_4rem)/5)] lg:basis-[calc((100%_-_4rem)/5)]"
+                  className="group min-w-[70%] basis-[70%] snap-start overflow-hidden rounded-xl border border-surface-800 bg-surface-950 transition-colors hover:border-accent-500 sm:min-w-[36%] sm:basis-[36%] md:min-w-[27%] md:basis-[27%] lg:min-w-[calc((100%_-_4rem)/5)] lg:basis-[calc((100%_-_4rem)/5)]"
                 >
-                  <div className="relative aspect-[2/3] bg-gray-800">
-                    {item.posterUrl ? <PosterImage src={item.posterUrl} alt={`${item.title} poster`} title={item.title} /> : <div className="flex h-full items-center justify-center p-3 text-center text-xs text-gray-500">{item.title}</div>}
+                  <div className="relative aspect-[2/3] bg-surface-800">
+                    {item.posterUrl ? <PosterImage src={item.posterUrl} alt={`${item.title} poster`} title={item.title} /> : <div className="flex h-full items-center justify-center p-3 text-center text-xs text-surface-500">{item.title}</div>}
                   </div>
                   <div className="p-2">
-                    <p className="line-clamp-2 text-sm font-medium text-gray-100 group-hover:text-purple-200">{item.title}</p>
-                    {item.firstAiredAt && <p className="text-xs text-gray-500">{formatDate(item.firstAiredAt)}</p>}
+                    <p className="line-clamp-2 text-sm font-medium text-surface-100 group-hover:text-accent-200">{item.title}</p>
+                    {item.firstAiredAt && <p className="text-xs text-surface-500">{formatDate(item.firstAiredAt)}</p>}
                   </div>
                 </Link>
               ))}
@@ -720,7 +720,7 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
               aria-label="Scroll recommendations left"
               onClick={() => scrollRecommendations(-1)}
               disabled={!recommendationsCanScrollLeft}
-              className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full border border-gray-700 bg-black/80 px-3 py-2 text-lg font-bold text-white shadow-lg transition hover:border-purple-400 hover:bg-purple-900/90 disabled:cursor-not-allowed disabled:opacity-30 sm:block"
+              className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full border border-surface-700 bg-black/80 px-3 py-2 text-lg font-bold text-white shadow-lg transition hover:border-accent-400 hover:bg-accent-900/90 disabled:cursor-not-allowed disabled:opacity-30 sm:block"
             >
               ←
             </button>
@@ -729,13 +729,13 @@ export default function AnimeDetailsClient({ initialData, defaultCastLanguage }:
               aria-label="Scroll recommendations right"
               onClick={() => scrollRecommendations(1)}
               disabled={!recommendationsCanScrollRight}
-              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full border border-gray-700 bg-black/80 px-3 py-2 text-lg font-bold text-white shadow-lg transition hover:border-purple-400 hover:bg-purple-900/90 disabled:cursor-not-allowed disabled:opacity-30 sm:block"
+              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full border border-surface-700 bg-black/80 px-3 py-2 text-lg font-bold text-white shadow-lg transition hover:border-accent-400 hover:bg-accent-900/90 disabled:cursor-not-allowed disabled:opacity-30 sm:block"
             >
               →
             </button>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No recommendations found.</p>
+          <p className="text-sm text-surface-500">No recommendations found.</p>
         )}
       </section>
 

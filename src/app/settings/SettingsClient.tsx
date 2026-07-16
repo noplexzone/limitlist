@@ -86,7 +86,7 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
         return (
           <div className="space-y-6">
             {/* Inner tab strip */}
-            <div className="flex gap-1 border-b border-gray-800 pb-0">
+            <div className="flex gap-1 border-b border-surface-800 pb-0">
               {PLEX_PANELS.map((p) => (
                 <button
                   key={p.id}
@@ -94,8 +94,8 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
                   onClick={() => navigatePlexPanel(p.id)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activePlexPanel === p.id
-                      ? 'border-purple-500 text-purple-300'
-                      : 'border-transparent text-gray-400 hover:text-gray-200'
+                      ? 'border-accent-500 text-accent-300'
+                      : 'border-transparent text-surface-400 hover:text-surface-200'
                   }`}
                 >
                   {p.label}
@@ -123,15 +123,15 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
   return (
     <div className="flex flex-col md:flex-row gap-6">
       {/* Mobile: horizontal scrollable tab bar */}
-      <div className="flex overflow-x-auto border-b border-gray-800 md:hidden -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex overflow-x-auto border-b border-surface-800 md:hidden -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map((s) => (
           <button
             key={s.id}
             onClick={() => navigate(s.id)}
             className={`shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeSection === s.id
-                ? 'border-purple-500 text-purple-300'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
+                ? 'border-accent-500 text-accent-300'
+                : 'border-transparent text-surface-400 hover:text-surface-200'
             }`}
           >
             {s.label}
@@ -148,8 +148,8 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
               onClick={() => navigate(s.id)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeSection === s.id
-                  ? 'bg-purple-900/60 text-purple-200'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60'
+                  ? 'bg-accent-900/60 text-accent-200'
+                  : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800/60'
               }`}
             >
               {s.label}

@@ -18,7 +18,7 @@ export default function PosterImage({ src, alt, title, sizes }: PosterImageProps
 
   if (errored) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+      <div className="flex h-full w-full items-center justify-center bg-surface-800 px-3 text-center text-sm text-surface-500">
         {title}
       </div>
     )

@@ -150,13 +150,13 @@ export default async function AnimeDetailsPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-surface-950">
       <Nav />
       <main className="mx-auto max-w-7xl px-4 py-8">
         {data ? (
           <AnimeDetailsClient initialData={data} defaultCastLanguage={defaultCastLanguage} />
         ) : (
-          <div className="rounded-2xl border border-gray-800 bg-gray-900 p-8 text-center text-gray-400">
+          <div className="rounded-2xl border border-surface-800 bg-surface-900 p-8 text-center text-surface-400">
             Anime not found or provider unavailable.
           </div>
         )}

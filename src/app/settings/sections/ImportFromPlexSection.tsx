@@ -53,18 +53,18 @@ export default function ImportFromPlexSection({ plexConfigured }: Props) {
 
   return (
     <div className="space-y-6">
-      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-1">Import from Plex</h2>
-        <p className="mb-4 text-sm text-gray-400">Review watched Plex shows before creating watchlist rows.</p>
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-surface-200 mb-1">Import from Plex</h2>
+        <p className="mb-4 text-sm text-surface-400">Review watched Plex shows before creating watchlist rows.</p>
         {!plexConfigured ? (
-          <p className="text-sm text-gray-500">Configure Plex connection credentials first.</p>
+          <p className="text-sm text-surface-500">Configure Plex connection credentials first.</p>
         ) : (
           <div className="space-y-3">
             <button
               type="button"
               disabled={discoveringPlex || importingPlex}
               onClick={discoverPlexImports}
-              className="rounded-lg border border-purple-500/60 px-3 py-1.5 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50"
+              className="rounded-lg border border-accent-500/60 px-3 py-1.5 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50"
             >
               {discoveringPlex ? 'Scanning…' : 'Scan Plex library'}
             </button>
@@ -74,11 +74,11 @@ export default function ImportFromPlexSection({ plexConfigured }: Props) {
                   <button
                     type="button"
                     onClick={() => setSelectedPlexImports(plexDiscovery.filter((s) => !s.alreadyTracked && s.tvdbId).map((s) => s.ratingKey))}
-                    className="text-xs text-purple-200 underline"
+                    className="text-xs text-accent-200 underline"
                   >
                     Select resolvable
                   </button>
-                  <button type="button" onClick={() => setSelectedPlexImports([])} className="text-xs text-gray-300 underline">
+                  <button type="button" onClick={() => setSelectedPlexImports([])} className="text-xs text-surface-300 underline">
                     Select none
                   </button>
                 </div>
@@ -89,7 +89,7 @@ export default function ImportFromPlexSection({ plexConfigured }: Props) {
                       <label
                         key={show.ratingKey}
                         className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm ${
-                          disabled ? 'border-gray-800 bg-gray-900/50 text-gray-500' : 'border-gray-700 bg-gray-900 text-gray-100'
+                          disabled ? 'border-surface-800 bg-surface-900/50 text-surface-500' : 'border-surface-700 bg-surface-900 text-surface-100'
                         }`}
                       >
                         <input
@@ -101,11 +101,11 @@ export default function ImportFromPlexSection({ plexConfigured }: Props) {
                               e.target.checked ? [...current, show.ratingKey] : current.filter((k) => k !== show.ratingKey)
                             )
                           }
-                          className="mt-1 accent-purple-500"
+                          className="mt-1 accent-accent-500"
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block font-medium">{show.title}{show.year ? ` (${show.year})` : ''}</span>
-                          <span className="block text-xs text-gray-500">
+                          <span className="block text-xs text-surface-500">
                             {show.viewedLeafCount}/{show.leafCount} watched
                             {show.alreadyTracked ? ' · Already in watchlist' : ''}
                             {!show.tvdbId ? ' · No TVDB match' : ''}
@@ -120,14 +120,14 @@ export default function ImportFromPlexSection({ plexConfigured }: Props) {
                   type="button"
                   disabled={importingPlex || selectedPlexImports.length === 0}
                   onClick={importSelectedPlexShows}
-                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50"
+                  className="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50"
                 >
                   {importingPlex ? 'Importing…' : `Import ${selectedPlexImports.length} selected`}
                 </button>
               </div>
             )}
             {plexImportSummary && (
-              <p className="rounded-lg border border-purple-500/30 bg-purple-950/30 px-3 py-2 text-sm text-purple-100">{plexImportSummary}</p>
+              <p className="rounded-lg border border-accent-500/30 bg-accent-950/30 px-3 py-2 text-sm text-accent-100">{plexImportSummary}</p>
             )}
           </div>
         )}

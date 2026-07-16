@@ -68,7 +68,7 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-300">
+          <label className="block text-sm font-medium mb-1 text-surface-300">
             Username
           </label>
           <input
@@ -76,11 +76,11 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
             type="text"
             required
             autoComplete="username"
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+            className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg focus:outline-none focus:border-accent-500 text-surface-100"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-300">
+          <label className="block text-sm font-medium mb-1 text-surface-300">
             Password
           </label>
           <input
@@ -88,12 +88,12 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
             type="password"
             required
             autoComplete="new-password"
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+            className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg focus:outline-none focus:border-accent-500 text-surface-100"
           />
-          <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+          <p className="text-xs text-surface-500 mt-1">Minimum 8 characters</p>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-300">
+          <label className="block text-sm font-medium mb-1 text-surface-300">
             Confirm Password
           </label>
           <input
@@ -101,17 +101,17 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
             type="password"
             required
             autoComplete="new-password"
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+            className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg focus:outline-none focus:border-accent-500 text-surface-100"
           />
         </div>
       </div>
 
-      <fieldset className="space-y-3 rounded-xl border border-gray-800 bg-gray-950/60 p-4">
+      <fieldset className="space-y-3 rounded-xl border border-surface-800 bg-surface-950/60 p-4">
         <div>
-          <legend className="text-sm font-semibold text-gray-200">TheTVDB metadata</legend>
-          <p className="mt-1 text-xs text-gray-500">
+          <legend className="text-sm font-semibold text-surface-200">TheTVDB metadata</legend>
+          <p className="mt-1 text-xs text-surface-500">
             Optional, but needed for search and imports. Get a key from{' '}
-            <a href="https://thetvdb.com/dashboard" target="_blank" rel="noreferrer" className="text-purple-300 hover:text-purple-200 underline">
+            <a href="https://thetvdb.com/dashboard" target="_blank" rel="noreferrer" className="text-accent-300 hover:text-accent-200 underline">
               TheTVDB dashboard
             </a>
             .
@@ -119,21 +119,21 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
         </div>
 
         {tvdbApiKeyLocked ? (
-          <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-300">
+          <div className="rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-300">
             TVDB API key is configured via environment variables.
           </div>
         ) : (
           <label className="block">
-            <span className="mb-1 block text-sm text-gray-400">TVDB API key <span className="text-gray-600">(optional)</span></span>
-            <div className="flex rounded-lg border border-gray-700 bg-gray-800 focus-within:border-purple-500">
+            <span className="mb-1 block text-sm text-surface-400">TVDB API key <span className="text-surface-600">(optional)</span></span>
+            <div className="flex rounded-lg border border-surface-700 bg-surface-800 focus-within:border-accent-500">
               <input
                 name="tvdbApiKey"
                 type={showTvdbApiKey ? 'text' : 'password'}
                 autoComplete="off"
                 placeholder="Paste TVDB API key"
-                className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 focus:outline-none"
+                className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-surface-100 focus:outline-none"
               />
-              <button type="button" onClick={() => setShowTvdbApiKey((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+              <button type="button" onClick={() => setShowTvdbApiKey((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-surface-400 hover:text-white">
                 {showTvdbApiKey ? 'Hide' : 'Show'}
               </button>
             </div>
@@ -142,16 +142,16 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
 
         {!tvdbApiKeyLocked && !tvdbPinLocked && (
           <label className="block">
-            <span className="mb-1 block text-sm text-gray-400">TVDB PIN <span className="text-gray-600">(optional)</span></span>
-            <div className="flex rounded-lg border border-gray-700 bg-gray-800 focus-within:border-purple-500">
+            <span className="mb-1 block text-sm text-surface-400">TVDB PIN <span className="text-surface-600">(optional)</span></span>
+            <div className="flex rounded-lg border border-surface-700 bg-surface-800 focus-within:border-accent-500">
               <input
                 name="tvdbPin"
                 type={showTvdbPin ? 'text' : 'password'}
                 autoComplete="off"
                 placeholder="Optional subscriber PIN"
-                className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-gray-100 focus:outline-none"
+                className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-surface-100 focus:outline-none"
               />
-              <button type="button" onClick={() => setShowTvdbPin((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-gray-400 hover:text-white">
+              <button type="button" onClick={() => setShowTvdbPin((value) => !value)} className="rounded-r-lg px-3 text-xs font-semibold text-surface-400 hover:text-white">
                 {showTvdbPin ? 'Hide' : 'Show'}
               </button>
             </div>
@@ -159,24 +159,24 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
         )}
 
         {!tvdbApiKeyLocked && tvdbPinLocked && (
-          <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-300">
+          <div className="rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-300">
             TVDB PIN is configured via environment variables.
           </div>
         )}
 
         <label className="block">
-          <span className="mb-1 block text-sm text-gray-400">TVDB season type</span>
+          <span className="mb-1 block text-sm text-surface-400">TVDB season type</span>
           <select
             name="tvdbSeasonType"
             defaultValue={defaultTvdbSeasonType || 'default'}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-purple-500 text-gray-100"
+            className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg focus:outline-none focus:border-accent-500 text-surface-100"
           >
             <option value="default">Aired order (recommended)</option>
             <option value="official">Official order</option>
             <option value="dvd">DVD order</option>
             <option value="absolute">Absolute order (one continuous episode count)</option>
           </select>
-          <p className="mt-1 text-xs text-gray-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
+          <p className="mt-1 text-xs text-surface-500">Pick the TVDB order that matches how the Plex library is organized; anime libraries most often use aired or absolute order.</p>
         </label>
       </fieldset>
 
@@ -185,7 +185,7 @@ export default function SetupForm({ tvdbApiKeyLocked, tvdbPinLocked, defaultTvdb
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
+        className="w-full py-2 bg-accent-600 hover:bg-accent-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
       >
         {loading ? 'Creating account...' : 'Create account'}
       </button>

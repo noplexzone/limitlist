@@ -117,16 +117,16 @@ export default function DiscoverClient() {
         type="button"
         onClick={() => setPage((p) => Math.max(1, p - 1))}
         disabled={page === 1 || loading}
-        className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 disabled:opacity-40"
+        className="rounded-lg bg-surface-800 px-4 py-2 text-sm font-medium text-surface-200 hover:bg-surface-700 disabled:opacity-40"
       >
         Previous
       </button>
-      <span className="text-sm text-gray-500">Page {page}</span>
+      <span className="text-sm text-surface-500">Page {page}</span>
       <button
         type="button"
         onClick={() => setPage((p) => p + 1)}
         disabled={!hasNextPage || loading}
-        className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 disabled:opacity-40"
+        className="rounded-lg bg-surface-800 px-4 py-2 text-sm font-medium text-surface-200 hover:bg-surface-700 disabled:opacity-40"
       >
         Next
       </button>
@@ -143,18 +143,18 @@ export default function DiscoverClient() {
               onClick={() => { setFeedType(t); setPage(1) }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 feedType === t
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+                  ? 'bg-accent-600 text-white'
+                  : 'bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700'
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-500">Ranked by AniList · page {page} · TVDB matching happens on import</p>
+        <p className="text-xs text-surface-500">Ranked by AniList · page {page} · TVDB matching happens on import</p>
       </div>
 
-      {loading && <div className="flex justify-center py-20 text-gray-400">Loading…</div>}
+      {loading && <div className="flex justify-center py-20 text-surface-400">Loading…</div>}
 
       {!loading && fetchError && (
         <div className="text-center py-20">
@@ -164,7 +164,7 @@ export default function DiscoverClient() {
       )}
 
       {!loading && !fetchError && results.length === 0 && (
-        <div className="text-center py-20 text-gray-500">No results found.</div>
+        <div className="text-center py-20 text-surface-500">No results found.</div>
       )}
 
       {!loading && !fetchError && results.length > 0 && (
@@ -182,14 +182,14 @@ export default function DiscoverClient() {
               return (
                 <article
                   key={cardKey}
-                  className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70"
+                  className="group relative aspect-[2/3] overflow-hidden rounded-2xl border border-surface-800 bg-surface-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-accent-500/70"
                 >
                   {detailHref ? (
-                    <Link href={detailHref} aria-label={`View details for ${result.title}`} className="absolute inset-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-300">
+                    <Link href={detailHref} aria-label={`View details for ${result.title}`} className="absolute inset-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-300">
                       {result.posterUrl ? (
                         <PosterImage src={result.posterUrl} alt={`${result.title} poster`} title={result.title} />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+                        <div className="flex h-full w-full items-center justify-center bg-surface-800 px-3 text-center text-sm text-surface-500">
                           {result.title}
                         </div>
                       )}
@@ -197,7 +197,7 @@ export default function DiscoverClient() {
                   ) : result.posterUrl ? (
                     <PosterImage src={result.posterUrl} alt={`${result.title} poster`} title={result.title} />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+                    <div className="flex h-full w-full items-center justify-center bg-surface-800 px-3 text-center text-sm text-surface-500">
                       {result.title}
                     </div>
                   )}
@@ -210,7 +210,7 @@ export default function DiscoverClient() {
 
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-2 pb-2 pt-12">
                     {detailHref ? (
-                      <Link href={detailHref} className="relative z-10 mb-1 block text-[11px] font-semibold leading-tight text-white line-clamp-2 hover:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-300" aria-label={`View details for ${result.title}`}>
+                      <Link href={detailHref} className="relative z-10 mb-1 block text-[11px] font-semibold leading-tight text-white line-clamp-2 hover:text-accent-200 focus:outline-none focus:ring-2 focus:ring-accent-300" aria-label={`View details for ${result.title}`}>
                         {result.title}
                       </Link>
                     ) : (
@@ -225,7 +225,7 @@ export default function DiscoverClient() {
                       <button
                         onClick={(event) => { event.stopPropagation(); void handleImport(result) }}
                         disabled={isImporting}
-                        className="w-full rounded-full bg-purple-600/90 py-1 text-xs font-semibold text-white hover:bg-purple-500 disabled:opacity-50 transition-colors"
+                        className="w-full rounded-full bg-accent-600/90 py-1 text-xs font-semibold text-white hover:bg-accent-500 disabled:opacity-50 transition-colors"
                       >
                         {isImporting ? 'Adding…' : '+ Add to Watchlist'}
                       </button>

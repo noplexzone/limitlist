@@ -90,25 +90,25 @@ function AiringCalendar({
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 select-none">
+    <div className="bg-surface-900 border border-surface-800 rounded-xl p-4 select-none">
       {/* Month header */}
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={prevMonth}
           aria-label="Previous month"
-          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+          className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-gray-200">
+        <span className="text-sm font-semibold text-surface-200">
           {MONTH_NAMES[viewMonth]} {viewYear}
         </span>
         <button
           onClick={nextMonth}
           aria-label="Next month"
-          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+          className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -119,7 +119,7 @@ function AiringCalendar({
       {/* Day-of-week headers */}
       <div className="grid grid-cols-7 mb-1">
         {DAY_ABBRS.map((d) => (
-          <div key={d} className="text-center text-[10px] font-medium text-gray-500 py-1">{d}</div>
+          <div key={d} className="text-center text-[10px] font-medium text-surface-500 py-1">{d}</div>
         ))}
       </div>
 
@@ -140,13 +140,13 @@ function AiringCalendar({
               aria-pressed={isSelected}
               className={`
                 relative flex flex-col items-center justify-center h-8 w-full rounded-lg text-xs font-medium transition-colors
-                ${isSelected ? 'bg-purple-600 text-white' : isToday ? 'bg-slate-700 text-white' : 'text-gray-300 hover:bg-gray-800'}
+                ${isSelected ? 'bg-accent-600 text-white' : isToday ? 'bg-slate-700 text-white' : 'text-surface-300 hover:bg-surface-800'}
               `}
             >
               {day}
               {hasAiring && (
                 <span
-                  className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full ${isSelected ? 'bg-white' : 'bg-purple-400'}`}
+                  className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full ${isSelected ? 'bg-white' : 'bg-accent-400'}`}
                   aria-hidden="true"
                 />
               )}
@@ -156,15 +156,15 @@ function AiringCalendar({
       </div>
 
       {selectedDate && (
-        <p className="mt-3 text-center text-xs text-gray-500">
+        <p className="mt-3 text-center text-xs text-surface-500">
           Showing episodes for{' '}
-          <span className="text-purple-400 font-medium">
+          <span className="text-accent-400 font-medium">
             {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </span>
           {' '}—{' '}
           <button
             onClick={() => onSelectDate(null)}
-            className="text-gray-400 underline hover:text-white"
+            className="text-surface-400 underline hover:text-white"
           >
             show all
           </button>
@@ -215,12 +215,12 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
     <div>
       <div className={`flex ${compact ? 'flex-col items-stretch gap-2' : 'items-center justify-between'} mb-6`}>
         <div>
-          {refreshMsg && <p className="text-sm text-gray-400">{refreshMsg}</p>}
+          {refreshMsg && <p className="text-sm text-surface-400">{refreshMsg}</p>}
         </div>
         <button
           onClick={refreshAll}
           disabled={refreshing}
-          className="px-4 py-2 bg-purple-700 hover:bg-purple-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-accent-700 hover:bg-accent-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
         >
           {refreshing ? 'Refreshing…' : 'Refresh All Schedules'}
         </button>
@@ -231,14 +231,14 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
         <div>
           {!hasEntries ? (
             <div className="text-center py-16">
-              <p className="text-gray-400 text-lg mb-2">No upcoming episodes known.</p>
-              <p className="text-gray-500 text-sm">
+              <p className="text-surface-400 text-lg mb-2">No upcoming episodes known.</p>
+              <p className="text-surface-500 text-sm">
                 Use &ldquo;Refresh All Schedules&rdquo; to fetch airing info from TVDB, or add shows with upcoming episodes to your watchlist.
               </p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-400">No episodes on this date.</p>
+              <p className="text-surface-400">No episodes on this date.</p>
             </div>
           ) : (
             <div className="grid gap-3">
@@ -248,10 +248,10 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
                 return (
                   <div
                     key={`${entry.showId}-${entry.airsAt}`}
-                    className={`bg-gray-900 border border-gray-800 rounded-xl ${compact ? 'p-3' : 'p-4'} flex gap-3 items-start`}
+                    className={`bg-surface-900 border border-surface-800 rounded-xl ${compact ? 'p-3' : 'p-4'} flex gap-3 items-start`}
                   >
                     {thumbSrc && (
-                      <div className="relative shrink-0 w-[72px] h-[54px] rounded-lg overflow-hidden bg-gray-800">
+                      <div className="relative shrink-0 w-[72px] h-[54px] rounded-lg overflow-hidden bg-surface-800">
                         <Image
                           src={thumbSrc}
                           alt=""
@@ -265,16 +265,16 @@ export default function UpcomingReleases({ initialEntries, compact = false }: { 
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-white truncate">{entry.title}</span>
                         <span
-                          className={`px-2 py-0.5 rounded text-xs font-medium text-white flex-shrink-0 ${isShowStatus(entry.status) ? STATUS_BADGE_CLASSES[entry.status] : 'bg-gray-600'}`}
+                          className={`px-2 py-0.5 rounded text-xs font-medium text-white flex-shrink-0 ${isShowStatus(entry.status) ? STATUS_BADGE_CLASSES[entry.status] : 'bg-surface-600'}`}
                         >
                           {isShowStatus(entry.status) ? STATUS_LABELS[entry.status] : entry.status}
                         </span>
                       </div>
                       <div className="mt-1 flex flex-col gap-0.5">
                         {episodeLabel && (
-                          <span className="text-sm text-gray-300 truncate">{episodeLabel}</span>
+                          <span className="text-sm text-surface-300 truncate">{episodeLabel}</span>
                         )}
-                        <span className="text-xs text-purple-300">{formatAirDate(entry.airsAt)}</span>
+                        <span className="text-xs text-accent-300">{formatAirDate(entry.airsAt)}</span>
                       </div>
                     </div>
                   </div>

@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* Accent (purple) — RGB channels matching Tailwind v3 purple palette */
+  --color-accent-100: 243 232 255;
+  --color-accent-200: 233 213 255;
+  --color-accent-300: 216 180 254;
+  --color-accent-400: 192 132 252;
+  --color-accent-500: 168 85 247;
+  --color-accent-600: 147 51 234;
+  --color-accent-700: 126 34 206;
+  --color-accent-800: 107 33 168;
+  --color-accent-900: 88 28 135;
+  --color-accent-950: 59 7 100;
+
+  /* Surface (gray) — RGB channels matching Tailwind v3 gray palette */
+  --color-surface-100: 243 244 246;
+  --color-surface-200: 229 231 235;
+  --color-surface-300: 209 213 219;
+  --color-surface-400: 156 163 175;
+  --color-surface-500: 107 114 128;
+  --color-surface-600: 75 85 99;
+  --color-surface-700: 55 65 81;
+  --color-surface-800: 31 41 55;
+  --color-surface-900: 17 24 39;
+  --color-surface-950: 3 7 18;
+}

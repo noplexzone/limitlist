@@ -120,7 +120,7 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search anime to add…"
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-gray-100 placeholder-slate-400 outline-none transition-colors focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
+          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-surface-100 placeholder-slate-400 outline-none transition-colors focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30"
         />
       </form>
 
@@ -160,7 +160,7 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
                   type="button"
                   onClick={(e) => addResult(e, result)}
                   disabled={adding === key}
-                  className="rounded-full bg-purple-600 px-3 py-1 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50"
+                  className="rounded-full bg-accent-600 px-3 py-1 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50"
                   aria-label={`Add ${result.title} to watchlist`}
                 >
                   {adding === key ? '…' : '+'}

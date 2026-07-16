@@ -7,9 +7,9 @@ export default async function LoginPage() {
   if (user) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="bg-gray-900 p-8 rounded-xl shadow-lg w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-6 text-purple-400">
+    <div className="min-h-screen flex items-center justify-center bg-surface-950">
+      <div className="bg-surface-900 p-8 rounded-xl shadow-lg w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-center mb-6 text-accent-400">
           LimitList
         </h1>
         <LoginForm />

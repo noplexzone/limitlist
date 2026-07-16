@@ -76,90 +76,90 @@ export default function PlexSyncSection({ settings, onSettingsChange }: Props) {
         </div>
       )}
 
-      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-1">Plex Sync</h2>
-        <p className="mb-4 text-sm text-gray-400">Controls library discovery, watched thresholds, and status updates.</p>
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-surface-200 mb-1">Plex Sync</h2>
+        <p className="mb-4 text-sm text-surface-400">Controls library discovery, watched thresholds, and status updates.</p>
         {!plexConfigured ? (
-          <p className="text-sm text-gray-500">Configure Plex connection credentials first.</p>
+          <p className="text-sm text-surface-500">Configure Plex connection credentials first.</p>
         ) : (
           <form onSubmit={submitPlexSync} className="space-y-4">
             <div>
-              <p className="mb-2 text-sm text-gray-400">Libraries to scan</p>
+              <p className="mb-2 text-sm text-surface-400">Libraries to scan</p>
               {settings.plexLibrarySections.lockedByEnvironment ? (
-                <p className="text-xs text-gray-500">Library sections are set by environment variable.</p>
+                <p className="text-xs text-surface-500">Library sections are set by environment variable.</p>
               ) : plexSectionsLoading ? (
-                <p className="text-xs text-gray-500">Loading Plex show libraries…</p>
+                <p className="text-xs text-surface-500">Loading Plex show libraries…</p>
               ) : plexSections.length > 0 ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {plexSections.map((section) => (
-                    <label key={section.key} className="flex items-center gap-2 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+                    <label key={section.key} className="flex items-center gap-2 rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-200">
                       <input
                         type="checkbox"
                         checked={plexLibrarySections.includes(section.key)}
                         onChange={(e) => setPlexLibrarySections((current) =>
                           e.target.checked ? [...current, section.key] : current.filter((k) => k !== section.key)
                         )}
-                        className="accent-purple-500"
+                        className="accent-accent-500"
                       />
                       {section.title}
                     </label>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-500">No show libraries loaded yet; save/test Plex credentials first. Empty means all show libraries.</p>
+                <p className="text-xs text-surface-500">No show libraries loaded yet; save/test Plex credentials first. Empty means all show libraries.</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">Choose dedicated Anime libraries to make discovery faster and avoid regular TV imports. Leave none selected to scan all show libraries.</p>
+              <p className="mt-1 text-xs text-surface-500">Choose dedicated Anime libraries to make discovery faster and avoid regular TV imports. Leave none selected to scan all show libraries.</p>
             </div>
             <label className="block">
-              <span className="mb-1 block text-sm text-gray-400">Plex account ID <span className="text-gray-600">(optional)</span></span>
+              <span className="mb-1 block text-sm text-surface-400">Plex account ID <span className="text-surface-600">(optional)</span></span>
               <input
                 value={plexAccountId}
                 onChange={(e) => setPlexAccountId(e.target.value)}
                 readOnly={settings.plexAccountId.lockedByEnvironment}
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 read-only:opacity-60"
+                className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-surface-100 outline-none focus:border-accent-500 read-only:opacity-60"
               />
-              <p className="mt-1 text-xs text-gray-500">Scope shared-server history to one Plex account. Blank uses the server owner.</p>
+              <p className="mt-1 text-xs text-surface-500">Scope shared-server history to one Plex account. Blank uses the server owner.</p>
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm text-gray-400">Watched threshold</span>
+              <span className="mb-1 block text-sm text-surface-400">Watched threshold</span>
               <select
                 value={plexWatchedThreshold}
                 onChange={(e) => setPlexWatchedThreshold(e.target.value as 'viewcount' | 'partial')}
                 disabled={settings.plexWatchedThreshold.lockedByEnvironment}
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500 disabled:opacity-60"
+                className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-surface-100 outline-none focus:border-accent-500 disabled:opacity-60"
               >
                 <option value="viewcount">Plex view count only</option>
                 <option value="partial">Also count 90% complete plays</option>
               </select>
-              <p className="mt-1 text-xs text-gray-500">Partial catches nearly-finished episodes Plex has not marked played.</p>
+              <p className="mt-1 text-xs text-surface-500">Partial catches nearly-finished episodes Plex has not marked played.</p>
             </label>
-            <label className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+            <label className="flex items-start gap-3 rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-200">
               <input
                 type="checkbox"
                 checked={plexAutoStatus}
                 onChange={(e) => setPlexAutoStatus(e.target.checked)}
                 disabled={settings.plexAutoStatus.lockedByEnvironment}
-                className="mt-1 accent-purple-500"
+                className="mt-1 accent-accent-500"
               />
               <span>
                 <span className="font-medium">Auto-set Up-to-Date</span>
-                <span className="block text-xs text-gray-500">When all aired episodes are watched, Plex may update the show status.</span>
+                <span className="block text-xs text-surface-500">When all aired episodes are watched, Plex may update the show status.</span>
               </span>
             </label>
-            <label className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-gray-200">
+            <label className="flex items-start gap-3 rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-200">
               <input
                 type="checkbox"
                 checked={plexSyncOnRefresh}
                 onChange={(e) => setPlexSyncOnRefresh(e.target.checked)}
                 disabled={settings.plexSyncOnRefresh.lockedByEnvironment}
-                className="mt-1 accent-purple-500"
+                className="mt-1 accent-accent-500"
               />
               <span>
                 <span className="font-medium">Sync after schedule refresh</span>
-                <span className="block text-xs text-gray-500">Refresh All Schedules also runs Plex sync afterward.</span>
+                <span className="block text-xs text-surface-500">Refresh All Schedules also runs Plex sync afterward.</span>
               </span>
             </label>
-            <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+            <button disabled={saving} className="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50">
               Save sync settings
             </button>
           </form>

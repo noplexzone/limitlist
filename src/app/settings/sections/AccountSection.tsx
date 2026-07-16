@@ -75,49 +75,49 @@ export default function AccountSection({ settings, onSettingsChange }: Props) {
         </div>
       )}
 
-      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-4">Account</h2>
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-surface-200 mb-4">Account</h2>
         <form onSubmit={submitAccount} className="space-y-4">
           <label className="block">
-            <span className="mb-1 block text-sm text-gray-400">Username</span>
+            <span className="mb-1 block text-sm text-surface-400">Username</span>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+              className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-surface-100 outline-none focus:border-accent-500"
             />
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-sm text-gray-400">Current password</span>
+              <span className="mb-1 block text-sm text-surface-400">Current password</span>
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 autoComplete="current-password"
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+                className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-surface-100 outline-none focus:border-accent-500"
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm text-gray-400">New password</span>
+              <span className="mb-1 block text-sm text-surface-400">New password</span>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 autoComplete="new-password"
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-purple-500"
+                className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-surface-100 outline-none focus:border-accent-500"
               />
             </label>
           </div>
-          <button disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50">
+          <button disabled={saving} className="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50">
             Save account
           </button>
         </form>
       </section>
 
-      <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-200 mb-4">Profile picture</h2>
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-surface-200 mb-4">Profile picture</h2>
         <div className="flex items-center gap-4">
-          <div className="h-20 w-20 overflow-hidden rounded-xl bg-purple-800 flex items-center justify-center text-lg font-bold text-white">
+          <div className="h-20 w-20 overflow-hidden rounded-xl bg-accent-800 flex items-center justify-center text-lg font-bold text-white">
             {settings.profileImageData ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={settings.profileImageData} alt="Profile" className="h-full w-full object-cover" />
@@ -130,14 +130,14 @@ export default function AccountSection({ settings, onSettingsChange }: Props) {
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
               onChange={(e) => uploadProfileImage(e.target.files?.[0] ?? null)}
-              className="block text-sm text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-800 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-100 hover:file:bg-gray-700"
+              className="block text-sm text-surface-400 file:mr-3 file:rounded-lg file:border-0 file:bg-surface-800 file:px-3 file:py-2 file:text-sm file:font-medium file:text-surface-100 hover:file:bg-surface-700"
             />
-            <p className="text-xs text-gray-500">Stored in the local database as an image data URL; max 2 MB.</p>
+            <p className="text-xs text-surface-500">Stored in the local database as an image data URL; max 2 MB.</p>
             {settings.profileImageData && (
               <button
                 type="button"
                 onClick={() => savePatch({ profileImageData: null }, 'Profile picture removed.')}
-                className="text-xs text-gray-400 underline hover:text-white"
+                className="text-xs text-surface-400 underline hover:text-white"
               >
                 Remove picture
               </button>

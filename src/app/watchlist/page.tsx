@@ -9,11 +9,11 @@ export default async function WatchlistPage() {
   if (!user) redirect('/login')
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-surface-950">
       <Nav />
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-purple-400">My Watchlist</h1>
-        <Suspense fallback={<p className="text-gray-400">Loading watchlist...</p>}>
+        <h1 className="text-3xl font-bold mb-8 text-accent-400">My Watchlist</h1>
+        <Suspense fallback={<p className="text-surface-400">Loading watchlist...</p>}>
           <WatchlistClient />
         </Suspense>
       </main>

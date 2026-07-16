@@ -50,7 +50,7 @@ function StarIcon({ fillPct }: { fillPct: number }) {
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 drop-shadow sm:h-6 sm:w-6">
       <path
         d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
-        className="fill-gray-500/80"
+        className="fill-surface-500/80"
       />
       <path
         d="M12 2.25l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.06l-5.8 3.05 1.11-6.46-4.7-4.58 6.49-.94L12 2.25z"
@@ -117,7 +117,7 @@ function StarRating({
           onClick={(e) => click(e, null)}
           onKeyDown={stopKeyNavigation}
           aria-label="Clear rating"
-          className="mx-auto mt-1 block rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-200 hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-purple-300"
+          className="mx-auto mt-1 block rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-surface-200 hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-accent-300"
           title="Clear rating"
         >
           Clear
@@ -257,25 +257,25 @@ export default function WatchlistClient() {
     })
   }, [shows, sortField, sortDir, statusFilter])
 
-  if (loading) return <p className="text-gray-400">Loading watchlist...</p>
+  if (loading) return <p className="text-surface-400">Loading watchlist...</p>
   if (error) return <p className="text-red-400">{error}</p>
   if (shows.length === 0)
     return (
       <div className="text-center py-16">
-        <p className="text-gray-400 text-lg mb-2">Your watchlist is empty.</p>
-        <p className="text-gray-500">Use the search bar above to find and import anime.</p>
+        <p className="text-surface-400 text-lg mb-2">Your watchlist is empty.</p>
+        <p className="text-surface-500">Use the search bar above to find and import anime.</p>
       </div>
     )
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-800 bg-gray-900/70 p-3">
-        <label className="text-sm text-gray-400">
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-surface-800 bg-surface-900/70 p-3">
+        <label className="text-sm text-surface-400">
           Status{' '}
           <select
             value={statusFilter}
             onChange={(e) => applyParams({ status: e.target.value as StatusFilter })}
-            className="ml-2 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 outline-none focus:border-purple-500"
+            className="ml-2 rounded-lg border border-surface-700 bg-surface-950 px-3 py-1.5 text-sm text-surface-100 outline-none focus:border-accent-500"
           >
             <option value="ALL">All</option>
             <option value="NEEDS_UPDATE">Needs update</option>
@@ -284,7 +284,7 @@ export default function WatchlistClient() {
             ))}
           </select>
         </label>
-        <label className="text-sm text-gray-400">
+        <label className="text-sm text-surface-400">
           Sort{' '}
           <select
             value={sortField}
@@ -292,7 +292,7 @@ export default function WatchlistClient() {
               const newField = e.target.value as SortField
               applyParams({ sortField: newField, sortDir: newField === 'title' ? 'asc' : 'desc' })
             }}
-            className="ml-2 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100 outline-none focus:border-purple-500"
+            className="ml-2 rounded-lg border border-surface-700 bg-surface-950 px-3 py-1.5 text-sm text-surface-100 outline-none focus:border-accent-500"
           >
             <option value="updated">Last updated</option>
             <option value="title">Title</option>
@@ -305,18 +305,18 @@ export default function WatchlistClient() {
           aria-label={sortDir === 'asc' ? 'Sort ascending' : 'Sort descending'}
           title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
           onClick={() => applyParams({ sortDir: sortDir === 'asc' ? 'desc' : 'asc' })}
-          className="rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-sm text-gray-100 outline-none transition-colors hover:border-purple-500 focus:border-purple-500"
+          className="rounded-lg border border-surface-700 bg-surface-950 px-2.5 py-1.5 text-sm text-surface-100 outline-none transition-colors hover:border-accent-500 focus:border-accent-500"
         >
           {sortDir === 'asc' ? '↑' : '↓'}
         </button>
-        <button type="button" disabled={syncingAll} onClick={syncAllWithPlex} className="rounded-lg border border-purple-500/60 px-3 py-1.5 text-sm font-semibold text-purple-100 hover:bg-purple-950 disabled:opacity-50">{syncingAll ? 'Syncing…' : 'Sync all with Plex'}</button>
-        <p className="ml-auto text-xs text-gray-500">{visibleShows.length} of {shows.length} shown</p>
+        <button type="button" disabled={syncingAll} onClick={syncAllWithPlex} className="rounded-lg border border-accent-500/60 px-3 py-1.5 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50">{syncingAll ? 'Syncing…' : 'Sync all with Plex'}</button>
+        <p className="ml-auto text-xs text-surface-500">{visibleShows.length} of {shows.length} shown</p>
       </div>
 
-      {syncSummary && <p className="rounded-xl border border-purple-500/30 bg-purple-950/30 px-4 py-3 text-sm text-purple-100">{syncSummary}</p>}
+      {syncSummary && <p className="rounded-xl border border-accent-500/30 bg-accent-950/30 px-4 py-3 text-sm text-accent-100">{syncSummary}</p>}
 
       {visibleShows.length === 0 ? (
-        <div className="py-16 text-center text-gray-500">No shows match those filters.</div>
+        <div className="py-16 text-center text-surface-500">No shows match those filters.</div>
       ) : (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
           {visibleShows.map((show) => (
@@ -328,13 +328,13 @@ export default function WatchlistClient() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') router.push(`/anime/${show.metadataProvider}/${show.metadataId}`)
               }}
-              className="group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-purple-500/70 focus:border-purple-500/70 focus:outline-none"
+              className="group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-2xl border border-surface-800 bg-surface-900 shadow-lg shadow-black/30 transition-transform hover:-translate-y-1 hover:border-accent-500/70 focus:border-accent-500/70 focus:outline-none"
               title={show.title}
             >
               {show.posterUrl ? (
                 <PosterImage src={show.posterUrl} alt={`${show.title} poster`} title={show.title} />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-800 px-3 text-center text-sm text-gray-500">
+                <div className="flex h-full w-full items-center justify-center bg-surface-800 px-3 text-center text-sm text-surface-500">
                   {show.title}
                 </div>
               )}
@@ -359,10 +359,10 @@ export default function WatchlistClient() {
               </button>
 
               {removeConfirmId === show.id && (
-                <div className="absolute inset-x-2 top-12 z-40 rounded-xl border border-red-400/50 bg-gray-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
-                  <p className="mb-2 text-xs font-medium text-gray-100">Remove?</p>
+                <div className="absolute inset-x-2 top-12 z-40 rounded-xl border border-red-400/50 bg-surface-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
+                  <p className="mb-2 text-xs font-medium text-surface-100">Remove?</p>
                   <div className="flex justify-center gap-2">
-                    <button type="button" className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700" onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(null) }}>Cancel</button>
+                    <button type="button" className="rounded bg-surface-800 px-2 py-1 text-xs text-surface-200 hover:bg-surface-700" onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(null) }}>Cancel</button>
                     <button type="button" className="rounded bg-red-700 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600" onClick={(e) => { e.stopPropagation(); void removeShow(show.id) }}>Remove</button>
                   </div>
                 </div>
@@ -389,8 +389,8 @@ export default function WatchlistClient() {
                   <p className="text-[11px] font-medium leading-tight text-white line-clamp-2">{show.title}</p>
                   {show.airedCount ? (
                     <div className="mt-1">
-                      <div className="h-1 overflow-hidden rounded-full bg-gray-800"><div className="h-full bg-purple-500" style={{ width: `${Math.min(100, Math.round(((show.watchedCount ?? 0) / show.airedCount) * 100))}%` }} /></div>
-                      <p className="mt-1 text-[10px] text-gray-300">{show.watchedCount ?? 0}/{show.airedCount} watched</p>
+                      <div className="h-1 overflow-hidden rounded-full bg-surface-800"><div className="h-full bg-accent-500" style={{ width: `${Math.min(100, Math.round(((show.watchedCount ?? 0) / show.airedCount) * 100))}%` }} /></div>
+                      <p className="mt-1 text-[10px] text-surface-300">{show.watchedCount ?? 0}/{show.airedCount} watched</p>
                     </div>
                   ) : null}
                   <div className="hidden pointer-events-auto group-hover:block group-focus-within:block">
