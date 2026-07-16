@@ -26,6 +26,7 @@ import {
 } from '@/lib/settings'
 import Nav from '@/components/Nav'
 import SettingsClient from './SettingsClient'
+import pkg from '../../../package.json'
 
 function maskKey(value: string | null) {
   if (!value) return null
@@ -56,10 +57,11 @@ export default async function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <Nav />
-      <main className="max-w-2xl mx-auto px-4 py-12">
+      <main className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-2 text-purple-400">Settings</h1>
         <p className="text-gray-400 text-sm mb-10">Manage your LimitList account and metadata provider settings.</p>
         <SettingsClient
+          version={pkg.version}
           initialSettings={{
             username: appUser?.username ?? user.username,
             profileImageData: appUser?.profileImageData ?? null,
