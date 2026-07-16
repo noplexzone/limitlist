@@ -65,6 +65,7 @@ export async function getDefaultCastLanguage(): Promise<'english' | 'japanese'> 
 export const THEME_SETTING = 'theme'
 export const DEFAULT_THEME = DEFAULT_THEME_ID
 export async function getConfiguredTheme(): Promise<string> {
+  if (!process.env.DATABASE_URL) return DEFAULT_THEME
   try {
     const storedTheme = await getStoredSetting(THEME_SETTING)
     return isThemeId(storedTheme) ? storedTheme : DEFAULT_THEME
