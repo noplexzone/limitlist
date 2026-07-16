@@ -23,6 +23,7 @@ No unreleased changes yet.
 ### Fixed
 
 - **Scheduler bookkeeping**: Skipped scheduled tasks no longer bump `lastRunAt`; persisted interrupted `running` tasks are marked as errors on scheduler startup, and run-now overlap prevention is centralized.
+- **Container build theme fallback**: The server-rendered theme defaults safely during static build paths when the runtime settings database is not available.
 
 ## [1.3.0] - 2026-07-15
 

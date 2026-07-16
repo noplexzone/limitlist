@@ -32,6 +32,7 @@ export const changelogEntries: ChangelogEntry[] = [
         title: 'Bug fixes',
         bullets: [
           'Skipped scheduled tasks no longer update last-run timestamps, run-now overlap checks are centralized, and interrupted running tasks are cleaned up on scheduler startup.',
+          'Server-rendered theme loading now falls back safely during static build paths when the settings database is unavailable.',
         ],
       },
     ],
