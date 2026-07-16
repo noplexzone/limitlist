@@ -27,6 +27,11 @@ interface AniListImage {
   medium?: string | null
 }
 
+interface AniListRelationEdge {
+  relationType?: AniListRelationType | null
+  node?: (AniListMedia & { type?: string | null }) | null
+}
+
 export interface AniListMedia {
   id: number
   idMal?: number | null
@@ -42,6 +47,9 @@ export interface AniListMedia {
   genres?: string[] | null
   averageScore?: number | null
   popularity?: number | null
+  relations?: {
+    edges?: AniListRelationEdge[] | null
+  } | null
   characters?: {
     edges?: Array<{
       node?: { name?: { full?: string | null } | null } | null
@@ -52,10 +60,7 @@ export interface AniListMedia {
 
 export interface AniListDetailMedia extends AniListMedia {
   relations?: {
-    edges?: Array<{
-      relationType?: AniListRelationType | null
-      node?: AniListMedia & { type?: string | null }
-    }> | null
+    edges?: AniListRelationEdge[] | null
   } | null
   recommendations?: {
     nodes?: Array<{
@@ -157,11 +162,17 @@ const SEARCH_DETAIL_QUERY = `
 `
 
 const DISCOVER_QUERY = `
-  query DiscoverAnime($page: Int!, $perPage: Int!, $sort: [MediaSort], $status: MediaStatus) {
+  query DiscoverAnime($page: Int!, $perPage: Int!, $sort: [MediaSort], $status: MediaStatus, $formatIn: [MediaFormat]) {
     Page(page: $page, perPage: $perPage) {
       pageInfo { hasNextPage }
-      media(type: ANIME, sort: $sort, isAdult: false, status: $status) {
+      media(type: ANIME, sort: $sort, isAdult: false, status: $status, format_in: $formatIn) {
         ${MEDIA_FIELDS}
+        relations {
+          edges {
+            relationType
+            node { id format }
+          }
+        }
       }
     }
   }
@@ -292,6 +303,7 @@ function buildSeasonSummary(media: AniListMedia, index: number): MetadataSeasonS
 }
 
 const SERIES_FORMATS = new Set(['TV', 'TV_SHORT'])
+const DISCOVER_SERIES_FORMATS = Array.from(SERIES_FORMATS)
 const CHILD_FORMATS = new Set(['MOVIE', 'SPECIAL', 'OVA', 'ONA'])
 const STRICT_CHILD_RELATIONS = new Set(['PREQUEL', 'SEQUEL', 'SIDE_STORY', 'SPIN_OFF', 'SUMMARY'])
 
@@ -396,6 +408,12 @@ export function mapAniListDetailToMetadata(media: AniListDetailMedia): MetadataR
   }
 }
 
+function hasSeriesPrequel(media: AniListMedia): boolean {
+  return (media.relations?.edges ?? []).some((edge) =>
+    edge?.relationType === 'PREQUEL' && SERIES_FORMATS.has(String(edge.node?.format))
+  )
+}
+
 export async function fetchAniListDiscover(
   type: AniListFeedType,
   page = 1,
@@ -413,10 +431,14 @@ export async function fetchAniListDiscover(
   } else {
     sort = ['POPULARITY_DESC']
   }
-  const data = await postAniList<AniListResponse>(DISCOVER_QUERY, { page, perPage, sort, status }, 5000)
+  const data = await postAniList<AniListResponse>(
+    DISCOVER_QUERY,
+    { page, perPage, sort, status, formatIn: DISCOVER_SERIES_FORMATS },
+    5000
+  )
   if (!data) throw new Error('AniList request failed')
   return {
-    media: data.data?.Page?.media ?? [],
+    media: (data.data?.Page?.media ?? []).filter((media) => !hasSeriesPrequel(media)),
     hasNextPage: Boolean(data.data?.Page?.pageInfo?.hasNextPage),
   }
 }
