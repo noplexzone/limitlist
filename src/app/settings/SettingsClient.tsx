@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SettingsState } from './types'
 import AccountSection from './sections/AccountSection'
@@ -14,14 +14,27 @@ import AboutSection from './sections/AboutSection'
 const SECTIONS = [
   { id: 'account', label: 'Account' },
   { id: 'metadata', label: 'Metadata' },
-  { id: 'plex-connection', label: 'Plex Connection' },
-  { id: 'plex-sync', label: 'Plex Sync' },
-  { id: 'import-from-plex', label: 'Import from Plex' },
+  { id: 'plex', label: 'Plex' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'about', label: 'About' },
 ] as const
 
 type SectionId = (typeof SECTIONS)[number]['id']
+
+const PLEX_PANELS = [
+  { id: 'connection', label: 'Connection' },
+  { id: 'sync', label: 'Sync options' },
+  { id: 'import', label: 'Import watched anime' },
+] as const
+
+type PlexPanelId = (typeof PLEX_PANELS)[number]['id']
+
+// Legacy section IDs that map to the unified Plex section.
+const LEGACY_PLEX_MAP: Record<string, PlexPanelId> = {
+  'plex-connection': 'connection',
+  'plex-sync': 'sync',
+  'import-from-plex': 'import',
+}
 
 function SettingsRouter({ initialSettings, version }: { initialSettings: SettingsState; version: string }) {
   const router = useRouter()
@@ -29,10 +42,38 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
   const [settings, setSettings] = useState(initialSettings)
 
   const rawSection = searchParams.get('section') ?? 'account'
-  const activeSection: SectionId = (SECTIONS.some((s) => s.id === rawSection) ? rawSection : 'account') as SectionId
+  const rawPanel = searchParams.get('panel') ?? 'connection'
+
+  // Redirect legacy plex section URLs to the unified plex section.
+  useEffect(() => {
+    if (rawSection in LEGACY_PLEX_MAP) {
+      const panel = LEGACY_PLEX_MAP[rawSection]
+      router.replace(`/settings?section=plex&panel=${panel}`, { scroll: false })
+    }
+  }, [rawSection, router])
+
+  const isLegacyRedirect = rawSection in LEGACY_PLEX_MAP
+
+  const activeSection: SectionId = (SECTIONS.some((s) => s.id === rawSection)
+    ? rawSection
+    : isLegacyRedirect
+      ? 'plex'
+      : 'account') as SectionId
+
+  const activePlexPanel: PlexPanelId = (PLEX_PANELS.some((p) => p.id === rawPanel)
+    ? rawPanel
+    : 'connection') as PlexPanelId
 
   function navigate(id: SectionId) {
-    router.replace(`/settings?section=${id}`, { scroll: false })
+    if (id === 'plex') {
+      router.replace(`/settings?section=plex&panel=${activePlexPanel}`, { scroll: false })
+    } else {
+      router.replace(`/settings?section=${id}`, { scroll: false })
+    }
+  }
+
+  function navigatePlexPanel(panel: PlexPanelId) {
+    router.replace(`/settings?section=plex&panel=${panel}`, { scroll: false })
   }
 
   function renderSection() {
@@ -41,12 +82,37 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
         return <AccountSection settings={settings} onSettingsChange={setSettings} />
       case 'metadata':
         return <MetadataSection settings={settings} onSettingsChange={setSettings} />
-      case 'plex-connection':
-        return <PlexConnectionSection settings={settings} onSettingsChange={setSettings} />
-      case 'plex-sync':
-        return <PlexSyncSection settings={settings} onSettingsChange={setSettings} />
-      case 'import-from-plex':
-        return <ImportFromPlexSection plexConfigured={settings.plexBaseUrl.configured && settings.plexToken.configured} />
+      case 'plex':
+        return (
+          <div className="space-y-6">
+            {/* Inner tab strip */}
+            <div className="flex gap-1 border-b border-gray-800 pb-0">
+              {PLEX_PANELS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => navigatePlexPanel(p.id)}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                    activePlexPanel === p.id
+                      ? 'border-purple-500 text-purple-300'
+                      : 'border-transparent text-gray-400 hover:text-gray-200'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {activePlexPanel === 'connection' && (
+              <PlexConnectionSection settings={settings} onSettingsChange={setSettings} />
+            )}
+            {activePlexPanel === 'sync' && (
+              <PlexSyncSection settings={settings} onSettingsChange={setSettings} />
+            )}
+            {activePlexPanel === 'import' && (
+              <ImportFromPlexSection plexConfigured={settings.plexBaseUrl.configured && settings.plexToken.configured} />
+            )}
+          </div>
+        )
       case 'tasks':
         return <TasksSection />
       case 'about':
