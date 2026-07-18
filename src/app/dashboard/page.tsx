@@ -119,9 +119,11 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   if (!user) redirect('/login')
 
-  let shows = await prisma.animeShow.findMany({
-    orderBy: { updatedAt: 'desc' },
-  })
+  const [initialShows, episodesWatched] = await Promise.all([
+    prisma.animeShow.findMany({ orderBy: { updatedAt: 'desc' } }),
+    prisma.episodeWatch.count({ where: { watched: true } }),
+  ])
+  let shows = initialShows
   let stats = computeStats(shows)
   if (stats.topStudios.length === 0 && shows.some((show) => show.metadataProvider === 'tvdb' && !show.studios)) {
     const tvdb = await getConfiguredTvdbProvider()
@@ -193,9 +195,8 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <StatCard label="Total Shows" value={String(stats.totalShows)} />
                   <StatCard label="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
-                  {stats.averageRating !== null && (
-                    <StatCard label="Average Rating" value={`${stats.averageRating.toFixed(1)} / 5`} />
-                  )}
+                  <StatCard label="Average Rating" value={stats.averageRating !== null ? `${stats.averageRating.toFixed(1)} / 5` : '—'} />
+                  <StatCard label="Episodes Watched" value={String(episodesWatched)} />
                 </div>
 
                 {/* Status breakdown */}
