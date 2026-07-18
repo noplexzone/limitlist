@@ -23,11 +23,15 @@ export interface WatchStats {
   averageRating: number | null
 }
 
+const GENRE_SKIP = new Set(['anime', 'animation', 'n/a'])
+const STUDIO_SKIP = new Set(['n/a'])
+
 function countTokens(
   shows: AnimeShow[],
   field: 'genres' | 'studios',
   topN: number
 ): TokenCount[] {
+  const skipSet = field === 'genres' ? GENRE_SKIP : STUDIO_SKIP
   const counts = new Map<string, { display: string; count: number }>()
   for (const show of shows) {
     const raw = show[field]
@@ -36,6 +40,7 @@ function countTokens(
       const trimmed = token.trim()
       if (!trimmed) continue
       const key = trimmed.toLowerCase()
+      if (skipSet.has(key)) continue
       const entry = counts.get(key)
       if (entry) {
         entry.count++
