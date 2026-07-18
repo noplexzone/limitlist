@@ -3,6 +3,7 @@ import { prisma } from './db'
 import { refreshAllShowsAiring } from './airing'
 import { syncAllShowsFromPlex } from './plex-sync'
 import { getConfiguredPlexClient } from './plex'
+import { runNotificationTask } from './notify/task'
 
 export interface TaskDefinition {
   taskKey: string
@@ -23,6 +24,12 @@ export const TASK_DEFINITIONS: TaskDefinition[] = [
     name: 'Plex sync',
     description: 'Syncs watched state from your Plex library for all tracked shows. When enabled, this can make the manual "Sync after schedule refresh" setting redundant.',
     defaultCronExpr: '0 4 * * *',
+  },
+  {
+    taskKey: 'notify',
+    name: 'Episode notifications',
+    description: 'Sends notifications for recently aired episodes to enabled channels.',
+    defaultCronExpr: '0 5 * * *',
   },
 ]
 
@@ -80,6 +87,9 @@ async function runTaskFn(taskKey: string): Promise<{ status: 'success' | 'skippe
     const succeeded = result.results.filter((r) => r.success).length
     const skipped = result.results.filter((r) => r.skipped).length
     return { status: 'success', message: `Synced ${succeeded} shows, ${skipped} skipped, ${result.failedCount} failed` }
+  }
+  if (taskKey === 'notify') {
+    return runNotificationTask()
   }
   return { status: 'skipped', message: 'Unknown task' }
 }
