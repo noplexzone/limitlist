@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.5.0] - 2026-07-18
+
+### Added
+
+- **Episode notifications**: Added global new-episode alerts with configurable `episode-aired` and Plex-aware `aired-unwatched` triggers.
+- **Notification channels**: Added Discord webhook, ntfy, Gotify, and SMTP delivery with independent channel controls, masked credentials, and per-channel test actions.
+- **Scheduled delivery**: Added a disabled-by-default `notify` scheduler task with per-episode/channel deduplication, retryable failed deliveries, and a bounded 14-day first-run lookback.
+- **Notifications settings**: Added a themed, deep-linkable Notifications section with channel configuration and a pointer to Tasks scheduling.
+
 ## [1.4.1] - 2026-07-18
 
 ### Changed

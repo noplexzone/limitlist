@@ -11,6 +11,21 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.5.0',
+    date: '2026-07-18',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added configurable new-episode notifications with episode-aired and Plex-aware aired-unwatched triggers.',
+          'Added Discord webhook, ntfy, Gotify, and SMTP delivery channels with independent controls and test actions.',
+          'Added a scheduled notify task with per-episode/channel deduplication, retryable failures, and a bounded 14-day first-run lookback.',
+          'Added a themed Notifications settings section with masked credentials and scheduling guidance.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.4.1',
     date: '2026-07-18',
     sections: [
