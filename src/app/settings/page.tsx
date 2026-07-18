@@ -24,16 +24,12 @@ import {
   TVDB_PIN_SETTING,
   PLEX_TOKEN_SETTING,
   getEffectivePlexBaseUrl,
+  maskKey,
 } from '@/lib/settings'
+import { getNotificationSettingsState } from '@/lib/notification-settings'
 import Nav from '@/components/Nav'
 import SettingsClient from './SettingsClient'
 import pkg from '../../../package.json'
-
-function maskKey(value: string | null) {
-  if (!value) return null
-  if (value.length <= 8) return '••••'
-  return `${value.slice(0, 4)}…${value.slice(-4)}`
-}
 
 export default async function SettingsPage() {
   const user = await requireAuth()
@@ -55,6 +51,7 @@ export default async function SettingsPage() {
   const plexAutoStatus = await getConfiguredPlexAutoStatus()
   const plexSyncOnRefresh = await getConfiguredPlexSyncOnRefresh()
   const theme = await getConfiguredTheme()
+  const notificationSettings = await getNotificationSettingsState()
 
   return (
     <div className="min-h-screen bg-surface-950">
@@ -94,6 +91,7 @@ export default async function SettingsPage() {
             plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
             plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
             plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
+            ...notificationSettings,
             theme,
           }}
         />

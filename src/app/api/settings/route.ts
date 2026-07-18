@@ -42,16 +42,16 @@ import {
   getEffectivePlexBaseUrl,
   getEffectivePlexToken,
   upsertStoredSetting,
+  maskKey,
 } from '@/lib/settings'
+import {
+  NotificationSettingsInputError,
+  getNotificationSettingsState,
+  updateNotificationSettings,
+} from '@/lib/notification-settings'
 import { isThemeId } from '@/lib/themes'
 
 const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024
-
-function maskKey(value: string | null) {
-  if (!value) return null
-  if (value.length <= 8) return '••••'
-  return `${value.slice(0, 4)}…${value.slice(-4)}`
-}
 
 function validateProfileImageData(value: unknown): string | null {
   if (value === null || value === '') return null
@@ -72,6 +72,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const appUser = await prisma.appUser.findUnique({ where: { username: user.username } })
+  const notificationSettings = await getNotificationSettingsState()
   const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh, theme] =
     await Promise.all([
       getStoredSetting(TVDB_API_KEY_SETTING),
@@ -118,6 +119,7 @@ export async function GET() {
     plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
     plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
     plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
+    ...notificationSettings,
     theme,
   })
 }
@@ -296,6 +298,15 @@ export async function PATCH(req: NextRequest) {
     await upsertStoredSetting(PLEX_SYNC_ON_REFRESH_SETTING, body.plexSyncOnRefresh ? 'true' : 'false')
   }
 
+  try {
+    await updateNotificationSettings(body as Record<string, unknown>)
+  } catch (error) {
+    if (error instanceof NotificationSettingsInputError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    throw error
+  }
+
   if ('theme' in body) {
     if (typeof body.theme !== 'string' || !isThemeId(body.theme)) {
       return NextResponse.json({ error: 'Unknown theme' }, { status: 400 })
@@ -309,6 +320,7 @@ export async function PATCH(req: NextRequest) {
     await session.save()
   }
 
+  const notificationSettings = await getNotificationSettingsState()
   const [storedTvdbKey, storedTvdbPin, effectivePlexBaseUrl, storedPlexToken, tvdbSeasonType, defaultCastLanguage, plexLibrarySections, plexAccountId, plexWatchedThreshold, plexAutoStatus, plexSyncOnRefresh, theme] =
     await Promise.all([
       getStoredSetting(TVDB_API_KEY_SETTING),
@@ -354,6 +366,7 @@ export async function PATCH(req: NextRequest) {
     plexWatchedThreshold: { lockedByEnvironment: isPlexWatchedThresholdEnvLocked(), value: plexWatchedThreshold },
     plexAutoStatus: { lockedByEnvironment: isPlexAutoStatusEnvLocked(), value: plexAutoStatus },
     plexSyncOnRefresh: { lockedByEnvironment: isPlexSyncOnRefreshEnvLocked(), value: plexSyncOnRefresh },
+    ...notificationSettings,
     theme,
   })
 }

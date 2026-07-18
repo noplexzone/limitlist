@@ -57,6 +57,12 @@ export function parseBooleanSetting(value: string | null | undefined, defaultVal
   if (value == null || value === '') return defaultValue
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase())
 }
+
+export function maskKey(value: string | null): string | null {
+  if (!value) return null
+  if (value.length <= 8) return '••••'
+  return `${value.slice(0, 4)}…${value.slice(-4)}`
+}
 export async function getConfiguredPlexAutoStatus(): Promise<boolean> { return parseBooleanSetting(process.env.PLEX_AUTO_STATUS ?? (await getStoredSetting(PLEX_AUTO_STATUS_SETTING)), true) }
 export async function getConfiguredPlexSyncOnRefresh(): Promise<boolean> { return parseBooleanSetting(process.env.PLEX_SYNC_ON_REFRESH ?? (await getStoredSetting(PLEX_SYNC_ON_REFRESH_SETTING)), false) }
 export function normalizeCastLanguage(value?: string | null): 'english' | 'japanese' { return value === 'english' || value === 'japanese' ? value : DEFAULT_CAST_LANGUAGE }
