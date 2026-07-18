@@ -140,7 +140,7 @@ function AiringCalendar({
               aria-pressed={isSelected}
               className={`
                 relative flex flex-col items-center justify-center h-8 w-full rounded-lg text-xs font-medium transition-colors
-                ${isSelected ? 'bg-accent-600 text-white' : isToday ? 'bg-slate-700 text-white' : 'text-surface-300 hover:bg-surface-800'}
+                ${isSelected ? 'bg-accent-600 text-white' : isToday ? 'bg-surface-700 text-white' : 'text-surface-300 hover:bg-surface-800'}
               `}
             >
               {day}

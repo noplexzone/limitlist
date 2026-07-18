@@ -120,30 +120,30 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search anime to add…"
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-surface-100 placeholder-slate-400 outline-none transition-colors focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30"
+          className="w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2 text-sm text-surface-100 placeholder-surface-400 outline-none transition-colors focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30"
         />
       </form>
 
       {showDropdown && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60">
-          {searching && <p className="px-4 py-3 text-sm text-slate-400">Searching…</p>}
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-black/60">
+          {searching && <p className="px-4 py-3 text-sm text-surface-400">Searching…</p>}
           {!searching && error && <p className="px-4 py-3 text-sm text-red-400">{error}</p>}
           {!searching && !error && results.length === 0 && (
-            <p className="px-4 py-3 text-sm text-slate-500">No results found.</p>
+            <p className="px-4 py-3 text-sm text-surface-500">No results found.</p>
           )}
           {!searching && !error && results.map((result) => {
             const key = `${result.providerName}:${result.providerId}`
             return (
               <div
                 key={key}
-                className="flex w-full items-center gap-3 border-b border-slate-800 px-3 py-2 last:border-b-0 hover:bg-slate-800"
+                className="flex w-full items-center gap-3 border-b border-surface-800 px-3 py-2 last:border-b-0 hover:bg-surface-800"
               >
                 <button
                   type="button"
                   onClick={() => { onClose(); router.push(detailsUrl(result)) }}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <span className="h-14 w-10 shrink-0 overflow-hidden rounded bg-slate-800">
+                  <span className="h-14 w-10 shrink-0 overflow-hidden rounded bg-surface-800">
                     {result.posterUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={result.posterUrl} alt="" className="h-full w-full object-cover" />
@@ -152,7 +152,7 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-white">{result.title}</span>
                     {result.firstAiredAt && (
-                      <span className="block text-xs text-slate-500">{result.firstAiredAt.slice(0, 4)}</span>
+                      <span className="block text-xs text-surface-500">{result.firstAiredAt.slice(0, 4)}</span>
                     )}
                   </span>
                 </button>
