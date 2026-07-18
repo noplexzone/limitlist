@@ -42,6 +42,7 @@ model AnimeShow {
   updatedAt              DateTime  @updatedAt
   childRatings           AnimeChildRating[]
   episodeWatches         EpisodeWatch[]
+  notificationLogs       NotificationLog[]
 
   @@unique([metadataProvider, metadataId])
   @@unique([sourceProvider, sourceId])
@@ -99,6 +100,22 @@ model AppSetting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model NotificationLog {
+  id            String    @id @default(cuid())
+  animeShowId   String
+  seasonNumber  Int?
+  episodeNumber Int?
+  trigger       String
+  channel       String
+  status        String
+  message       String?
+  sentAt        DateTime  @default(now())
+  animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)
+
+  @@index([animeShowId])
+  @@unique([animeShowId, seasonNumber, episodeNumber, trigger, channel])
 }
 
 model ScheduledTask {
