@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.4.1] - 2026-07-18
+
+### Changed
+
+- **Navigation redesign**: Themed navigation rebuilt with LimitList wordmark, accent-highlighted active links, clearer interaction states, and refined profile/search controls across all four themes.
+- **Theme token migration**: Remaining navigation, global search, and upcoming-release fixed slate colors migrated to theme-responsive surface tokens.
+
 ## [1.4.0] - 2026-07-15
 
 ### Added

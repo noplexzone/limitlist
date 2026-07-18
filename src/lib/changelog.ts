@@ -11,6 +11,19 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.4.1',
+    date: '2026-07-18',
+    sections: [
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Themed navigation rebuilt with LimitList wordmark, accent-highlighted active links, clearer interaction states, and refined profile/search controls across all four themes.',
+          'Remaining navigation, global search, and upcoming-release fixed slate colors migrated to theme-responsive surface tokens.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-07-15',
     sections: [
