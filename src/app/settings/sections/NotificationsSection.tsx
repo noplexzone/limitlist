@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { SettingsState } from '../types'
 
 type Channel = 'discord' | 'ntfy' | 'gotify' | 'smtp'
@@ -140,7 +140,6 @@ export default function NotificationsSection({ settings, onSettingsChange }: { s
   const [busy, setBusy] = useState<string | null>(null)
   const [results, setResults] = useState<Partial<Record<Channel | 'preferences', { ok: boolean; message: string }>>>({})
 
-  useEffect(() => setDraft(fromSettings(settings)), [settings])
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
 
   async function save(label: Channel | 'preferences', payload: Record<string, unknown>) {
@@ -154,7 +153,25 @@ export default function NotificationsSection({ settings, onSettingsChange }: { s
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Could not save notification settings')
-      onSettingsChange(data as SettingsState)
+      const savedSettings = data as SettingsState
+      const savedDraft = fromSettings(savedSettings)
+      setDraft((current) => {
+        if (label === 'preferences') return { ...current, notifyEnabled: savedDraft.notifyEnabled, notifyTrigger: savedDraft.notifyTrigger }
+        if (label === 'discord') return { ...current, notifyDiscordEnabled: savedDraft.notifyDiscordEnabled, notifyDiscordWebhook: '' }
+        if (label === 'ntfy') return { ...current, notifyNtfyEnabled: savedDraft.notifyNtfyEnabled, notifyNtfyUrl: savedDraft.notifyNtfyUrl, notifyNtfyToken: '' }
+        if (label === 'gotify') return { ...current, notifyGotifyEnabled: savedDraft.notifyGotifyEnabled, notifyGotifyUrl: savedDraft.notifyGotifyUrl, notifyGotifyToken: '' }
+        return {
+          ...current,
+          notifySmtpEnabled: savedDraft.notifySmtpEnabled,
+          notifySmtpHost: savedDraft.notifySmtpHost,
+          notifySmtpPort: savedDraft.notifySmtpPort,
+          notifySmtpUser: savedDraft.notifySmtpUser,
+          notifySmtpPass: '',
+          notifySmtpFrom: savedDraft.notifySmtpFrom,
+          notifySmtpTo: savedDraft.notifySmtpTo,
+        }
+      })
+      onSettingsChange(savedSettings)
       setResults((current) => ({ ...current, [label]: { ok: true, message: 'Saved.' } }))
     } catch (error) {
       setResults((current) => ({ ...current, [label]: { ok: false, message: error instanceof Error ? error.message : 'Could not save notification settings' } }))
