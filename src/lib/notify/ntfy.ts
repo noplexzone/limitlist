@@ -15,12 +15,13 @@ export async function sendNtfy(payload: NotificationPayload): Promise<ChannelRes
       return { channel, ok: false, message: 'ntfy URL is not configured' }
     }
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'text/plain',
-      Title: payload.title,
-    }
-    if (payload.url && isSafeHttpUrl(payload.url)) headers['Click'] = payload.url
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (token) headers['Authorization'] = `Bearer ${token}`
+    const body = {
+      title: payload.title.replace(/[\r\n]+/g, ' '),
+      message: payload.body,
+      ...(payload.url && isSafeHttpUrl(payload.url) ? { click: payload.url } : {}),
+    }
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 8_000)
@@ -29,7 +30,7 @@ export async function sendNtfy(payload: NotificationPayload): Promise<ChannelRes
       const res = await fetch(ntfyUrl, {
         method: 'POST',
         headers,
-        body: payload.body,
+        body: JSON.stringify(body),
         signal: controller.signal,
       })
 

@@ -2,8 +2,8 @@
 CREATE TABLE "NotificationLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "animeShowId" TEXT NOT NULL,
-    "seasonNumber" INTEGER,
-    "episodeNumber" INTEGER,
+    "seasonNumber" INTEGER NOT NULL,
+    "episodeNumber" INTEGER NOT NULL,
     "trigger" TEXT NOT NULL,
     "channel" TEXT NOT NULL,
     "status" TEXT NOT NULL,

@@ -6,7 +6,7 @@ export interface NotificationPayload {
   showTitle: string
   episodeLabel: string
   url?: string
-  posterUrl?: string
+  posterUrl?: string | null
 }
 
 export interface ChannelResult {

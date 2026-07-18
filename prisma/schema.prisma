@@ -105,8 +105,8 @@ model AppSetting {
 model NotificationLog {
   id            String    @id @default(cuid())
   animeShowId   String
-  seasonNumber  Int?
-  episodeNumber Int?
+  seasonNumber  Int
+  episodeNumber Int
   trigger       String
   channel       String
   status        String

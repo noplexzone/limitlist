@@ -9,9 +9,7 @@ import {
   getEffectiveNotifySmtpPass,
 } from '../settings'
 import type { ChannelResult, NotificationPayload } from './types'
-import { FETCH_TIMEOUT_MS, isSafeHttpUrl } from './http'
-
-class SmtpTimeoutError extends Error {}
+import { isSafeHttpUrl } from './http'
 
 function escapeHtml(s: string): string {
   return s
@@ -57,9 +55,16 @@ export async function sendSmtp(payload: NotificationPayload): Promise<ChannelRes
     if (!from) return { channel, ok: false, message: 'SMTP from address is not configured' }
     if (!to) return { channel, ok: false, message: 'SMTP to address is not configured' }
 
-    const port = portRaw ? parseInt(portRaw, 10) : 587
+    const normalizedPort = portRaw?.trim() || '587'
+    if (!/^\d+$/.test(normalizedPort)) {
+      return { channel, ok: false, message: 'SMTP port is invalid' }
+    }
+    const port = Number(normalizedPort)
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
       return { channel, ok: false, message: 'SMTP port is invalid' }
+    }
+    if ([host, from, to, user].some((value) => value && /[\r\n]/.test(value))) {
+      return { channel, ok: false, message: 'SMTP configuration is invalid' }
     }
     if (Boolean(user) !== Boolean(pass)) {
       return { channel, ok: false, message: 'SMTP authentication is incomplete' }
@@ -82,30 +87,20 @@ export async function sendSmtp(payload: NotificationPayload): Promise<ChannelRes
 
     const transporter = nodemailer.createTransport(transportOptions)
 
-    let timeout: ReturnType<typeof setTimeout> | undefined
     try {
-      await Promise.race([
-        transporter.sendMail({
-          from,
-          to,
-          subject: payload.title,
-          text: `${payload.body}\n\n${payload.showTitle} — ${payload.episodeLabel}${payload.url && isSafeHttpUrl(payload.url) ? `\n${payload.url}` : ''}`,
-          html: buildHtml(payload),
-        }),
-        new Promise<never>((_, reject) => {
-          timeout = setTimeout(() => reject(new SmtpTimeoutError()), FETCH_TIMEOUT_MS)
-        }),
-      ])
+      await transporter.sendMail({
+        from,
+        to,
+        subject: payload.title.replace(/[\r\n]+/g, ' '),
+        text: `${payload.body}\n\n${payload.showTitle} — ${payload.episodeLabel}${payload.url && isSafeHttpUrl(payload.url) ? `\n${payload.url}` : ''}`,
+        html: buildHtml(payload),
+      })
     } finally {
-      if (timeout) clearTimeout(timeout)
       transporter.close()
     }
 
     return { channel, ok: true, message: 'Notification sent' }
   } catch (err) {
-    if (err instanceof SmtpTimeoutError) {
-      return { channel, ok: false, message: 'Request timed out' }
-    }
     const msg = err instanceof Error ? err.message : ''
     if (msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND') || msg.includes('ETIMEDOUT') || msg.includes('timeout')) {
       return { channel, ok: false, message: 'Connection failed' }
