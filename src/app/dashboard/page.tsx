@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import { computeStats } from '@/lib/stats'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { changelogEntries } from '@/lib/changelog'
+import { formatEpisodeLabel } from '@/lib/format-episode'
 import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
 import UpcomingReleases from '@/app/schedule/UpcomingReleases'
@@ -74,6 +75,8 @@ interface ShelfShow {
   title: string
   posterUrl: string | null
   rating: number | null
+  nextEpisodeNum?: number | null
+  nextEpisodeName?: string | null
 }
 
 function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
@@ -105,6 +108,11 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
               )}
             </div>
             <p className="mt-1 text-[10px] text-surface-400 leading-tight line-clamp-2">{show.title}</p>
+            {show.nextEpisodeNum != null && (
+              <p className="text-[10px] text-surface-500 leading-tight truncate">
+                {formatEpisodeLabel(null, show.nextEpisodeNum!, show.nextEpisodeName)}
+              </p>
+            )}
             {show.rating != null && (
               <p className="text-[10px] text-yellow-400">★ {show.rating}</p>
             )}
@@ -145,14 +153,33 @@ export default async function DashboardPage() {
   }
   const isEmpty = stats.totalShows === 0
 
-  const continueWatching: ShelfShow[] = shows
+  const cwCandidates = shows
     .filter((s) => s.status === 'WATCHING' || (s.status === 'UP_TO_DATE' && s.upToDateStale))
     .slice(0, 12)
+
+  const continueWatching: ShelfShow[] = cwCandidates.map((s) => ({
+    id: s.id,
+    metadataProvider: s.metadataProvider,
+    metadataId: s.metadataId,
+    title: s.title,
+    posterUrl: s.posterUrl,
+    rating: s.rating,
+    nextEpisodeNum: s.nextEpisodeNum,
+    nextEpisodeName: s.nextEpisodeName,
+  }))
 
   const highestRated: ShelfShow[] = shows
     .filter((s) => s.rating != null)
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
     .slice(0, 12)
+    .map((s) => ({
+      id: s.id,
+      metadataProvider: s.metadataProvider,
+      metadataId: s.metadataId,
+      title: s.title,
+      posterUrl: s.posterUrl,
+      rating: s.rating,
+    }))
 
   const scheduleEntries = shows
     .filter((show) => show.nextAiringAt)
