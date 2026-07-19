@@ -95,7 +95,15 @@ function translationOverview(value?: string | TvdbTranslationValue | null) {
   if (!value || typeof value === 'string') return undefined
   return value.overview
 }
-function isAnimeLike(item: TvdbSearchResult | TvdbSeriesExtended) {
+export function searchResultTitle(item: TvdbSearchResult): string | undefined {
+  return item.translations?.eng?.trim() || item.name?.trim() || undefined
+}
+
+export function buildAnimeSearchQueries(candidates: string[], year?: number | null): string[] {
+  return candidates.slice(0, 6).flatMap((candidate) => year ? [`${candidate} ${year}`, candidate] : [candidate])
+}
+
+export function isAnimeLike(item: TvdbSearchResult | TvdbSeriesExtended) {
   const genreText = Array.isArray(item.genres)
     ? item.genres.map((g) => (typeof g === 'string' ? g : g.name)).join(' ')
     : ''
@@ -103,6 +111,8 @@ function isAnimeLike(item: TvdbSearchResult | TvdbSeriesExtended) {
   const extendedItem = item as TvdbSeriesExtended
   const language = searchItem.primary_language ?? extendedItem.originalLanguage
   const country = searchItem.country ?? extendedItem.originalCountry
+  // No classification metadata → can't rule it out, treat as eligible
+  if (!genreText && !language && !country) return true
   const text = [genreText, language, country, item.name, item.overview].filter(Boolean).join(' ').toLowerCase()
   return text.includes('anime') || text.includes('animation') || text.includes('japan') || text.includes('japanese') || country === 'jp' || language === 'jpn'
 }
@@ -175,7 +185,7 @@ export class TvdbProvider implements MetadataProvider {
     return items.slice(0, options?.limit ?? 10).map((item) => ({
       providerId: String(item.tvdb_id ?? item.id),
       providerName: 'tvdb',
-      title: item.name || `TVDB #${item.tvdb_id ?? item.id}`,
+      title: searchResultTitle(item) || `TVDB #${item.tvdb_id ?? item.id}`,
       originalTitle: item.translations?.jpn,
       overview: item.overview || undefined,
       posterUrl: imageUrl(item.image_url),
@@ -321,7 +331,7 @@ export class TvdbProvider implements MetadataProvider {
   async findShowForAnime(titles: Array<string | null | undefined>, year?: number | null): Promise<MetadataResult | null> {
     const candidates = titleCandidates(...titles)
     let best: { item: MetadataResult; score: number } | null = null
-    for (const query of candidates.slice(0, 6)) {
+    for (const query of buildAnimeSearchQueries(candidates, year)) {
       const results = await this.search(query, { animeOnly: true, limit: 10 })
       for (const item of results) {
         const score = scoreTvdbMatch(item, candidates, year)
@@ -341,7 +351,16 @@ export class TvdbProvider implements MetadataProvider {
       })
     }
     if (!best || best.score < 3.5) return null
-    return this.getDetails(best.item.providerId)
+    const details = await this.getDetails(best.item.providerId)
+    if (!details || !isAnimeLike({
+      id: Number(details.providerId),
+      name: details.title,
+      overview: details.overview,
+      genres: details.genres?.map((name) => ({ name })),
+      originalCountry: details.originCountries?.[0],
+      originalLanguage: details.originalLanguage,
+    })) return null
+    return details
   }
 }
 
