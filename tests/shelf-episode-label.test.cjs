@@ -17,17 +17,17 @@ m.paths = Module._nodeModulePaths(path.dirname(sourcePath))
 m._compile(compiled, sourcePath)
 const { formatEpisodeLabel } = m.exports
 
-test('with season and episode name: Sx · Ey — Name format', () => {
+test('with season and episode name: S1·E5 — Name compact format', () => {
   assert.equal(
     formatEpisodeLabel(1, 5, 'Cursed Womb'),
-    'Up next: S1 · Ep 5 — Cursed Womb'
+    'Up next: S1·E5 — Cursed Womb'
   )
 })
 
-test('with season but no name: Sx · Ey format', () => {
+test('with season but no name: S1·E5 compact format', () => {
   assert.equal(
     formatEpisodeLabel(2, 1, null),
-    'Up next: S2 · Ep 1'
+    'Up next: S2·E1'
   )
 })
 
@@ -49,6 +49,6 @@ test('season 0 (TVDB Specials) is a valid season and is shown', () => {
   // season 0 means "Specials" in TVDB — it's a legitimate season identifier
   assert.equal(
     formatEpisodeLabel(0, 3, 'Episode'),
-    'Up next: S0 · Ep 3 — Episode'
+    'Up next: S0·E3 — Episode'
   )
 })

@@ -27,6 +27,11 @@ No unreleased changes yet.
 - **Watchlist card layout**: Status pill and remove button now occupy a single flex row and can never overlap on any screen width.
 - **Episode label**: Continue Watching shelf cards use `line-clamp-2` and are slightly wider (`w-28`) so episode names are readable rather than cut off.
 - **COMPLETED detection**: Plex import now marks a fully-watched show as COMPLETED when airingStatus is absent or ended/completed — no longer requires a prior airing refresh to populate the field.
+- **iOS input zoom**: Text inputs in settings and forms no longer trigger Safari auto-zoom on focus; all controls render at 16 px or larger.
+- **PWA safe areas**: Safe-area insets keep the top navigation below the status bar/notch and the bottom navigation above the home indicator.
+- **Discover tabs on mobile**: The Discover tab bar no longer overflows on narrow screens; all four tabs remain visible and tappable.
+- **Watchlist toolbar**: Filter and sort controls collapse to a compact single row on mobile with full touch-sized targets.
+- **Settings selector reachability**: Mobile section and Plex-panel dropdowns replace invisible overflowing tab strips, making every settings panel reachable.
 
 ## [1.6.0] - 2026-07-19
 

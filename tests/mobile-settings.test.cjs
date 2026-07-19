@@ -6,11 +6,12 @@ const read = (file) => fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
 const client = read('src/app/settings/SettingsClient.tsx')
 const css = read('src/app/globals.css')
 const notifications = read('src/app/settings/sections/NotificationsSection.tsx')
+const toggle = read('src/components/Toggle.tsx')
 
-test('settings and Plex tabs intentionally scroll on phones', () => {
-  assert.match(client, /overflow-x-auto[\s\S]*scrollbar-width:none/)
-  assert.match(client, /min-h-11 shrink-0/)
-  assert.match(client, /overscroll-x-contain/)
+test('mobile settings and Plex use labelled dropdown selectors; desktop Plex tabs remain', () => {
+  assert.match(client, /aria-label="Settings section"/)
+  assert.match(client, /aria-label="Plex settings panel"/)
+  assert.match(client, /hidden sm:flex[\s\S]*min-h-11 shrink-0/)
 })
 
 test('settings controls get scoped 44px mobile targets', () => {
@@ -20,7 +21,7 @@ test('settings controls get scoped 44px mobile targets', () => {
 })
 
 test('dense notification cards use phone padding and touchable toggle labels', () => {
-  assert.match(notifications, /inline-flex min-h-11/)
+  assert.match(toggle, /inline-flex min-h-\[44px\]/)
   assert.match(notifications, /p-4 sm:p-5/)
 })
 

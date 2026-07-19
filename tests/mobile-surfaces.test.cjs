@@ -8,15 +8,17 @@ const discover = read('src/app/discover/DiscoverClient.tsx')
 const detail = read('src/app/anime/[provider]/[id]/AnimeDetailsClient.tsx')
 
 test('watchlist exposes status, remove, and rating to touch without hover', () => {
-  assert.match(watchlist, /min-h-11 w-full cursor-pointer/)
+  assert.match(watchlist, /min-h-\[44px\] flex-1 cursor-pointer/)
   assert.match(watchlist, /h-11 w-11[\s\S]*opacity-100/)
-  assert.match(watchlist, /Rating for \{show\.title\}/)
+  assert.match(watchlist, /w-1\/2 cursor-pointer rounded-l hidden sm:block/)
+  assert.match(watchlist, /w-full sm:w-1\/2 cursor-pointer/)
+  assert.match(watchlist, /absolute inset-x-0 top-0 z-20 flex items-start gap-1/)
   assert.match(watchlist, /block md:hidden/)
   assert.match(watchlist, /md:group-hover:block/)
 })
 
-test('watchlist filters and grid fit phone width', () => {
-  assert.match(watchlist, /flex flex-col gap-3[\s\S]*sm:flex-row/)
+test('watchlist toolbar is compact flex-row on mobile; grid fits phone width', () => {
+  assert.match(watchlist, /flex flex-row flex-wrap items-center gap-2/)
   assert.match(watchlist, /grid grid-cols-2 gap-3/)
 })
 
@@ -32,9 +34,9 @@ test('detail episode and language controls are touch sized', () => {
   assert.match(detail, /summary className="flex min-h-11/)
 })
 
-test('discover tabs intentionally scroll and actions are touch sized', () => {
-  assert.match(discover, /overflow-x-auto[\s\S]*scrollbar-width:none/)
-  assert.match(discover, /min-h-11 shrink-0/)
+test('discover fits four flex-1 tabs on mobile without scroll; actions are touch sized', () => {
+  assert.match(discover, /min-h-\[44px\] flex-1[\s\S]*sm:flex-none/)
+  assert.match(discover, /'popular'[\s\S]*'trending'[\s\S]*'top-rated'[\s\S]*'upcoming'/)
   assert.match(discover, /min-h-11 w-full rounded-full/)
   assert.match(discover, /grid grid-cols-2 gap-3/)
 })
