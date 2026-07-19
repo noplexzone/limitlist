@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Toggle from '@/components/Toggle'
 
 interface ScheduledTask {
   taskKey: string
@@ -167,17 +168,12 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
           <h3 className="text-sm font-semibold text-accent-100">{task.name}</h3>
           <p className="text-xs text-surface-500 mt-0.5">{task.description}</p>
         </div>
-        <button
-          type="button"
-          onClick={toggleEnabled}
+        <Toggle
+          checked={task.enabled}
           disabled={toggling}
-          aria-label={task.enabled ? 'Disable task' : 'Enable task'}
-          className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${task.enabled ? 'bg-accent-600' : 'bg-surface-700'}`}
-        >
-          <span
-            className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${task.enabled ? 'translate-x-6' : 'translate-x-1'}`}
-          />
-        </button>
+          onChange={() => { void toggleEnabled() }}
+          label={task.enabled ? 'Disable task' : 'Enable task'}
+        />
       </div>
 
       {/* Schedule presets */}

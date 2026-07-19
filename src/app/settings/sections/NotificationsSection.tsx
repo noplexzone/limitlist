@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Toggle from '@/components/Toggle'
 import type { SettingsState } from '../types'
 
 type Channel = 'discord' | 'ntfy' | 'gotify' | 'smtp'
@@ -48,24 +49,6 @@ function fromSettings(settings: SettingsState): Draft {
   }
 }
 
-function Toggle({ checked, disabled, onChange, label }: { checked: boolean; disabled?: boolean; onChange: (value: boolean) => void; label: string }) {
-  return (
-    <label className="inline-flex min-h-11 items-center gap-3 text-sm text-surface-200">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'border-accent-400 bg-accent-600' : 'border-surface-600 bg-surface-800'}`}
-      >
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface-50 transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
-      </button>
-      <span>{label}</span>
-    </label>
-  )
-}
 
 function TextField({ label, value, disabled, placeholder, type = 'text', onChange }: { label: string; value: string; disabled?: boolean; placeholder?: string; type?: string; onChange: (value: string) => void }) {
   return (
