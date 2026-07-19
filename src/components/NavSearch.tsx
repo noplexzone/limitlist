@@ -125,7 +125,7 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
       </form>
 
       {showDropdown && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-black/60">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden overflow-x-hidden rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-black/60 max-h-[60vh] overflow-y-auto">
           {searching && <p className="px-4 py-3 text-sm text-surface-400">Searching…</p>}
           {!searching && error && <p className="px-4 py-3 text-sm text-red-400">{error}</p>}
           {!searching && !error && results.length === 0 && (
@@ -136,12 +136,12 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
             return (
               <div
                 key={key}
-                className="flex w-full items-center gap-3 border-b border-surface-800 px-3 py-2 last:border-b-0 hover:bg-surface-800"
+                className="flex w-full items-center gap-3 border-b border-surface-800 px-3 last:border-b-0 hover:bg-surface-800 min-h-[44px]"
               >
                 <button
                   type="button"
                   onClick={() => { onClose(); router.push(detailsUrl(result)) }}
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left py-2"
                 >
                   <span className="h-14 w-10 shrink-0 overflow-hidden rounded bg-surface-800">
                     {result.posterUrl ? (
@@ -160,7 +160,7 @@ export default function NavSearch({ onClose }: { onClose: () => void }) {
                   type="button"
                   onClick={(e) => addResult(e, result)}
                   disabled={adding === key}
-                  className="rounded-full bg-accent-600 px-3 py-1 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50"
+                  className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-accent-600 px-3 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50"
                   aria-label={`Add ${result.title} to watchlist`}
                 >
                   {adding === key ? '…' : '+'}
