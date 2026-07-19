@@ -53,7 +53,7 @@ export default function ImportFromPlexSection({ plexConfigured }: Props) {
 
   return (
     <div className="space-y-6">
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-surface-200 mb-1">Import from Plex</h2>
         <p className="mb-4 text-sm text-surface-400">Review watched Plex shows before creating watchlist rows.</p>
         {!plexConfigured ? (

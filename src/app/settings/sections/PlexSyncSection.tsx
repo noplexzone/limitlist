@@ -76,7 +76,7 @@ export default function PlexSyncSection({ settings, onSettingsChange }: Props) {
         </div>
       )}
 
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-surface-200 mb-1">Plex Sync</h2>
         <p className="mb-4 text-sm text-surface-400">Controls library discovery, watched thresholds, and status updates.</p>
         {!plexConfigured ? (

@@ -193,3 +193,17 @@
     transform: rotate(-8deg);
   }
 }
+
+@media (max-width: 767px) {
+  .mobile-settings button:not([role="switch"]),
+  .mobile-settings input:not([type="checkbox"]):not([type="radio"]),
+  .mobile-settings select {
+    min-height: 44px;
+  }
+
+  .mobile-settings input,
+  .mobile-settings select,
+  .mobile-settings textarea {
+    max-width: 100%;
+  }
+}

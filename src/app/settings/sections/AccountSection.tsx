@@ -75,7 +75,7 @@ export default function AccountSection({ settings, onSettingsChange }: Props) {
         </div>
       )}
 
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-surface-200 mb-4">Account</h2>
         <form onSubmit={submitAccount} className="space-y-4">
           <label className="block">
@@ -114,7 +114,7 @@ export default function AccountSection({ settings, onSettingsChange }: Props) {
         </form>
       </section>
 
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-surface-200 mb-4">Profile picture</h2>
         <div className="flex items-center gap-4">
           <div className="h-20 w-20 overflow-hidden rounded-xl bg-accent-800 flex items-center justify-center text-lg font-bold text-white">

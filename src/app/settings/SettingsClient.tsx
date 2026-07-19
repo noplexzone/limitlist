@@ -90,13 +90,13 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
         return (
           <div className="space-y-6">
             {/* Inner tab strip */}
-            <div className="flex gap-1 border-b border-surface-800 pb-0">
+            <div className="-mx-4 flex gap-1 overflow-x-auto border-b border-surface-800 px-4 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
               {PLEX_PANELS.map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => navigatePlexPanel(p.id)}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  className={`min-h-11 shrink-0 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activePlexPanel === p.id
                       ? 'border-accent-500 text-accent-300'
                       : 'border-transparent text-surface-400 hover:text-surface-200'
@@ -129,14 +129,14 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
+    <div className="mobile-settings flex flex-col gap-6 md:flex-row">
       {/* Mobile: horizontal scrollable tab bar */}
-      <div className="flex overflow-x-auto border-b border-surface-800 md:hidden -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex overflow-x-auto border-b border-surface-800 md:hidden -mx-4 px-4 overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map((s) => (
           <button
             key={s.id}
             onClick={() => navigate(s.id)}
-            className={`shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+            className={`min-h-11 shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeSection === s.id
                 ? 'border-accent-500 text-accent-300'
                 : 'border-transparent text-surface-400 hover:text-surface-200'

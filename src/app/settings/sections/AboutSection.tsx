@@ -9,7 +9,7 @@ interface Props {
 export default function AboutSection({ version }: Props) {
   return (
     <div className="space-y-6">
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-surface-200 mb-4">About</h2>
         <div className="space-y-1">
           <p className="text-sm text-surface-400">LimitList</p>
@@ -17,7 +17,7 @@ export default function AboutSection({ version }: Props) {
         </div>
       </section>
 
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <div className="mb-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-accent-300">What&apos;s New</p>
           <h2 className="mt-1 text-lg font-semibold text-surface-100">LimitList updates</h2>

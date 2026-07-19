@@ -35,7 +35,7 @@ export default function AppearanceSection({ settings, onSettingsChange }: Props)
   }
 
   return (
-    <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+    <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-surface-200 mb-1">Appearance</h2>
       <p className="mb-4 text-sm text-surface-400">Choose the global LimitList theme. Changes apply after the server-rendered refresh to avoid a wrong-theme flash.</p>
       {error && <div className="mb-4 rounded-xl border border-red-500/50 bg-red-950/50 px-4 py-3 text-sm text-red-200">{error}</div>}

@@ -50,7 +50,7 @@ function fromSettings(settings: SettingsState): Draft {
 
 function Toggle({ checked, disabled, onChange, label }: { checked: boolean; disabled?: boolean; onChange: (value: boolean) => void; label: string }) {
   return (
-    <label className="inline-flex items-center gap-3 text-sm text-surface-200">
+    <label className="inline-flex min-h-11 items-center gap-3 text-sm text-surface-200">
       <button
         type="button"
         role="switch"
@@ -88,7 +88,7 @@ function SecretField({ label, value, disabled, configured, masked, onChange }: {
   return (
     <label className="block">
       <span className="mb-1 block text-sm text-surface-300">{label}</span>
-      <div className="flex gap-2">
+      <div className="flex min-w-0 gap-2">
         <input
           type={visible ? 'text' : 'password'}
           value={value}
@@ -121,7 +121,7 @@ function SecretField({ label, value, disabled, configured, masked, onChange }: {
 
 function Card({ title, description, enabled, locked, onEnabledChange, children, actions }: { title: string; description: string; enabled: boolean; locked: boolean; onEnabledChange: (value: boolean) => void; children: React.ReactNode; actions: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-surface-800 bg-surface-900/50 p-5">
+    <section className="rounded-xl border border-surface-800 bg-surface-900/50 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold text-surface-100">{title}</h3>
@@ -231,7 +231,7 @@ export default function NotificationsSection({ settings, onSettingsChange }: { s
         <p className="mt-1 text-sm text-surface-400">Send new-episode alerts through any combination of delivery channels.</p>
       </div>
 
-      <section className="rounded-xl border border-surface-800 bg-surface-900/50 p-5 space-y-4">
+      <section className="rounded-xl border border-surface-800 bg-surface-900/50 p-4 sm:p-5 space-y-4">
         <Toggle checked={draft.notifyEnabled} disabled={settings.notifyEnabled.lockedByEnvironment} onChange={(value) => set('notifyEnabled', value)} label="Enable episode notifications" />
         <fieldset disabled={settings.notifyTrigger.lockedByEnvironment} className="space-y-2">
           <legend className="text-sm font-medium text-surface-200">Notify me</legend>

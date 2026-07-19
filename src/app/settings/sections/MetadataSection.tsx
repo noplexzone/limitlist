@@ -95,7 +95,7 @@ export default function MetadataSection({ settings, onSettingsChange }: Props) {
         </div>
       )}
 
-      <section className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+      <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-surface-200 mb-1">TVDB</h2>
         <p className="mb-4 text-sm text-surface-400">TheTVDB is used for search, imports, airing metadata, and season ordering.</p>
         <form onSubmit={submitApiKeys} className="space-y-4">
