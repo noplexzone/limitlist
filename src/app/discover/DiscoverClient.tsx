@@ -135,7 +135,7 @@ export default function DiscoverClient() {
         type="button"
         onClick={() => setPage((p) => Math.max(1, p - 1))}
         disabled={page === 1 || loading}
-        className="rounded-lg bg-surface-800 px-4 py-2 text-sm font-medium text-surface-200 hover:bg-surface-700 disabled:opacity-40"
+        className="min-h-11 rounded-lg bg-surface-800 px-4 py-2 text-sm font-medium text-surface-200 hover:bg-surface-700 disabled:opacity-40"
       >
         Previous
       </button>
@@ -144,7 +144,7 @@ export default function DiscoverClient() {
         type="button"
         onClick={() => setPage((p) => p + 1)}
         disabled={!hasNextPage || loading}
-        className="rounded-lg bg-surface-800 px-4 py-2 text-sm font-medium text-surface-200 hover:bg-surface-700 disabled:opacity-40"
+        className="min-h-11 rounded-lg bg-surface-800 px-4 py-2 text-sm font-medium text-surface-200 hover:bg-surface-700 disabled:opacity-40"
       >
         Next
       </button>
@@ -154,7 +154,7 @@ export default function DiscoverClient() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map(({ type: t, label }) => (
             <button
               key={t}
@@ -167,7 +167,7 @@ export default function DiscoverClient() {
                 setFetchError('')
                 setHasNextPage(false)
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`min-h-11 shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 feedType === t
                   ? 'bg-accent-600 text-white'
                   : 'bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700'
@@ -195,7 +195,7 @@ export default function DiscoverClient() {
 
       {!loading && !fetchError && results.length > 0 && (
         <>
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-7">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-7">
             {results.map((result) => {
               const cardKey = `${result.sourceProvider ?? result.providerName}:${result.sourceId ?? result.providerId}`
               const isAdded = result.inWatchlist || (!!result.providerId && importedIds.has(result.providerId))
@@ -251,7 +251,7 @@ export default function DiscoverClient() {
                       <button
                         onClick={(event) => { event.stopPropagation(); void handleImport(result) }}
                         disabled={isImporting}
-                        className="w-full rounded-full bg-accent-600/90 py-1 text-xs font-semibold text-white hover:bg-accent-500 disabled:opacity-50 transition-colors"
+                        className="min-h-11 w-full rounded-full bg-accent-600/90 py-2 text-xs font-semibold text-white hover:bg-accent-500 disabled:opacity-50 transition-colors"
                       >
                         {isImporting ? 'Adding…' : '+ Add to Watchlist'}
                       </button>

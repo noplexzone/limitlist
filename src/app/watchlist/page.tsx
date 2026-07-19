@@ -11,7 +11,7 @@ export default async function WatchlistPage() {
   return (
     <div className="min-h-screen bg-surface-950">
       <Nav />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-5 sm:py-8">
         <h1 className="text-3xl font-bold mb-8 text-accent-400">My Watchlist</h1>
         <Suspense fallback={<p className="text-surface-400">Loading watchlist...</p>}>
           <WatchlistClient />

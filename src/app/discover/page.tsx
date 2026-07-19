@@ -10,7 +10,7 @@ export default async function DiscoverPage() {
   return (
     <div className="min-h-screen bg-surface-950">
       <Nav />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-5 sm:py-8">
         <h1 className="text-3xl font-bold mb-2 text-accent-400">Discover</h1>
         <p className="text-surface-400 text-sm mb-8">Popular and trending anime from AniList, linked to TVDB for tracking</p>
         <DiscoverClient />

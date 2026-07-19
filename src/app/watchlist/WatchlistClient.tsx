@@ -269,13 +269,13 @@ export default function WatchlistClient() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-surface-800 bg-surface-900/70 p-3">
-        <label className="text-sm text-surface-400">
+      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/70 p-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="w-full text-sm text-surface-400 sm:w-auto">
           Status{' '}
           <select
             value={statusFilter}
             onChange={(e) => applyParams({ status: e.target.value as StatusFilter })}
-            className="ml-2 rounded-lg border border-surface-700 bg-surface-950 px-3 py-1.5 text-sm text-surface-100 outline-none focus:border-accent-500"
+            className="mt-1 min-h-11 w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none focus:border-accent-500 sm:ml-2 sm:mt-0 sm:min-h-0 sm:w-auto sm:py-1.5"
           >
             <option value="ALL">All</option>
             <option value="NEEDS_UPDATE">Needs update</option>
@@ -284,7 +284,7 @@ export default function WatchlistClient() {
             ))}
           </select>
         </label>
-        <label className="text-sm text-surface-400">
+        <label className="w-full text-sm text-surface-400 sm:w-auto">
           Sort{' '}
           <select
             value={sortField}
@@ -292,7 +292,7 @@ export default function WatchlistClient() {
               const newField = e.target.value as SortField
               applyParams({ sortField: newField, sortDir: newField === 'title' ? 'asc' : 'desc' })
             }}
-            className="ml-2 rounded-lg border border-surface-700 bg-surface-950 px-3 py-1.5 text-sm text-surface-100 outline-none focus:border-accent-500"
+            className="mt-1 min-h-11 w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none focus:border-accent-500 sm:ml-2 sm:mt-0 sm:min-h-0 sm:w-auto sm:py-1.5"
           >
             <option value="updated">Last updated</option>
             <option value="title">Title</option>
@@ -305,12 +305,12 @@ export default function WatchlistClient() {
           aria-label={sortDir === 'asc' ? 'Sort ascending' : 'Sort descending'}
           title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
           onClick={() => applyParams({ sortDir: sortDir === 'asc' ? 'desc' : 'asc' })}
-          className="rounded-lg border border-surface-700 bg-surface-950 px-2.5 py-1.5 text-sm text-surface-100 outline-none transition-colors hover:border-accent-500 focus:border-accent-500"
+          className="min-h-11 rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none transition-colors hover:border-accent-500 focus:border-accent-500"
         >
           {sortDir === 'asc' ? '↑' : '↓'}
         </button>
-        <button type="button" disabled={syncingAll} onClick={syncAllWithPlex} className="rounded-lg border border-accent-500/60 px-3 py-1.5 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50">{syncingAll ? 'Syncing…' : 'Sync all with Plex'}</button>
-        <p className="ml-auto text-xs text-surface-500">{visibleShows.length} of {shows.length} shown</p>
+        <button type="button" disabled={syncingAll} onClick={syncAllWithPlex} className="min-h-11 rounded-lg border border-accent-500/60 px-3 py-2 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50">{syncingAll ? 'Syncing…' : 'Sync all with Plex'}</button>
+        <p className="text-xs text-surface-500 sm:ml-auto">{visibleShows.length} of {shows.length} shown</p>
       </div>
 
       {syncSummary && <p className="rounded-xl border border-accent-500/30 bg-accent-950/30 px-4 py-3 text-sm text-accent-100">{syncSummary}</p>}
@@ -318,7 +318,7 @@ export default function WatchlistClient() {
       {visibleShows.length === 0 ? (
         <div className="py-16 text-center text-surface-500">No shows match those filters.</div>
       ) : (
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
           {visibleShows.map((show) => (
             <article
               key={show.id}
@@ -353,7 +353,7 @@ export default function WatchlistClient() {
                 onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(show.id) }}
                 onKeyDown={stopCardActivation}
                 disabled={removingId === show.id}
-                className="absolute right-2 top-2 z-30 rounded-full border border-red-400/50 bg-black/80 px-2 py-1 text-xs font-bold text-red-100 opacity-0 shadow-lg transition-opacity hover:bg-red-700 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-300 group-hover:opacity-100 group-focus-within:opacity-100"
+                className="absolute right-1.5 top-1.5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-red-400/50 bg-black/80 text-lg font-bold text-red-100 opacity-100 shadow-lg transition-opacity hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 md:right-2 md:top-2 md:h-auto md:w-auto md:px-2 md:py-1 md:text-xs md:opacity-0 md:focus:opacity-100 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
               >
                 ×
               </button>
@@ -376,7 +376,7 @@ export default function WatchlistClient() {
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                   onChange={(e) => patchShow(show.id, { status: e.target.value as AnimeShow['status'] })}
-                  className={`w-full cursor-pointer rounded-full border px-2 py-1.5 text-center text-[11px] font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 sm:px-3 sm:text-xs ${STATUS_SELECT_CLASSES[show.status]}`}
+                  className={`min-h-11 w-full cursor-pointer rounded-full border px-2 py-2 text-center text-[11px] font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 sm:px-3 sm:text-xs ${STATUS_SELECT_CLASSES[show.status]}`}
                 >
                   {SHOW_STATUSES.map((status) => (
                     <option key={status} value={status}>{STATUS_LABELS[status]}</option>
@@ -393,7 +393,20 @@ export default function WatchlistClient() {
                       <p className="mt-1 text-[10px] text-surface-300">{show.watchedCount ?? 0}/{show.airedCount} watched</p>
                     </div>
                   ) : null}
-                  <div className="hidden pointer-events-auto group-hover:block group-focus-within:block">
+                  <label className="pointer-events-auto block md:hidden">
+                    <span className="sr-only">Rating for {show.title}</span>
+                    <select
+                      value={show.rating ?? ''}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onChange={(e) => patchShow(show.id, { rating: e.target.value ? Number(e.target.value) : null })}
+                      className="min-h-11 w-full rounded-lg border border-surface-600 bg-black/80 px-2 text-xs font-medium text-white outline-none focus:ring-2 focus:ring-accent-300"
+                    >
+                      <option value="">Unrated</option>
+                      {[0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((value) => <option key={value} value={value}>{value}/5</option>)}
+                    </select>
+                  </label>
+                  <div className="hidden pointer-events-auto md:group-hover:block md:group-focus-within:block">
                     <StarRating rating={show.rating ?? null} onRate={(value) => patchShow(show.id, { rating: value })} />
                   </div>
                 </div>

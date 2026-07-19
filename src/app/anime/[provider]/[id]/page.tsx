@@ -152,7 +152,7 @@ export default async function AnimeDetailsPage({
   return (
     <div className="min-h-screen bg-surface-950">
       <Nav />
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:py-8">
         {data ? (
           <AnimeDetailsClient initialData={data} defaultCastLanguage={defaultCastLanguage} />
         ) : (
