@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.6.0] - 2026-07-19
+
+### Added
+
+- **Installable PWA**: Added a standalone web app manifest, app icons, offline shell fallback, and privacy-safe service worker caching that keeps API and personalized data network-only.
+- **Mobile navigation**: Added an accessible mobile-only bottom tab bar with safe-area support and touch-sized search/profile controls.
+
+### Changed
+
+- **Mobile experience**: Reworked detail, watchlist, Discover, and Settings surfaces for narrow viewports, visible touch controls, 44px targets, responsive forms, and all four themes.
+- **Discover pagination**: Discover pages now fill up to 35 post-filtered titles while preserving exact AniList cursors across page boundaries without duplicates or skipped leftovers.
+- **Dashboard summary**: The summary row now always shows four cards, including watched episodes, and Continue Watching identifies the next episode.
+
+### Fixed
+
+- **Dashboard statistics**: Excluded Anime, Animation, and missing-value noise from Top Genres while preserving studio counts; verified completion-rate status handling and empty average-rating display.
+- **TVDB anime matching**: Sparse TVDB search records remain eligible for title/year scoring, English translations and bounded year-qualified searches improve candidate matching, and extended records provide the final anime validation.
+
 ## [1.5.0] - 2026-07-18
 
 ### Added

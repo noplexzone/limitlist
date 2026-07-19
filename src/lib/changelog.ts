@@ -11,6 +11,34 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.6.0',
+    date: '2026-07-19',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'LimitList is now installable as a standalone PWA with app icons, an offline shell fallback, and network-only handling for API and personalized data.',
+          'Added an accessible mobile bottom navigation bar with safe-area support and touch-sized controls.',
+        ],
+      },
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Detail, watchlist, Discover, and Settings surfaces now fit narrow viewports with visible touch controls, responsive forms, and support for all four themes.',
+          'Discover pages fill up to 35 filtered titles while preserving exact AniList pagination without duplicate or skipped items.',
+          'Dashboard summary cards now remain complete, and Continue Watching identifies the next episode.',
+        ],
+      },
+      {
+        title: 'Bug fixes',
+        bullets: [
+          'Top Genres excludes Anime, Animation, and missing-value noise; completion rates and empty average ratings render correctly.',
+          'TVDB matching now retains sparse anime candidates, uses English translations and bounded year-qualified searches, and validates final extended records.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-07-18',
     sections: [
