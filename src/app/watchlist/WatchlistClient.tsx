@@ -96,7 +96,7 @@ function StarRating({
                 onFocus={() => setHovered(half)}
                 onClick={(e) => click(e, half)}
                 onKeyDown={stopKeyNavigation}
-                className="absolute left-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-l"
+                className="absolute left-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-l hidden sm:block"
               />
               <button
                 type="button"
@@ -105,7 +105,7 @@ function StarRating({
                 onFocus={() => setHovered(star)}
                 onClick={(e) => click(e, star)}
                 onKeyDown={stopKeyNavigation}
-                className="absolute right-0 top-0 z-10 h-full w-1/2 cursor-pointer rounded-r"
+                className="absolute right-0 top-0 z-10 h-full w-full sm:w-1/2 cursor-pointer rounded sm:rounded-r"
               />
             </div>
           )

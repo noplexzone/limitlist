@@ -421,11 +421,12 @@ export async function discoverWatchedFromPlex(): Promise<PlexDiscoveryResult> {
   }
 }
 
-function initialStatusForImportedShow(show: PlexWatchedShow, airingStatus?: string | null): ShowStatus {
+function initialStatusForImportedShow(show: PlexWatchedShow, airingStatus?: string | null, nextAiringAt?: Date | null): ShowStatus {
   const isFullyWatched = show.leafCount > 0 && show.viewedLeafCount >= show.leafCount
   const statusLower = airingStatus?.toLowerCase()
-  // Treat absent or ended/completed airingStatus as "not currently airing" — avoids requiring a prior airing refresh
-  const isNotCurrentlyAiring = !statusLower || ['ended', 'completed'].includes(statusLower)
+  const hasUpcomingEpisode = nextAiringAt != null && nextAiringAt.getTime() > Date.now()
+  // ended/completed → not airing; absent airingStatus → not airing only when no upcoming episode is known
+  const isNotCurrentlyAiring = ['ended', 'completed'].includes(statusLower ?? '') || (!statusLower && !hasUpcomingEpisode)
   if (isFullyWatched && isNotCurrentlyAiring) return 'COMPLETED'
   return show.viewedLeafCount > 0 ? 'WATCHING' : 'PLAN_TO_WATCH'
 }
@@ -455,7 +456,20 @@ export async function importWatchedFromPlex(ratingKeys: string[]): Promise<{ res
         continue
       }
       const details = await tvdb.getDetails(tvdbId)
-      const initialStatus = initialStatusForImportedShow({ ...discovered, guids: [] }, details?.airingStatus)
+      let importAiringStatus = details?.airingStatus ?? null
+      let importNextAiringAt: Date | null = null
+      if (tvdb.getAiringDetails) {
+        try {
+          const airingInfo = await tvdb.getAiringDetails(tvdbId)
+          if (airingInfo) {
+            importAiringStatus = airingInfo.airingStatus ?? importAiringStatus
+            importNextAiringAt = airingInfo.nextAiringAt
+          }
+        } catch {
+          // fall back to details airingStatus
+        }
+      }
+      const initialStatus = initialStatusForImportedShow({ ...discovered, guids: [] }, importAiringStatus, importNextAiringAt)
       const show = await importTvdbShowToWatchlist(tvdbId, { status: initialStatus, plexRatingKey: discovered.ratingKey })
       const sync = _isAllowedShowOrderingForTest(discovered.showOrdering) ? await syncShowFromPlex(show.id) : undefined
       results.push({

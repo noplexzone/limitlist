@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
+import Toggle from '@/components/Toggle'
 import { SettingsState } from '../types'
 
 interface Props {
@@ -133,32 +134,24 @@ export default function PlexSyncSection({ settings, onSettingsChange }: Props) {
               </select>
               <p className="mt-1 text-xs text-surface-500">Partial catches nearly-finished episodes Plex has not marked played.</p>
             </label>
-            <label className="flex items-start gap-3 rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-200">
-              <input
-                type="checkbox"
+            <div className="rounded-lg border border-surface-800 bg-surface-900 px-3 py-2">
+              <Toggle
                 checked={plexAutoStatus}
-                onChange={(e) => setPlexAutoStatus(e.target.checked)}
                 disabled={settings.plexAutoStatus.lockedByEnvironment}
-                className="mt-1 accent-accent-500"
+                onChange={setPlexAutoStatus}
+                label="Auto-set Up-to-Date"
               />
-              <span>
-                <span className="font-medium">Auto-set Up-to-Date</span>
-                <span className="block text-xs text-surface-500">When all aired episodes are watched, Plex may update the show status.</span>
-              </span>
-            </label>
-            <label className="flex items-start gap-3 rounded-lg border border-surface-800 bg-surface-900 px-3 py-2 text-sm text-surface-200">
-              <input
-                type="checkbox"
+              <p className="mt-0.5 text-xs text-surface-500 ml-14">When all aired episodes are watched, Plex may update the show status.</p>
+            </div>
+            <div className="rounded-lg border border-surface-800 bg-surface-900 px-3 py-2">
+              <Toggle
                 checked={plexSyncOnRefresh}
-                onChange={(e) => setPlexSyncOnRefresh(e.target.checked)}
                 disabled={settings.plexSyncOnRefresh.lockedByEnvironment}
-                className="mt-1 accent-accent-500"
+                onChange={setPlexSyncOnRefresh}
+                label="Sync after schedule refresh"
               />
-              <span>
-                <span className="font-medium">Sync after schedule refresh</span>
-                <span className="block text-xs text-surface-500">Refresh All Schedules also runs Plex sync afterward.</span>
-              </span>
-            </label>
+              <p className="mt-0.5 text-xs text-surface-500 ml-14">Refresh All Schedules also runs Plex sync afterward.</p>
+            </div>
             <button disabled={saving} className="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-500 disabled:opacity-50">
               Save sync settings
             </button>

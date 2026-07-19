@@ -172,7 +172,7 @@ function TaskCard({ task: initialTask }: { task: ScheduledTask }) {
           checked={task.enabled}
           disabled={toggling}
           onChange={() => { void toggleEnabled() }}
-          label={task.enabled ? 'Disable task' : 'Enable task'}
+          label={task.enabled ? `Disable ${task.name}` : `Enable ${task.name}`}
         />
       </div>
 
