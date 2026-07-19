@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-const WHATS_NEW_RECENT = 3
 import Image from 'next/image'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -12,6 +11,8 @@ import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
 import UpcomingReleases from '@/app/schedule/UpcomingReleases'
 import OpenSearchButton from './OpenSearchButton'
+
+const WHATS_NEW_RECENT = 3
 
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -134,9 +135,14 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   if (!user) redirect('/login')
 
-  const [initialShows, episodesWatched] = await Promise.all([
+  const [initialShows, episodesWatched, watchCounts] = await Promise.all([
     prisma.animeShow.findMany({ orderBy: { updatedAt: 'desc' } }),
     prisma.episodeWatch.count({ where: { watched: true } }),
+    prisma.episodeWatch.groupBy({
+      by: ['animeShowId'],
+      where: { watched: true },
+      _count: { id: true },
+    }),
   ])
   let shows = initialShows
   let stats = computeStats(shows)
@@ -160,12 +166,17 @@ export default async function DashboardPage() {
   }
   const isEmpty = stats.totalShows === 0
 
+  const watchedCountMap = new Map(watchCounts.map((r) => [r.animeShowId, r._count.id]))
+
   const cwCandidates = shows
-    .filter((s) =>
-      s.status === 'WATCHING' ||
-      s.status === 'PAUSED' ||
-      (s.status === 'UP_TO_DATE' && (s.upToDateStale || s.nextEpisodeNum != null))
-    )
+    .filter((s) => {
+      if (s.status === 'COMPLETED' || s.status === 'PLAN_TO_WATCH' || s.status === 'DROPPED') return false
+      if (s.status !== 'WATCHING' && s.status !== 'PAUSED' && s.status !== 'UP_TO_DATE') return false
+      const watched = watchedCountMap.get(s.id) ?? 0
+      const aired = s.airedEpisodeCount
+      if (aired != null && aired > 0) return watched < aired
+      return s.status === 'WATCHING' || s.status === 'PAUSED' || s.nextEpisodeNum != null
+    })
     .slice(0, 12)
 
   const continueWatching: ShelfShow[] = cwCandidates.map((s) => ({
