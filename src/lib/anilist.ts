@@ -1,5 +1,6 @@
 import type { MetadataCastMember, MetadataRelatedItem, MetadataResult, MetadataSeasonSummary, MetadataVoiceCastGroup } from './providers'
 import { getAnimeRootTitle, normalizeAnimeTitle, titleCandidates } from './anime-title'
+import { decodeCursor, encodeCursor, computeNextCursor } from './discover-pagination'
 
 const ANILIST_GRAPHQL = 'https://graphql.anilist.co'
 
@@ -88,6 +89,7 @@ interface AniListResponse {
 export interface AniListDiscoverPage {
   media: AniListMedia[]
   hasNextPage: boolean
+  nextCursor: string | null
 }
 
 const MEDIA_FIELDS = `
@@ -414,10 +416,13 @@ function hasSeriesPrequel(media: AniListMedia): boolean {
   )
 }
 
+const DISCOVER_TARGET = 35
+const DISCOVER_PER_PAGE = 50
+const DISCOVER_MAX_FETCHES = 4
+
 export async function fetchAniListDiscover(
   type: AniListFeedType,
-  page = 1,
-  perPage = 42
+  cursor?: string | null
 ): Promise<AniListDiscoverPage> {
   let sort: string[]
   let status: string | undefined
@@ -431,16 +436,60 @@ export async function fetchAniListDiscover(
   } else {
     sort = ['POPULARITY_DESC']
   }
-  const data = await postAniList<AniListResponse>(
-    DISCOVER_QUERY,
-    { page, perPage, sort, status, formatIn: DISCOVER_SERIES_FORMATS },
-    5000
-  )
-  if (!data) throw new Error('AniList request failed')
-  return {
-    media: (data.data?.Page?.media ?? []).filter((media) => !hasSeriesPrequel(media)),
-    hasNextPage: Boolean(data.data?.Page?.pageInfo?.hasNextPage),
+
+  const start = (cursor ? decodeCursor(cursor) : null) ?? { page: 1, offset: 0 }
+  let currentPage = start.page
+  let currentOffset = start.offset
+  const collected: AniListMedia[] = []
+  let fetchCount = 0
+
+  while (collected.length < DISCOVER_TARGET) {
+    if (fetchCount >= DISCOVER_MAX_FETCHES) {
+      return {
+        media: collected,
+        hasNextPage: true,
+        nextCursor: encodeCursor(currentPage, currentOffset),
+      }
+    }
+
+    const data = await postAniList<AniListResponse>(
+      DISCOVER_QUERY,
+      { page: currentPage, perPage: DISCOVER_PER_PAGE, sort, status, formatIn: DISCOVER_SERIES_FORMATS },
+      5000
+    )
+    fetchCount++
+
+    if (!data) throw new Error('AniList request failed')
+
+    const filtered = (data.data?.Page?.media ?? []).filter((media) => !hasSeriesPrequel(media))
+    const upstreamHasNext = Boolean(data.data?.Page?.pageInfo?.hasNextPage)
+    const slice = filtered.slice(currentOffset)
+    const needed = DISCOVER_TARGET - collected.length
+
+    if (slice.length >= needed) {
+      collected.push(...slice.slice(0, needed))
+      const { nextCursor, hasNextPage } = computeNextCursor(
+        currentPage,
+        filtered.length,
+        currentOffset,
+        needed,
+        upstreamHasNext
+      )
+      return { media: collected, hasNextPage, nextCursor }
+    }
+
+    collected.push(...slice)
+    currentOffset = 0
+
+    if (upstreamHasNext) {
+      currentPage++
+    } else {
+      return { media: collected, hasNextPage: false, nextCursor: null }
+    }
   }
+
+  // Unreachable but satisfies TypeScript
+  return { media: collected, hasNextPage: false, nextCursor: null }
 }
 
 export async function fetchAniListMediaById(id: string): Promise<AniListMedia | null> {

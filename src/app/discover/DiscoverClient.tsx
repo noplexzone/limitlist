@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import PosterImage from '@/components/PosterImage'
 
 interface DiscoverResult {
@@ -46,12 +46,24 @@ export default function DiscoverClient() {
   const [importErrors, setImportErrors] = useState<Map<string, string>>(new Map())
   const [hasNextPage, setHasNextPage] = useState(false)
 
+  // cursor history: page number → cursor needed to fetch that page (page 1 is always null)
+  const cursorHistoryRef = useRef<Map<number, string | null>>(new Map([[1, null]]))
+  const abortRef = useRef<AbortController | null>(null)
+
   const fetchDiscover = useCallback(async (type: FeedType, pageNum: number) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    const cursor = cursorHistoryRef.current.get(pageNum) ?? null
+
     setLoading(true)
     setFetchError('')
     try {
-      const res = await fetch(`/api/discover?type=${type}&page=${pageNum}`)
-      const data = await res.json()
+      let url = `/api/discover?type=${type}&page=${pageNum}`
+      if (cursor !== null) url += `&cursor=${encodeURIComponent(cursor)}`
+      const res = await fetch(url, { signal: controller.signal })
+      const data = await res.json() as { error?: string; results?: DiscoverResult[]; hasNextPage?: boolean; nextCursor?: string | null }
       if (!res.ok) {
         setFetchError(data.error ?? 'Failed to load results')
         setResults([])
@@ -59,13 +71,19 @@ export default function DiscoverClient() {
       } else {
         setResults(data.results ?? [])
         setHasNextPage(Boolean(data.hasNextPage))
+        const nc = data.nextCursor ?? null
+        if (nc !== null) {
+          cursorHistoryRef.current = new Map(cursorHistoryRef.current).set(pageNum + 1, nc)
+        }
       }
-    } catch {
+      setLoading(false)
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return
       setFetchError('Network error')
       setResults([])
       setHasNextPage(false)
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -140,7 +158,15 @@ export default function DiscoverClient() {
           {TABS.map(({ type: t, label }) => (
             <button
               key={t}
-              onClick={() => { setFeedType(t); setPage(1) }}
+              onClick={() => {
+                if (t === feedType) return
+                cursorHistoryRef.current = new Map([[1, null]])
+                setFeedType(t)
+                setPage(1)
+                setResults([])
+                setFetchError('')
+                setHasNextPage(false)
+              }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 feedType === t
                   ? 'bg-accent-600 text-white'

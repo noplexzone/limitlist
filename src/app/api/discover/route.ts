@@ -9,8 +9,10 @@ import {
   getAniListTitles,
   type AniListFeedType,
 } from '@/lib/anilist'
+import { decodeCursor } from '@/lib/discover-pagination'
 import { getAnimeRootTitle } from '@/lib/anime-title'
 
+const DISCOVER_TARGET = 35
 const VALID_FEED_TYPES = new Set<AniListFeedType>(['popular', 'trending', 'top-rated', 'upcoming'])
 
 function feedTypeFromRequest(req: NextRequest): AniListFeedType {
@@ -18,14 +20,20 @@ function feedTypeFromRequest(req: NextRequest): AniListFeedType {
   return (type && VALID_FEED_TYPES.has(type as AniListFeedType)) ? (type as AniListFeedType) : 'popular'
 }
 
-function pageFromRequest(req: NextRequest): number {
+function displayPageFromRequest(req: NextRequest): number {
   const raw = Number(req.nextUrl.searchParams.get('page') ?? '1')
-  return Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), 25) : 1
+  return Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), 9999) : 1
 }
 
 export async function GET(req: NextRequest) {
   const user = await requireAuth()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rawCursor = req.nextUrl.searchParams.get('cursor') ?? ''
+  if (rawCursor) {
+    const parsed = decodeCursor(rawCursor)
+    if (!parsed) return NextResponse.json({ error: 'Invalid cursor' }, { status: 400 })
+  }
 
   const existing = await prisma.animeShow.findMany({
     select: {
@@ -48,9 +56,8 @@ export async function GET(req: NextRequest) {
   )
 
   try {
-    const page = pageFromRequest(req)
-    const pageSize = 42
-    const discoverPage = await fetchAniListDiscover(feedTypeFromRequest(req), page, pageSize)
+    const page = displayPageFromRequest(req)
+    const discoverPage = await fetchAniListDiscover(feedTypeFromRequest(req), rawCursor || null)
     const results = discoverPage.media.map((item) => {
       const title = getAniListDisplayTitle(item)
       const rootTitles = getAniListTitles(item).map(getAnimeRootTitle).filter(Boolean)
@@ -84,8 +91,9 @@ export async function GET(req: NextRequest) {
       provider: 'anilist',
       linkedProvider: 'tvdb-on-import',
       page,
-      pageSize,
+      pageSize: DISCOVER_TARGET,
       hasNextPage: discoverPage.hasNextPage,
+      nextCursor: discoverPage.nextCursor,
       results,
     })
   } catch (err) {
