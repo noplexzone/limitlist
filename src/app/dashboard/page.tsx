@@ -91,14 +91,14 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-surface-700">
         {shows.map((show) => (
-          <Link key={show.id} href={`/anime/${show.metadataProvider}/${show.metadataId}`} className="shrink-0 w-24 group">
+          <Link key={show.id} href={`/anime/${show.metadataProvider}/${show.metadataId}`} className="shrink-0 w-28 group">
             <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-surface-800 bg-surface-900 group-hover:border-accent-500/70 transition-colors">
               {show.posterUrl ? (
                 <Image
                   src={show.posterUrl}
                   alt={`${show.title} poster`}
                   fill
-                  sizes="96px"
+                  sizes="112px"
                   className="object-cover"
                 />
               ) : (
@@ -109,8 +109,8 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
             </div>
             <p className="mt-1 text-[10px] text-surface-400 leading-tight line-clamp-2">{show.title}</p>
             {show.nextEpisodeNum != null && (
-              <p className="text-[10px] text-surface-500 leading-tight truncate">
-                {formatEpisodeLabel(null, show.nextEpisodeNum!, show.nextEpisodeName)}
+              <p className="text-[10px] text-surface-500 leading-tight line-clamp-2">
+                {formatEpisodeLabel(null, show.nextEpisodeNum!, show.nextEpisodeName, true)}
               </p>
             )}
             {show.rating != null && (
@@ -154,7 +154,11 @@ export default async function DashboardPage() {
   const isEmpty = stats.totalShows === 0
 
   const cwCandidates = shows
-    .filter((s) => s.status === 'WATCHING' || (s.status === 'UP_TO_DATE' && s.upToDateStale))
+    .filter((s) =>
+      s.status === 'WATCHING' ||
+      s.status === 'PAUSED' ||
+      (s.status === 'UP_TO_DATE' && (s.upToDateStale || s.nextEpisodeNum != null))
+    )
     .slice(0, 12)
 
   const continueWatching: ShelfShow[] = cwCandidates.map((s) => ({

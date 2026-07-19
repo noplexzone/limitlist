@@ -1,11 +1,10 @@
 export function formatEpisodeLabel(
   nextSeasonNum: number | null | undefined,
   nextEpisodeNum: number,
-  nextEpisodeName: string | null | undefined
+  nextEpisodeName: string | null | undefined,
+  compact?: boolean
 ): string {
-  const epPart = `Ep ${nextEpisodeNum}`
+  const epPart = nextSeasonNum != null ? `S${nextSeasonNum}·E${nextEpisodeNum}` : `Ep ${nextEpisodeNum}`
   const namePart = nextEpisodeName ? ` — ${nextEpisodeName}` : ''
-  return nextSeasonNum != null
-    ? `Up next: S${nextSeasonNum} · ${epPart}${namePart}`
-    : `Up next: ${epPart}${namePart}`
+  return compact ? `${epPart}${namePart}` : `Up next: ${epPart}${namePart}`
 }

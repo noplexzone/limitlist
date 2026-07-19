@@ -81,13 +81,13 @@ function StarRating({
   }
 
   return (
-    <div className="w-full px-5" aria-label="Rating">
-      <div className="flex items-center justify-center gap-0.5" onMouseLeave={() => setHovered(null)}>
+    <div className="w-full px-3" aria-label="Rating">
+      <div className="flex items-center justify-center gap-1" onMouseLeave={() => setHovered(null)}>
         {[1, 2, 3, 4, 5].map((star) => {
           const half = star - 0.5
           const fillPct = Math.max(0, Math.min(1, effective - (star - 1))) * 100
           return (
-            <div key={star} className="relative h-5 w-5 sm:h-6 sm:w-6">
+            <div key={star} className="relative h-8 w-8 sm:h-5 sm:w-5">
               <StarIcon fillPct={fillPct} />
               <button
                 type="button"
@@ -358,19 +358,8 @@ export default function WatchlistClient() {
                 </div>
               )}
 
-              <button
-                type="button"
-                aria-label={`Remove ${show.title} from watchlist`}
-                onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(show.id) }}
-                onKeyDown={stopCardActivation}
-                disabled={removingId === show.id}
-                className="absolute right-1.5 top-1.5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-red-400/50 bg-black/80 text-lg font-bold text-red-100 opacity-100 shadow-lg transition-opacity hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 md:right-2 md:top-2 md:h-auto md:w-auto md:px-2 md:py-1 md:text-xs md:opacity-0 md:focus:opacity-100 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-              >
-                ×
-              </button>
-
               {removeConfirmId === show.id && (
-                <div className="absolute inset-x-2 top-12 z-40 rounded-xl border border-red-400/50 bg-surface-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
+                <div className="absolute inset-x-2 top-14 z-40 rounded-xl border border-red-400/50 bg-surface-950/95 p-3 text-center shadow-2xl" onClick={(e) => e.stopPropagation()} onKeyDown={stopCardActivation}>
                   <p className="mb-2 text-xs font-medium text-surface-100">Remove?</p>
                   <div className="flex justify-center gap-2">
                     <button type="button" className="rounded bg-surface-800 px-2 py-1 text-xs text-surface-200 hover:bg-surface-700" onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(null) }}>Cancel</button>
@@ -379,7 +368,8 @@ export default function WatchlistClient() {
                 </div>
               )}
 
-              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/85 via-black/45 to-transparent p-2 pr-11">
+              {/* Top overlay: status pill + remove button in one flex row so they can never overlap */}
+              <div className="absolute inset-x-0 top-0 z-20 flex items-start gap-1 bg-gradient-to-b from-black/85 via-black/45 to-transparent p-1.5">
                 <label className="sr-only" htmlFor={`status-${show.id}`}>Status for {show.title}</label>
                 <select
                   id={`status-${show.id}`}
@@ -387,12 +377,22 @@ export default function WatchlistClient() {
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                   onChange={(e) => patchShow(show.id, { status: e.target.value as AnimeShow['status'] })}
-                  className={`min-h-11 w-full cursor-pointer rounded-full border px-2 py-2 text-center text-[11px] font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 sm:px-3 sm:text-xs ${STATUS_SELECT_CLASSES[show.status]}`}
+                  className={`min-h-[44px] flex-1 cursor-pointer rounded-full border px-2 py-1 text-center text-[11px] font-semibold text-white outline-none transition-colors focus:ring-2 focus:ring-white/50 sm:text-xs ${STATUS_SELECT_CLASSES[show.status]}`}
                 >
                   {SHOW_STATUSES.map((status) => (
                     <option key={status} value={status}>{STATUS_LABELS[status]}</option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  aria-label={`Remove ${show.title} from watchlist`}
+                  onClick={(e) => { e.stopPropagation(); setRemoveConfirmId(show.id) }}
+                  onKeyDown={stopCardActivation}
+                  disabled={removingId === show.id}
+                  className="z-30 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-red-400/50 bg-black/80 text-lg font-bold text-red-100 shadow-lg transition-opacity hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 md:opacity-0 md:focus:opacity-100 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                >
+                  ×
+                </button>
               </div>
 
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-2 pb-3 pt-12 pointer-events-none">
@@ -404,19 +404,10 @@ export default function WatchlistClient() {
                       <p className="mt-1 text-[10px] text-surface-300">{show.watchedCount ?? 0}/{show.airedCount} watched</p>
                     </div>
                   ) : null}
-                  <label className="pointer-events-auto block md:hidden">
-                    <span className="sr-only">Rating for {show.title}</span>
-                    <select
-                      value={show.rating ?? ''}
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      onChange={(e) => patchShow(show.id, { rating: e.target.value ? Number(e.target.value) : null })}
-                      className="min-h-11 w-full rounded-lg border border-surface-600 bg-black/80 px-2 text-xs font-medium text-white outline-none focus:ring-2 focus:ring-accent-300"
-                    >
-                      <option value="">Unrated</option>
-                      {[0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((value) => <option key={value} value={value}>{value}/5</option>)}
-                    </select>
-                  </label>
+                  {/* Stars: always visible on mobile, hover-reveal on desktop */}
+                  <div className="pointer-events-auto block md:hidden">
+                    <StarRating rating={show.rating ?? null} onRate={(value) => patchShow(show.id, { rating: value })} />
+                  </div>
                   <div className="hidden pointer-events-auto md:group-hover:block md:group-focus-within:block">
                     <StarRating rating={show.rating ?? null} onRate={(value) => patchShow(show.id, { rating: value })} />
                   </div>
