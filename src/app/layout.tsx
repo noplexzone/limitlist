@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { getConfiguredTheme } from '@/lib/settings'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 
 export const metadata: Metadata = {
   title: 'LimitList',
   description: 'Personal anime watchlist tracker',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'LimitList',
+    statusBarStyle: 'default',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32' },
@@ -30,6 +37,7 @@ export default async function RootLayout({
     <html lang="en" data-theme={themeId}>
       <body className="bg-surface-950 text-surface-100 min-h-screen">
         {children}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   )
