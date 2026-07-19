@@ -11,6 +11,36 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '1.6.1',
+    date: '2026-07-19',
+    sections: [
+      {
+        title: 'Features',
+        bullets: [
+          'Added a full-history /changelog page; What\'s New panels now show the latest three entries with a link to it.',
+          'Extracted a shared Toggle component with role="switch", aria-checked, focus ring, and smooth transition for all on/off settings.',
+        ],
+      },
+      {
+        title: 'Enhancements',
+        bullets: [
+          'Replaced the broken Completion Rate stat card with Hours Watched — a metric that reflects real activity for any active user.',
+          'Continue Watching now includes PAUSED shows and UP_TO_DATE shows with a next episode, not only WATCHING ones.',
+          'What\'s New entries all start collapsed so the panel is compact on any viewport size.',
+        ],
+      },
+      {
+        title: 'Bug fixes',
+        bullets: [
+          'Watchlist card star rating is now always tappable on mobile without hover.',
+          'Status pill and remove button now occupy a shared flex row and can never overlap.',
+          'Continue Watching episode labels use line-clamp-2 and wider cards so names are readable rather than cut off.',
+          'Plex import now marks fully-watched shows as COMPLETED when airingStatus is absent or ended — no prior airing refresh required.',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-07-19',
     sections: [

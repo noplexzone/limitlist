@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes yet.
 
+## [1.6.1] - 2026-07-19
+
+### Added
+
+- **Changelog page**: Added `/changelog` route showing the full release history; What's New panels in the dashboard and Settings now show the latest three entries with a "View full changelog" link.
+- **Reusable toggle switch**: Extracted a shared `Toggle` component (`src/components/Toggle.tsx`) with `role="switch"`, `aria-checked`, focus ring, and smooth transition; used for all on/off settings in Notifications and Tasks.
+
+### Changed
+
+- **What's New panels**: Reduced to three most-recent entries in both the dashboard sidebar and Settings About; all entries start collapsed (no pre-expanded entry) so the panel is compact on any viewport size.
+- **Hours Watched**: Replaced the broken Completion Rate stat card with Hours Watched (episodes watched × 24 min average) — a metric that reflects real activity for any active user.
+- **Continue Watching**: Broadened shelf to include PAUSED shows and UP_TO_DATE shows that have a next episode number, not only explicitly WATCHING shows.
+
+### Fixed
+
+- **Watchlist card rating**: Stars are now always directly tappable on mobile (no hover required); desktop keeps the hover-reveal behaviour.
+- **Watchlist card layout**: Status pill and remove button now occupy a single flex row and can never overlap on any screen width.
+- **Episode label**: Continue Watching shelf cards use `line-clamp-2` and are slightly wider (`w-28`) so episode names are readable rather than cut off.
+- **COMPLETED detection**: Plex import now marks a fully-watched show as COMPLETED when airingStatus is absent or ended/completed — no longer requires a prior airing refresh to populate the field.
+
 ## [1.6.0] - 2026-07-19
 
 ### Added
