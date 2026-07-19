@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+const WHATS_NEW_RECENT = 3
 import Image from 'next/image'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -24,15 +25,16 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 
 function WhatsNewPanel() {
+  const recent = changelogEntries.slice(0, WHATS_NEW_RECENT)
   return (
     <section className="rounded-xl border border-surface-800 bg-surface-900 p-5">
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-accent-300">What&apos;s New</p>
         <h2 className="mt-1 text-lg font-semibold text-surface-100">LimitList updates</h2>
       </div>
-      <div className="max-h-[38rem] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
-        {changelogEntries.map((entry, index) => (
-          <details key={entry.version} open={index === 0} className="rounded-lg border border-surface-800 bg-surface-950/70 px-3 py-2">
+      <div className="space-y-2">
+        {recent.map((entry) => (
+          <details key={entry.version} className="rounded-lg border border-surface-800 bg-surface-950/70 px-3 py-2">
             <summary className="cursor-pointer text-sm font-medium text-surface-200">
               {entry.version} <span className="text-xs font-normal text-surface-500">· {entry.date}</span>
             </summary>
@@ -48,6 +50,11 @@ function WhatsNewPanel() {
             </div>
           </details>
         ))}
+      </div>
+      <div className="mt-3">
+        <Link href="/changelog" className="text-sm font-medium text-accent-400 hover:text-accent-300 transition-colors">
+          View full changelog →
+        </Link>
       </div>
     </section>
   )

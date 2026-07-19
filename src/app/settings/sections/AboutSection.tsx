@@ -1,12 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { changelogEntries } from '@/lib/changelog'
 
 interface Props {
   version: string
 }
 
+const RECENT_COUNT = 3
+
 export default function AboutSection({ version }: Props) {
+  const recent = changelogEntries.slice(0, RECENT_COUNT)
   return (
     <div className="space-y-6">
       <section className="bg-surface-900 border border-surface-800 rounded-xl p-4 sm:p-6">
@@ -23,8 +27,8 @@ export default function AboutSection({ version }: Props) {
           <h2 className="mt-1 text-lg font-semibold text-surface-100">LimitList updates</h2>
         </div>
         <div className="space-y-2">
-          {changelogEntries.map((entry, index) => (
-            <details key={entry.version} open={index === 0} className="rounded-lg border border-surface-800 bg-surface-950/70 px-3 py-2">
+          {recent.map((entry) => (
+            <details key={entry.version} className="rounded-lg border border-surface-800 bg-surface-950/70 px-3 py-2">
               <summary className="cursor-pointer text-sm font-medium text-surface-200">
                 {entry.version} <span className="text-xs font-normal text-surface-500">· {entry.date}</span>
               </summary>
@@ -42,6 +46,11 @@ export default function AboutSection({ version }: Props) {
               </div>
             </details>
           ))}
+        </div>
+        <div className="mt-3">
+          <Link href="/changelog" className="text-sm font-medium text-accent-400 hover:text-accent-300 transition-colors">
+            View full changelog →
+          </Link>
         </div>
       </section>
     </div>
