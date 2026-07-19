@@ -81,13 +81,13 @@ function StarRating({
   }
 
   return (
-    <div className="w-full px-3" aria-label="Rating">
-      <div className="flex items-center justify-center gap-1" onMouseLeave={() => setHovered(null)}>
+    <div className="w-full px-0 sm:px-3" aria-label="Rating">
+      <div className="flex flex-wrap items-center justify-center gap-1 sm:flex-nowrap" onMouseLeave={() => setHovered(null)}>
         {[1, 2, 3, 4, 5].map((star) => {
           const half = star - 0.5
           const fillPct = Math.max(0, Math.min(1, effective - (star - 1))) * 100
           return (
-            <div key={star} className="relative h-8 w-8 sm:h-5 sm:w-5">
+            <div key={star} className="relative h-8 w-8 shrink-0 sm:h-5 sm:w-5">
               <StarIcon fillPct={fillPct} />
               <button
                 type="button"

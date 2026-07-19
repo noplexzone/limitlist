@@ -26,7 +26,7 @@ No unreleased changes yet.
 - **Watchlist card rating**: Stars are now always directly tappable on mobile (no hover required); desktop keeps the hover-reveal behaviour.
 - **Watchlist card layout**: Status pill and remove button now occupy a single flex row and can never overlap on any screen width.
 - **Episode label**: Continue Watching shelf cards use `line-clamp-2` and are slightly wider (`w-28`) so episode names are readable rather than cut off.
-- **COMPLETED detection**: Plex import now marks a fully-watched show as COMPLETED when airingStatus is absent or ended/completed — no longer requires a prior airing refresh to populate the field.
+- **COMPLETED detection**: Plex import marks fully-watched shows as COMPLETED when airingStatus is ended/completed, or absent with no upcoming episode, and preserves that status through the initial Plex sync.
 - **iOS input zoom**: Text inputs in settings and forms no longer trigger Safari auto-zoom on focus; all controls render at 16 px or larger.
 - **PWA safe areas**: Safe-area insets keep the top navigation below the status bar/notch and the bottom navigation above the home indicator.
 - **Discover tabs on mobile**: The Discover tab bar no longer overflows on narrow screens; all four tabs remain visible and tappable.

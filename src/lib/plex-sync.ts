@@ -347,14 +347,16 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
 
   const watchedTotal = await prisma.episodeWatch.count({ where: { animeShowId: showId, watched: true } })
 
-  // If all aired TVDB episodes are watched, set UP_TO_DATE with the newest aired episode as baseline
+  // If all aired TVDB episodes are watched, set UP_TO_DATE with the newest aired episode as baseline.
+  // Preserve a valid COMPLETED classification, but allow a future episode to move it back to UP_TO_DATE.
   const allWatches = await prisma.episodeWatch.findMany({ where: { animeShowId: showId } })
   const upToDate = _computeUpToDateStatus(allWatches, tvdbDetails.seasons)
+  const preserveCompletedStatus = show.status === 'COMPLETED' && isNotCurrentlyAiring(show.airingStatus, show.nextAiringAt)
   if (upToDate.allAiredWatched && upToDate.newestWatchedEpisode) {
     await prisma.animeShow.update({
       where: { id: showId },
       data: {
-        ...(plexAutoStatus ? { status: 'UP_TO_DATE' } : {}),
+        ...(plexAutoStatus && !preserveCompletedStatus ? { status: 'UP_TO_DATE' } : {}),
         upToDateEpisodeNum: upToDate.newestWatchedEpisode.episodeNumber,
         upToDateAiredAt: new Date(upToDate.newestWatchedEpisode.airDate),
         upToDateStale: false,
@@ -421,13 +423,15 @@ export async function discoverWatchedFromPlex(): Promise<PlexDiscoveryResult> {
   }
 }
 
-function initialStatusForImportedShow(show: PlexWatchedShow, airingStatus?: string | null, nextAiringAt?: Date | null): ShowStatus {
-  const isFullyWatched = show.leafCount > 0 && show.viewedLeafCount >= show.leafCount
+function isNotCurrentlyAiring(airingStatus?: string | null, nextAiringAt?: Date | null): boolean {
   const statusLower = airingStatus?.toLowerCase()
   const hasUpcomingEpisode = nextAiringAt != null && nextAiringAt.getTime() > Date.now()
-  // ended/completed → not airing; absent airingStatus → not airing only when no upcoming episode is known
-  const isNotCurrentlyAiring = ['ended', 'completed'].includes(statusLower ?? '') || (!statusLower && !hasUpcomingEpisode)
-  if (isFullyWatched && isNotCurrentlyAiring) return 'COMPLETED'
+  return ['ended', 'completed'].includes(statusLower ?? '') || (!statusLower && !hasUpcomingEpisode)
+}
+
+function initialStatusForImportedShow(show: PlexWatchedShow, airingStatus?: string | null, nextAiringAt?: Date | null): ShowStatus {
+  const isFullyWatched = show.leafCount > 0 && show.viewedLeafCount >= show.leafCount
+  if (isFullyWatched && isNotCurrentlyAiring(airingStatus, nextAiringAt)) return 'COMPLETED'
   return show.viewedLeafCount > 0 ? 'WATCHING' : 'PLAN_TO_WATCH'
 }
 
