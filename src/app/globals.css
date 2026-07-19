@@ -194,6 +194,11 @@
   }
 }
 
+/* iOS Safari auto-zooms any focused input below 16px — floor all form controls on mobile */
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px; }
+}
+
 @media (max-width: 767px) {
   .mobile-settings button:not([role="switch"]),
   .mobile-settings input:not([type="checkbox"]):not([type="radio"]),
