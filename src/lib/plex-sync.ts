@@ -422,7 +422,11 @@ export async function discoverWatchedFromPlex(): Promise<PlexDiscoveryResult> {
 }
 
 function initialStatusForImportedShow(show: PlexWatchedShow, airingStatus?: string | null): ShowStatus {
-  if (show.leafCount > 0 && show.viewedLeafCount >= show.leafCount && airingStatus && ['ended', 'completed'].includes(airingStatus.toLowerCase())) return 'COMPLETED'
+  const isFullyWatched = show.leafCount > 0 && show.viewedLeafCount >= show.leafCount
+  const statusLower = airingStatus?.toLowerCase()
+  // Treat absent or ended/completed airingStatus as "not currently airing" — avoids requiring a prior airing refresh
+  const isNotCurrentlyAiring = !statusLower || ['ended', 'completed'].includes(statusLower)
+  if (isFullyWatched && isNotCurrentlyAiring) return 'COMPLETED'
   return show.viewedLeafCount > 0 ? 'WATCHING' : 'PLAN_TO_WATCH'
 }
 

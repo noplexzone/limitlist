@@ -225,7 +225,7 @@ export default async function DashboardPage() {
                 {/* Summary cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <StatCard label="Total Shows" value={String(stats.totalShows)} />
-                  <StatCard label="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
+                  <StatCard label="Hours Watched" value={episodesWatched === 0 ? '0h' : `${Math.round(episodesWatched * 24 / 60 * 10) / 10}h`} />
                   <StatCard label="Average Rating" value={stats.averageRating !== null ? `${stats.averageRating.toFixed(1)} / 5` : '—'} />
                   <StatCard label="Episodes Watched" value={String(episodesWatched)} />
                 </div>
