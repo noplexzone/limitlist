@@ -28,11 +28,11 @@ interface DiscoverResult {
 
 type FeedType = 'popular' | 'trending' | 'top-rated' | 'upcoming'
 
-const TABS: { type: FeedType; label: string }[] = [
-  { type: 'popular', label: 'Popular Anime' },
-  { type: 'trending', label: 'Trending This Week' },
-  { type: 'top-rated', label: 'Top Rated' },
-  { type: 'upcoming', label: 'Upcoming' },
+const TABS: { type: FeedType; label: string; mobileLabel: string }[] = [
+  { type: 'popular', label: 'Popular Anime', mobileLabel: 'Popular' },
+  { type: 'trending', label: 'Trending This Week', mobileLabel: 'Trending' },
+  { type: 'top-rated', label: 'Top Rated', mobileLabel: 'Top Rated' },
+  { type: 'upcoming', label: 'Upcoming', mobileLabel: 'Upcoming' },
 ]
 
 export default function DiscoverClient() {
@@ -153,9 +153,9 @@ export default function DiscoverClient() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TABS.map(({ type: t, label }) => (
+      <div className="mb-4 space-y-2">
+        <div className="flex gap-1 sm:gap-2">
+          {TABS.map(({ type: t, label, mobileLabel }) => (
             <button
               key={t}
               onClick={() => {
@@ -167,13 +167,14 @@ export default function DiscoverClient() {
                 setFetchError('')
                 setHasNextPage(false)
               }}
-              className={`min-h-11 shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`min-h-[44px] flex-1 rounded-lg px-1 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:px-4 sm:py-2 sm:text-sm ${
                 feedType === t
                   ? 'bg-accent-600 text-white'
                   : 'bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700'
               }`}
             >
-              {label}
+              <span className="sm:hidden">{mobileLabel}</span>
+              <span className="hidden sm:inline">{label}</span>
             </button>
           ))}
         </div>

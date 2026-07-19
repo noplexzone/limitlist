@@ -269,48 +269,59 @@ export default function WatchlistClient() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/70 p-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <label className="w-full text-sm text-surface-400 sm:w-auto">
-          Status{' '}
-          <select
-            value={statusFilter}
-            onChange={(e) => applyParams({ status: e.target.value as StatusFilter })}
-            className="mt-1 min-h-11 w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none focus:border-accent-500 sm:ml-2 sm:mt-0 sm:min-h-0 sm:w-auto sm:py-1.5"
-          >
-            <option value="ALL">All</option>
-            <option value="NEEDS_UPDATE">Needs update</option>
-            {SHOW_STATUSES.map((status) => (
-              <option key={status} value={status}>{STATUS_LABELS[status]}</option>
-            ))}
-          </select>
-        </label>
-        <label className="w-full text-sm text-surface-400 sm:w-auto">
-          Sort{' '}
-          <select
-            value={sortField}
-            onChange={(e) => {
-              const newField = e.target.value as SortField
-              applyParams({ sortField: newField, sortDir: newField === 'title' ? 'asc' : 'desc' })
-            }}
-            className="mt-1 min-h-11 w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none focus:border-accent-500 sm:ml-2 sm:mt-0 sm:min-h-0 sm:w-auto sm:py-1.5"
-          >
-            <option value="updated">Last updated</option>
-            <option value="title">Title</option>
-            <option value="rating">Rating</option>
-            <option value="first-aired">First aired</option>
-          </select>
-        </label>
+      <div className="flex flex-row flex-wrap items-center gap-2 rounded-2xl border border-surface-800 bg-surface-900/70 p-2 sm:gap-3 sm:p-3">
+        <select
+          aria-label="Filter by status"
+          value={statusFilter}
+          onChange={(e) => applyParams({ status: e.target.value as StatusFilter })}
+          className="min-h-[44px] flex-1 rounded-lg border border-surface-700 bg-surface-950 px-2 py-1 text-xs text-surface-100 outline-none focus:border-accent-500 sm:flex-none sm:px-3 sm:py-1.5 sm:text-sm"
+        >
+          <option value="ALL">All</option>
+          <option value="NEEDS_UPDATE">Needs update</option>
+          {SHOW_STATUSES.map((status) => (
+            <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+          ))}
+        </select>
+        <select
+          aria-label="Sort by"
+          value={sortField}
+          onChange={(e) => {
+            const newField = e.target.value as SortField
+            applyParams({ sortField: newField, sortDir: newField === 'title' ? 'asc' : 'desc' })
+          }}
+          className="min-h-[44px] flex-1 rounded-lg border border-surface-700 bg-surface-950 px-2 py-1 text-xs text-surface-100 outline-none focus:border-accent-500 sm:flex-none sm:px-3 sm:py-1.5 sm:text-sm"
+        >
+          <option value="updated">Last updated</option>
+          <option value="title">Title</option>
+          <option value="rating">Rating</option>
+          <option value="first-aired">First aired</option>
+        </select>
         <button
           type="button"
           aria-label={sortDir === 'asc' ? 'Sort ascending' : 'Sort descending'}
           title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
           onClick={() => applyParams({ sortDir: sortDir === 'asc' ? 'desc' : 'asc' })}
-          className="min-h-11 rounded-lg border border-surface-700 bg-surface-950 px-3 py-2 text-sm text-surface-100 outline-none transition-colors hover:border-accent-500 focus:border-accent-500"
+          className="min-h-[44px] min-w-[44px] shrink-0 rounded-lg border border-surface-700 bg-surface-950 px-3 py-1 text-sm text-surface-100 outline-none transition-colors hover:border-accent-500 focus:border-accent-500"
         >
           {sortDir === 'asc' ? '↑' : '↓'}
         </button>
-        <button type="button" disabled={syncingAll} onClick={syncAllWithPlex} className="min-h-11 rounded-lg border border-accent-500/60 px-3 py-2 text-sm font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50">{syncingAll ? 'Syncing…' : 'Sync all with Plex'}</button>
-        <p className="text-xs text-surface-500 sm:ml-auto">{visibleShows.length} of {shows.length} shown</p>
+        <button
+          type="button"
+          disabled={syncingAll}
+          onClick={syncAllWithPlex}
+          className="min-h-[44px] shrink-0 rounded-lg border border-accent-500/60 px-2 py-1 text-xs font-semibold text-accent-100 hover:bg-accent-950 disabled:opacity-50 sm:px-3 sm:text-sm"
+          aria-label="Sync all with Plex"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 sm:hidden" aria-hidden="true">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 16h5v5" />
+          </svg>
+          <span className="hidden sm:inline">{syncingAll ? 'Syncing…' : 'Sync with Plex'}</span>
+          <span className="sm:hidden sr-only">{syncingAll ? 'Syncing…' : 'Sync with Plex'}</span>
+        </button>
+        <p className="w-full text-xs text-surface-500 sm:ml-auto sm:w-auto">{visibleShows.length} of {shows.length} shown</p>
       </div>
 
       {syncSummary && <p className="rounded-xl border border-accent-500/30 bg-accent-950/30 px-4 py-3 text-sm text-accent-100">{syncSummary}</p>}

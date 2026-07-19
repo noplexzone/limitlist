@@ -89,8 +89,21 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
       case 'plex':
         return (
           <div className="space-y-6">
-            {/* Inner tab strip */}
-            <div className="-mx-4 flex gap-1 overflow-x-auto border-b border-surface-800 px-4 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            {/* Mobile: panel picker dropdown */}
+            <div className="sm:hidden">
+              <select
+                aria-label="Plex settings panel"
+                value={activePlexPanel}
+                onChange={(e) => navigatePlexPanel(e.target.value as PlexPanelId)}
+                className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-3 text-sm font-medium text-surface-100 outline-none focus:border-accent-500"
+              >
+                {PLEX_PANELS.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+            {/* Desktop: inner tab strip */}
+            <div className="hidden sm:flex gap-1 border-b border-surface-800">
               {PLEX_PANELS.map((p) => (
                 <button
                   key={p.id}
@@ -130,21 +143,18 @@ function SettingsRouter({ initialSettings, version }: { initialSettings: Setting
 
   return (
     <div className="mobile-settings flex flex-col gap-6 md:flex-row">
-      {/* Mobile: horizontal scrollable tab bar */}
-      <div className="flex overflow-x-auto border-b border-surface-800 md:hidden -mx-4 px-4 overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => navigate(s.id)}
-            className={`min-h-11 shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeSection === s.id
-                ? 'border-accent-500 text-accent-300'
-                : 'border-transparent text-surface-400 hover:text-surface-200'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+      {/* Mobile: section picker dropdown */}
+      <div className="md:hidden">
+        <select
+          aria-label="Settings section"
+          value={activeSection}
+          onChange={(e) => navigate(e.target.value as SectionId)}
+          className="w-full rounded-lg border border-surface-700 bg-surface-950 px-3 py-3 text-sm font-medium text-surface-100 outline-none focus:border-accent-500"
+        >
+          {SECTIONS.map((s) => (
+            <option key={s.id} value={s.id}>{s.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Desktop: left sidebar */}
