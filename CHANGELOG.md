@@ -19,7 +19,7 @@ No unreleased changes yet.
 
 - **What's New panels**: Reduced to three most-recent entries in both the dashboard sidebar and Settings About; all entries start collapsed (no pre-expanded entry) so the panel is compact on any viewport size.
 - **Hours Watched**: Replaced the broken Completion Rate stat card with Hours Watched (episodes watched × 24 min average) — a metric that reflects real activity for any active user.
-- **Continue Watching**: Broadened shelf to include PAUSED shows and UP_TO_DATE shows that have a next episode number, not only explicitly WATCHING shows.
+- **Continue Watching**: Uses episode watch history to show the first unwatched episode after the user's furthest watched episode, including season transitions and episode names populated by Plex sync.
 
 ### Fixed
 

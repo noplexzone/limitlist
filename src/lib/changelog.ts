@@ -25,7 +25,7 @@ export const changelogEntries: ChangelogEntry[] = [
         title: 'Enhancements',
         bullets: [
           'Replaced the broken Completion Rate stat card with Hours Watched — a metric that reflects real activity for any active user.',
-          'Continue Watching now includes PAUSED shows and UP_TO_DATE shows with a next episode, not only WATCHING ones.',
+          "Continue Watching uses episode watch history to show the first unwatched episode after the user's furthest watched episode, including season transitions and episode names populated by Plex sync.",
           'What\'s New entries all start collapsed so the panel is compact on any viewport size.',
         ],
       },

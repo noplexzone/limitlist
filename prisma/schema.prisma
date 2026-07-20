@@ -78,6 +78,7 @@ model EpisodeWatch {
   watchedAt     DateTime?
   source        String    @default("plex")
   plexRatingKey String?
+  episodeName   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   animeShow     AnimeShow @relation(fields: [animeShowId], references: [id], onDelete: Cascade)

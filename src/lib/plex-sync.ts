@@ -320,12 +320,12 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
         // Preserve source=manual; update watch state and Plex key only
         await prisma.episodeWatch.update({
           where: { id: existing.id },
-          data: { watched: ep.watched, watchedAt: ep.watchedAt, plexRatingKey: ep.plexRatingKey },
+          data: { watched: ep.watched, watchedAt: ep.watchedAt, plexRatingKey: ep.plexRatingKey, episodeName: ep.plexTitle || null },
         })
       } else {
         await prisma.episodeWatch.update({
           where: { id: existing.id },
-          data: { watched: ep.watched, watchedAt: ep.watchedAt, plexRatingKey: ep.plexRatingKey, source: 'plex' },
+          data: { watched: ep.watched, watchedAt: ep.watchedAt, plexRatingKey: ep.plexRatingKey, source: 'plex', episodeName: ep.plexTitle || null },
         })
       }
     } else {
@@ -338,6 +338,7 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
           watchedAt: ep.watchedAt,
           plexRatingKey: ep.plexRatingKey,
           source: 'plex',
+          episodeName: ep.plexTitle || null,
         },
       })
     }

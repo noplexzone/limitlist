@@ -7,6 +7,7 @@ import { computeStats } from '@/lib/stats'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { changelogEntries } from '@/lib/changelog'
 import { formatEpisodeLabel } from '@/lib/format-episode'
+import { nextContinueEpisode } from '@/lib/continue-watching'
 import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
 import UpcomingReleases from '@/app/schedule/UpcomingReleases'
@@ -83,6 +84,7 @@ interface ShelfShow {
   title: string
   posterUrl: string | null
   rating: number | null
+  nextSeasonNum?: number | null
   nextEpisodeNum?: number | null
   nextEpisodeName?: string | null
 }
@@ -118,7 +120,7 @@ function PosterShelf({ title, shows }: { title: string; shows: ShelfShow[] }) {
             <p className="mt-1 text-[10px] text-surface-400 leading-tight line-clamp-2">{show.title}</p>
             {show.nextEpisodeNum != null && (
               <p className="text-[10px] text-surface-500 leading-tight line-clamp-2">
-                {formatEpisodeLabel(null, show.nextEpisodeNum!, show.nextEpisodeName, true)}
+                {formatEpisodeLabel(show.nextSeasonNum ?? null, show.nextEpisodeNum!, show.nextEpisodeName, true)}
               </p>
             )}
             {show.rating != null && (
@@ -135,14 +137,9 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   if (!user) redirect('/login')
 
-  const [initialShows, episodesWatched, watchCounts] = await Promise.all([
+  const [initialShows, episodesWatched] = await Promise.all([
     prisma.animeShow.findMany({ orderBy: { updatedAt: 'desc' } }),
     prisma.episodeWatch.count({ where: { watched: true } }),
-    prisma.episodeWatch.groupBy({
-      by: ['animeShowId'],
-      where: { watched: true },
-      _count: { id: true },
-    }),
   ])
   let shows = initialShows
   let stats = computeStats(shows)
@@ -166,28 +163,59 @@ export default async function DashboardPage() {
   }
   const isEmpty = stats.totalShows === 0
 
-  const watchedCountMap = new Map(watchCounts.map((r) => [r.animeShowId, r._count.id]))
+  // Fetch episode watches for Continue Watching candidates (all non-DROPPED, non-COMPLETED shows).
+  // PLAN_TO_WATCH shows with actual watch progress are included — status alone does not gate inclusion.
+  const cwCandidateIds = shows
+    .filter((s) => s.status !== 'DROPPED' && s.status !== 'COMPLETED')
+    .map((s) => s.id)
 
-  const cwCandidates = shows
-    .filter((s) => {
-      if (s.status === 'COMPLETED' || s.status === 'PLAN_TO_WATCH' || s.status === 'DROPPED') return false
-      if (s.status !== 'WATCHING' && s.status !== 'PAUSED' && s.status !== 'UP_TO_DATE') return false
-      const watched = watchedCountMap.get(s.id) ?? 0
-      const aired = s.airedEpisodeCount
-      if (aired != null && aired > 0) return watched < aired
-      return s.status === 'WATCHING' || s.status === 'PAUSED' || s.nextEpisodeNum != null
-    })
-    .slice(0, 12)
+  const cwWatches = cwCandidateIds.length > 0
+    ? await prisma.episodeWatch.findMany({
+        where: { animeShowId: { in: cwCandidateIds } },
+        select: {
+          animeShowId: true,
+          seasonNumber: true,
+          episodeNumber: true,
+          watched: true,
+          watchedAt: true,
+          episodeName: true,
+        },
+      })
+    : []
 
-  const continueWatching: ShelfShow[] = cwCandidates.map((s) => ({
-    id: s.id,
-    metadataProvider: s.metadataProvider,
-    metadataId: s.metadataId,
-    title: s.title,
-    posterUrl: s.posterUrl,
-    rating: s.rating,
-    nextEpisodeNum: s.nextEpisodeNum,
-    nextEpisodeName: s.nextEpisodeName,
+  const watchesByShow = new Map<string, typeof cwWatches>()
+  for (const w of cwWatches) {
+    const list = watchesByShow.get(w.animeShowId) ?? []
+    list.push(w)
+    watchesByShow.set(w.animeShowId, list)
+  }
+
+  type CWEntry = { show: typeof shows[0]; nextEp: NonNullable<ReturnType<typeof nextContinueEpisode>> }
+  const cwWithNext: CWEntry[] = []
+  for (const show of shows) {
+    if (show.status === 'DROPPED' || show.status === 'COMPLETED') continue
+    const watches = watchesByShow.get(show.id) ?? []
+    const nextEp = nextContinueEpisode(watches)
+    if (nextEp) cwWithNext.push({ show, nextEp })
+  }
+
+  cwWithNext.sort((a, b) => {
+    const aTime = a.nextEp.furthestWatchedAt?.getTime() ?? 0
+    const bTime = b.nextEp.furthestWatchedAt?.getTime() ?? 0
+    if (bTime !== aTime) return bTime - aTime
+    return b.show.updatedAt.getTime() - a.show.updatedAt.getTime()
+  })
+
+  const continueWatching: ShelfShow[] = cwWithNext.slice(0, 12).map(({ show, nextEp }) => ({
+    id: show.id,
+    metadataProvider: show.metadataProvider,
+    metadataId: show.metadataId,
+    title: show.title,
+    posterUrl: show.posterUrl,
+    rating: show.rating,
+    nextSeasonNum: nextEp.seasonNumber,
+    nextEpisodeNum: nextEp.episodeNumber,
+    nextEpisodeName: nextEp.episodeName,
   }))
 
   const highestRated: ShelfShow[] = shows
