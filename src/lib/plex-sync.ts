@@ -313,7 +313,11 @@ export async function syncShowFromPlex(showId: string): Promise<PlexSyncResult> 
     const existing = existingMap.get(`${ep.seasonNumber}:${ep.episodeNumber}`)
     if (existing) {
       if (existing.source === 'manual' && existing.watched && !ep.watched) {
-        // Never flip manual+watched=true to false via Plex
+        // Never flip manual+watched=true to false via Plex; still refresh key/name.
+        await prisma.episodeWatch.update({
+          where: { id: existing.id },
+          data: { plexRatingKey: ep.plexRatingKey, episodeName: ep.plexTitle || null },
+        })
         continue
       }
       if (existing.source === 'manual') {

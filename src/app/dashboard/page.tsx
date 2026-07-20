@@ -7,7 +7,7 @@ import { computeStats } from '@/lib/stats'
 import { getConfiguredTvdbProvider } from '@/lib/tvdb'
 import { changelogEntries } from '@/lib/changelog'
 import { formatEpisodeLabel } from '@/lib/format-episode'
-import { nextContinueEpisode } from '@/lib/continue-watching'
+import { nextContinueEpisode, type CanonicalEpisode } from '@/lib/continue-watching'
 import { SHOW_STATUSES, STATUS_DOT_CLASSES, STATUS_LABELS } from '@/lib/status'
 import Nav from '@/components/Nav'
 import UpcomingReleases from '@/app/schedule/UpcomingReleases'
@@ -143,8 +143,8 @@ export default async function DashboardPage() {
   ])
   let shows = initialShows
   let stats = computeStats(shows)
+  const tvdb = await getConfiguredTvdbProvider()
   if (stats.topStudios.length === 0 && shows.some((show) => show.metadataProvider === 'tvdb' && !show.studios)) {
-    const tvdb = await getConfiguredTvdbProvider()
     if (tvdb?.getDetails) {
       const candidates = shows.filter((show) => show.metadataProvider === 'tvdb' && !show.studios).slice(0, 12)
       const enriched = await Promise.all(candidates.map(async (show) => {
@@ -190,11 +190,53 @@ export default async function DashboardPage() {
     watchesByShow.set(w.animeShowId, list)
   }
 
+  // Candidates: shows with at least one main-season watched episode, sorted by most recent activity.
+  // Bounded to CW_FETCH_BOUND to avoid unbounded TVDB calls.
+  const CW_FETCH_BOUND = 24
+  const progressCandidates = shows
+    .filter((s) => {
+      if (s.status === 'DROPPED' || s.status === 'COMPLETED') return false
+      return (watchesByShow.get(s.id) ?? []).some((w) => w.seasonNumber > 0 && w.watched)
+    })
+    .map((s) => {
+      const watches = watchesByShow.get(s.id) ?? []
+      const latestWatchedAt = watches.reduce<Date | null>((latest, w) => {
+        if (!w.watched || !w.watchedAt) return latest
+        return !latest || w.watchedAt > latest ? w.watchedAt : latest
+      }, null)
+      return { show: s, watches, latestWatchedAt }
+    })
+    .sort((a, b) => {
+      const aTime = a.latestWatchedAt?.getTime() ?? 0
+      const bTime = b.latestWatchedAt?.getTime() ?? 0
+      if (bTime !== aTime) return bTime - aTime
+      return b.show.updatedAt.getTime() - a.show.updatedAt.getTime()
+    })
+    .slice(0, CW_FETCH_BOUND)
+
   type CWEntry = { show: typeof shows[0]; nextEp: NonNullable<ReturnType<typeof nextContinueEpisode>> }
   const cwWithNext: CWEntry[] = []
-  for (const show of shows) {
-    if (show.status === 'DROPPED' || show.status === 'COMPLETED') continue
-    const watches = watchesByShow.get(show.id) ?? []
+  for (const { show, watches } of progressCandidates) {
+    if (tvdb?.getDetails && show.metadataProvider === 'tvdb') {
+      try {
+        const details = await tvdb.getDetails(show.metadataId)
+        if (details?.seasons?.length) {
+          const canonical: CanonicalEpisode[] = details.seasons.flatMap((season) =>
+            (season.episodes ?? []).map((ep) => ({
+              seasonNumber: season.seasonNumber,
+              episodeNumber: ep.episodeNumber,
+              name: ep.name ?? null,
+              airDate: ep.airDate ?? null,
+            }))
+          )
+          const nextEp = nextContinueEpisode(watches, canonical)
+          if (nextEp) cwWithNext.push({ show, nextEp })
+          continue
+        }
+      } catch {
+        // fall through to ledger fallback
+      }
+    }
     const nextEp = nextContinueEpisode(watches)
     if (nextEp) cwWithNext.push({ show, nextEp })
   }

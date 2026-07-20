@@ -19,7 +19,7 @@ No unreleased changes yet.
 
 - **What's New panels**: Reduced to three most-recent entries in both the dashboard sidebar and Settings About; all entries start collapsed (no pre-expanded entry) so the panel is compact on any viewport size.
 - **Hours Watched**: Replaced the broken Completion Rate stat card with Hours Watched (episodes watched × 24 min average) — a metric that reflects real activity for any active user.
-- **Continue Watching**: Uses episode watch history to show the first unwatched episode after the user's furthest watched episode, including season transitions and episode names populated by Plex sync.
+- **Continue Watching**: Uses episode watch history to show the first unwatched episode after the user's furthest watched episode, including season transitions and episode names populated by Plex sync. When TVDB is available, uses canonical episode data so manual-only progress (watched=true rows with no following unwatched row) correctly identifies the next aired episode; future and unaired episodes are excluded. Dashboard fetches TVDB details for a bounded candidate set (up to 24 shows) to keep load time predictable.
 
 ### Fixed
 
@@ -27,6 +27,7 @@ No unreleased changes yet.
 - **Watchlist card layout**: Status pill and remove button now occupy a single flex row and can never overlap on any screen width.
 - **Episode label**: Continue Watching shelf cards use `line-clamp-2` and are slightly wider (`w-28`) so episode names are readable rather than cut off.
 - **COMPLETED detection**: Plex import marks fully-watched shows as COMPLETED when airingStatus is ended/completed, or absent with no upcoming episode, and preserves that status through the initial Plex sync.
+- **Plex sync manual-row protection**: When Plex reports an episode as unwatched but the local row was manually marked watched, the row is no longer silently skipped — `plexRatingKey` and `episodeName` are still refreshed from Plex while the watched flag is preserved.
 - **iOS input zoom**: Text inputs in settings and forms no longer trigger Safari auto-zoom on focus; all controls render at 16 px or larger.
 - **PWA safe areas**: Safe-area insets keep the top navigation below the status bar/notch and the bottom navigation above the home indicator.
 - **Discover tabs on mobile**: The Discover tab bar no longer overflows on narrow screens; all four tabs remain visible and tappable.

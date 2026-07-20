@@ -25,7 +25,7 @@ export const changelogEntries: ChangelogEntry[] = [
         title: 'Enhancements',
         bullets: [
           'Replaced the broken Completion Rate stat card with Hours Watched — a metric that reflects real activity for any active user.',
-          "Continue Watching uses episode watch history to show the first unwatched episode after the user's furthest watched episode, including season transitions and episode names populated by Plex sync.",
+          "Continue Watching uses canonical TVDB episode data to show the next aired episode — manual-only progress (watched=true rows) now correctly identifies the next episode. Future and unaired episodes are excluded. Dashboard fetches are bounded to keep load time predictable.",
           'What\'s New entries all start collapsed so the panel is compact on any viewport size.',
         ],
       },
@@ -36,6 +36,7 @@ export const changelogEntries: ChangelogEntry[] = [
           'Status pill and remove button now occupy a shared flex row and can never overlap.',
           'Continue Watching episode labels use line-clamp-2 and wider cards so names are readable rather than cut off.',
           'Plex import marks fully-watched shows as COMPLETED when airingStatus is ended/completed, or absent with no upcoming episode, and preserves that status through the initial Plex sync.',
+          'Plex sync now refreshes plexRatingKey and episodeName for manually-watched rows even when Plex reports the episode as unwatched, so the watched flag is preserved without losing Plex metadata.',
           'iOS text inputs in settings and forms no longer trigger Safari auto-zoom on focus; all controls render at 16 px or larger.',
           'Safe-area insets keep the top navigation below the status bar/notch and the bottom navigation above the home indicator.',
           'Discover tab bar no longer overflows on narrow screens; all four tabs remain visible and tappable.',
